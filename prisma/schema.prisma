@@ -1,0 +1,34 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  password  String
+  role      String    @default("USER") // "ADMIN" ou "USER"
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  workLogs  WorkLog[]
+}
+
+model WorkLog {
+  id               String   @id @default(cuid())
+  requester        String   // Solicitante
+  clientOrOffice   String   // Escritório/Cliente
+  reportedProblem  String   // Problema relatado
+  actionTaken      String   // Ação realizada
+  status           String   @default("Realizado") // Realizado, Em andamento, Aguardando reunião, Não foi possível realizar
+  createdAt        DateTime @default(now())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
