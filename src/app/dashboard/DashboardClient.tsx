@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
+import { Cog, Lightbulb } from "lucide-react";
 import WorkLogForm from "@/components/WorkLogForm";
 import { WorkLog } from "@/components/WorkLogFeed";
 
@@ -317,10 +318,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                           border: "1.5px solid #0d1322",
                         }}
                       >
-                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-                          <circle cx="12" cy="12" r="9" />
-                          <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
-                        </svg>
+                        <Cog size={9} strokeWidth={1.5} color="white" />
                       </div>
                     )}
                     {hasImplementation && (
@@ -336,10 +334,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                           border: "1.5px solid #0d1322",
                         }}
                       >
-                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-                          <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
-                          <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
-                        </svg>
+                        <Lightbulb size={9} strokeWidth={1.5} color="white" />
                       </div>
                     )}
                   </div>
@@ -526,10 +521,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                           border: "1.5px solid #0d1322",
                         }}
                       >
-                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-                          <circle cx="12" cy="12" r="9" />
-                          <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
-                        </svg>
+                        <Cog size={9} strokeWidth={1.5} color="white" />
                       </div>
                     )}
                     {selectedLog.implementation && (
