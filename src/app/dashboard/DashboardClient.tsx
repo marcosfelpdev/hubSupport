@@ -286,41 +286,38 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                   style={{
                     cursor: "pointer",
                     position: "relative",
-                    overflow: "visible",
                     borderColor: isSelected ? "rgba(99,102,241,0.6)" : isOwn ? "rgba(99,102,241,0.25)" : "var(--border)",
                     boxShadow: isSelected ? "0 0 0 1px rgba(99,102,241,0.4)" : "none",
-                    padding: "1.125rem 0.875rem 0.875rem",
+                    padding: "0.875rem",
                     zIndex: 1,
-                    marginTop: "0.5rem",
                   }}
                 >
                   {/* Tipo tags (canto superior direito, sobressaindo do card) */}
                   <div
                     style={{
                       position: "absolute",
-                      top: "-12px",
-                      right: "-12px",
+                      top: "0.5rem",
+                      right: "0.5rem",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "8px",
+                      gap: "4px",
                       zIndex: 10,
                     }}
                   >
                     {hasTechnical && (
                       <div
                         style={{
-                          width: "36px",
-                          height: "36px",
+                          width: "20px",
+                          height: "20px",
                           borderRadius: "50%",
                           background: "#f59e0b",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          boxShadow: "0 2px 8px rgba(245, 158, 11, 0.5)",
-                          border: "2px solid #0d1322",
+                          border: "1.5px solid #0d1322",
                         }}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                           <circle cx="12" cy="12" r="9" />
                           <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
                         </svg>
@@ -329,18 +326,17 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                     {hasImplementation && (
                       <div
                         style={{
-                          width: "36px",
-                          height: "36px",
+                          width: "20px",
+                          height: "20px",
                           borderRadius: "50%",
                           background: "#3b82f6",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          boxShadow: "0 2px 8px rgba(59, 130, 246, 0.5)",
-                          border: "2px solid #0d1322",
+                          border: "1.5px solid #0d1322",
                         }}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                           <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
                           <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
                         </svg>
@@ -471,7 +467,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
           )}
         </div>
 
-        <div className="card" style={{ minHeight: "calc(100vh - 300px)", maxHeight: "calc(100vh - 300px)", overflowY: "auto", overflow: "visible" }}>
+        <div className="card" style={{ minHeight: "calc(100vh - 300px)", maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
           {selectedLog ? (
             <div className="animate-fade-in">
               <div
@@ -509,50 +505,48 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                 <div
                   style={{
                     position: "absolute",
-                    top: "-12px",
-                    right: "-12px",
+                    top: "0.5rem",
+                    right: "0.5rem",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "8px",
+                    gap: "4px",
                     zIndex: 10,
                   }}
                 >
                   {selectedLog.technicalAction && (
                     <div
                       style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        background: "#f59e0b",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 2px 6px rgba(245, 158, 11, 0.4)",
-                        border: "2px solid #0d1322",
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
-                      </svg>
-                    </div>
-                  )}
-                  {selectedLog.implementation && (
-                    <div
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        background: "#3b82f6",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 2px 6px rgba(59, 130, 246, 0.4)",
-                        border: "2px solid #0d1322",
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                        <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                        width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          background: "#f59e0b",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "1.5px solid #0d1322",
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
+                        </svg>
+                      </div>
+                    )}
+                    {selectedLog.implementation && (
+                      <div
+                        style={{
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          background: "#3b82f6",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "1.5px solid #0d1322",
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                          <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
                         <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
                       </svg>
                     </div>
