@@ -286,35 +286,37 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                   style={{
                     cursor: "pointer",
                     position: "relative",
+                    overflow: "visible",
                     borderColor: isSelected ? "rgba(99,102,241,0.6)" : isOwn ? "rgba(99,102,241,0.25)" : "var(--border)",
                     boxShadow: isSelected ? "0 0 0 1px rgba(99,102,241,0.4)" : "none",
-                    padding: "0.875rem",
+                    padding: "1.125rem 0.875rem 0.875rem",
                     zIndex: 1,
+                    marginTop: "0.5rem",
                   }}
                 >
                   {/* Tipo tags (canto superior direito, sobressaindo do card) */}
                   <div
                     style={{
                       position: "absolute",
-                      top: "-10px",
-                      right: "-10px",
+                      top: "-12px",
+                      right: "-12px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "6px",
+                      gap: "8px",
                       zIndex: 10,
                     }}
                   >
                     {hasTechnical && (
                       <div
                         style={{
-                          width: "32px",
-                          height: "32px",
+                          width: "36px",
+                          height: "36px",
                           borderRadius: "50%",
                           background: "#f59e0b",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          boxShadow: "0 2px 6px rgba(245, 158, 11, 0.4)",
+                          boxShadow: "0 2px 8px rgba(245, 158, 11, 0.5)",
                           border: "2px solid #0d1322",
                         }}
                       >
@@ -327,14 +329,14 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                     {hasImplementation && (
                       <div
                         style={{
-                          width: "32px",
-                          height: "32px",
+                          width: "36px",
+                          height: "36px",
                           borderRadius: "50%",
                           background: "#3b82f6",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          boxShadow: "0 2px 6px rgba(59, 130, 246, 0.4)",
+                          boxShadow: "0 2px 8px rgba(59, 130, 246, 0.5)",
                           border: "2px solid #0d1322",
                         }}
                       >
@@ -469,7 +471,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
           )}
         </div>
 
-        <div className="card" style={{ minHeight: "calc(100vh - 300px)", maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}>
+        <div className="card" style={{ minHeight: "calc(100vh - 300px)", maxHeight: "calc(100vh - 300px)", overflowY: "auto", overflow: "visible" }}>
           {selectedLog ? (
             <div className="animate-fade-in">
               <div
@@ -507,11 +509,11 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                 <div
                   style={{
                     position: "absolute",
-                    top: "-10px",
-                    right: "-10px",
+                    top: "-12px",
+                    right: "-12px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "6px",
+                    gap: "8px",
                     zIndex: 10,
                   }}
                 >
