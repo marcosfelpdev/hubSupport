@@ -3,6 +3,27 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import fs from "fs/promises";
+import path from "path";
+
+const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+
+async function ensureUploadDir() {
+  try {
+    await fs.access(UPLOAD_DIR);
+  } catch {
+    await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  }
+}
+
+async function saveUploadedFile(file: File): Promise<string> {
+  await ensureUploadDir();
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
+  const filePath = path.join(UPLOAD_DIR, fileName);
+  await fs.writeFile(filePath, buffer);
+  return `/uploads/${fileName}`;
+}
 
 export async function createWorkLog(formData: FormData) {
   try {
@@ -12,7 +33,6 @@ export async function createWorkLog(formData: FormData) {
       return { error: "Não autorizado. Por favor, faça login novamente." };
     }
 
-    // Busca o usuário real no banco pelo ID ou pelo email para garantir que o foreign key exista
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -31,9 +51,22 @@ export async function createWorkLog(formData: FormData) {
     const reportedProblem = formData.get("reportedProblem") as string;
     const actionTaken = formData.get("actionTaken") as string;
     const status = (formData.get("status") as string) || "Realizado";
+    const technicalAction = formData.get("technicalAction") === "on";
+    const implementation = formData.get("implementation") === "on";
 
     if (!requester?.trim() || !clientOrOffice?.trim() || !reportedProblem?.trim() || !actionTaken?.trim()) {
       return { error: "Por favor, preencha todos os campos obrigatórios." };
+    }
+
+    // Processar arquivos de mídia
+    const mediaFiles = formData.getAll("media") as File[];
+    const mediaPaths: string[] = [];
+
+    for (const file of mediaFiles) {
+      if (file && file.size > 0) {
+        const savedPath = await saveUploadedFile(file);
+        mediaPaths.push(savedPath);
+      }
     }
 
     await prisma.workLog.create({
@@ -43,6 +76,9 @@ export async function createWorkLog(formData: FormData) {
         reportedProblem: reportedProblem.trim(),
         actionTaken: actionTaken.trim(),
         status: status.trim(),
+        technicalAction,
+        implementation,
+        media: JSON.stringify(mediaPaths),
         userId: user.id,
       },
     });

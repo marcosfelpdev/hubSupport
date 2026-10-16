@@ -13,6 +13,9 @@ const STATUS_OPTIONS = [
 export default function WorkLogForm({ onSuccess }: { onSuccess?: () => void } = {}) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [technicalAction, setTechnicalAction] = useState(false);
+  const [implementation, setImplementation] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -20,6 +23,13 @@ export default function WorkLogForm({ onSuccess }: { onSuccess?: () => void } = 
 
     const form = e.currentTarget;
     const formData = new FormData(form);
+
+    formData.set("technicalAction", technicalAction ? "on" : "off");
+    formData.set("implementation", implementation ? "on" : "off");
+
+    mediaFiles.forEach((file) => {
+      formData.append("media", file);
+    });
 
     startTransition(async () => {
       try {
@@ -29,6 +39,9 @@ export default function WorkLogForm({ onSuccess }: { onSuccess?: () => void } = 
           return;
         }
         form.reset();
+        setTechnicalAction(false);
+        setImplementation(false);
+        setMediaFiles([]);
         onSuccess?.();
         setMessage({ type: "success", text: "Atendimento registrado com sucesso!" });
       } catch (err) {
@@ -215,6 +228,107 @@ export default function WorkLogForm({ onSuccess }: { onSuccess?: () => void } = 
             disabled={isPending}
             style={{ resize: "vertical", lineHeight: 1.5 }}
           />
+        </div>
+
+        {/* Checklist: Ação Técnica / Implementação */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.75rem",
+            background: "rgba(15, 23, 42, 0.5)",
+            border: "1px solid var(--border)",
+            borderRadius: "8px",
+            padding: "0.875rem",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setTechnicalAction((prev) => !prev)}
+            disabled={isPending}
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.625rem 0.875rem",
+              borderRadius: "6px",
+              border: technicalAction
+                ? `1px solid #f59e0b`
+                : "1px solid rgba(245, 158, 11, 0.3)",
+              background: technicalAction ? "rgba(245, 158, 11, 0.15)" : "transparent",
+              color: technicalAction ? "#fbbf24" : "var(--text-secondary)",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              transition: "all 0.2s",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
+            </svg>
+            <span>Ação Técnica</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setImplementation((prev) => !prev)}
+            disabled={isPending}
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.625rem 0.875rem",
+              borderRadius: "6px",
+              border: implementation
+                ? `1px solid #3b82f6`
+                : "1px solid rgba(59, 130, 246, 0.3)",
+              background: implementation ? "rgba(59, 130, 246, 0.15)" : "transparent",
+              color: implementation ? "#60a5fa" : "var(--text-secondary)",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              transition: "all 0.2s",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+              <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
+            </svg>
+            <span>Implementação</span>
+          </button>
+        </div>
+
+        {/* Anexo de Mídia */}
+        <div>
+          <label htmlFor="media">
+            Anexar Mídia <span style={{ color: "#94a3b8" }}>*(opcional)</span>
+          </label>
+          <input
+            id="media"
+            name="media"
+            type="file"
+            multiple
+            accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx"
+            className="input-dark"
+            disabled={isPending}
+            onChange={(e) => {
+              const files = Array.from((e.target as HTMLInputElement).files ?? []);
+              setMediaFiles(files);
+            }}
+            style={{
+              padding: "0.625rem 0.875rem",
+              border: "1px dashed var(--border-light)",
+              color: "var(--text-muted)",
+              cursor: "pointer",
+              background: "transparent",
+            }}
+          />
+          {mediaFiles.length > 0 && (
+            <p style={{ fontSize: "0.75rem", color: "#60a5fa", marginTop: "0.375rem" }}>
+              {mediaFiles.length} arquivo(s) selecionado(s)
+            </p>
+          )}
         </div>
 
         {/* Submit */}

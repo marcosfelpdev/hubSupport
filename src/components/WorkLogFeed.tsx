@@ -7,6 +7,9 @@ export interface WorkLog {
   reportedProblem: string;
   actionTaken: string;
   status: string;
+  technicalAction: boolean;
+  implementation: boolean;
+  media: string;
   createdAt: Date;
   userId: string;
   user: {

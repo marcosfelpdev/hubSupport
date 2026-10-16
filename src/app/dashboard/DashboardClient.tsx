@@ -82,6 +82,22 @@ function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("pt-BR");
 }
 
+function getMediaPaths(log: WorkLog): string[] {
+  try {
+    return JSON.parse(log.media || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function isImage(url: string) {
+  return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+}
+
+function isVideo(url: string) {
+  return /\.(mp4|webm|ogg|mov)$/i.test(url);
+}
+
 export default function DashboardClient({ logs, currentUserId, employees }: DashboardProps) {
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -92,6 +108,10 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
     status: "",
     employee: "",
   });
+
+  const [mediaModalOpen, setMediaModalOpen] = useState(false);
+  const [mediaCurrentIndex, setMediaCurrentIndex] = useState(0);
+  const [mediaItems, setMediaItems] = useState<string[]>([]);
 
   const employeeOptions = useMemo(() => {
     const unique = Array.from(new Set(employees.map((e) => e.name).filter(Boolean)));
@@ -129,6 +149,13 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
   }, [selectedLogId, filteredLogs]);
 
   const selectedLog = logs.find((log) => log.id === validSelectedLogId);
+
+  function openMediaModal(log: WorkLog, startIndex = 0) {
+    const paths = getMediaPaths(log);
+    setMediaItems(paths);
+    setMediaCurrentIndex(startIndex);
+    setMediaModalOpen(true);
+  }
 
   return (
     <main className="animate-fade-in" style={{ maxWidth: "1600px", padding: "2rem 2.5rem", width: "100%" }}>
@@ -248,6 +275,8 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
               const avatarColor = getAvatarColor(log.userId);
               const statusConfig = getStatusBadgeConfig(log.status);
               const isOwn = log.userId === currentUserId;
+              const hasTechnical = log.technicalAction;
+              const hasImplementation = log.implementation;
 
               return (
                 <div
@@ -256,11 +285,67 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                   className="card card-hover animate-fade-in"
                   style={{
                     cursor: "pointer",
+                    position: "relative",
                     borderColor: isSelected ? "rgba(99,102,241,0.6)" : isOwn ? "rgba(99,102,241,0.25)" : "var(--border)",
                     boxShadow: isSelected ? "0 0 0 1px rgba(99,102,241,0.4)" : "none",
                     padding: "0.875rem",
+                    zIndex: 1,
                   }}
                 >
+                  {/* Tipo tags (canto superior direito, sobressaindo do card) */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "-10px",
+                      right: "-10px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "6px",
+                      zIndex: 10,
+                    }}
+                  >
+                    {hasTechnical && (
+                      <div
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          background: "#f59e0b",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: "0 2px 6px rgba(245, 158, 11, 0.4)",
+                          border: "2px solid #0d1322",
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
+                        </svg>
+                      </div>
+                    )}
+                    {hasImplementation && (
+                      <div
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          background: "#3b82f6",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: "0 2px 6px rgba(59, 130, 246, 0.4)",
+                          border: "2px solid #0d1322",
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                          <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                          <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
                   <div
                     style={{
                       display: "flex",
@@ -316,8 +401,15 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", gap: "0.75rem", flexWrap: "nowrap", marginBottom: "0.5rem" }}>
-                    <div style={{ flex: "1 1 150px", marginBottom: "0", minWidth: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "0.75rem",
+                      flexWrap: "wrap",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    <div style={{ flex: "1 1 150px", marginBottom: "0" }}>
                       <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
                         Solicitante
                       </p>
@@ -334,7 +426,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                         {log.requester}
                       </p>
                     </div>
-                    <div style={{ flex: "1 1 150px", marginBottom: "0", minWidth: 0 }}>
+                    <div style={{ flex: "1 1 150px", marginBottom: "0" }}>
                       <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
                         Escritório
                       </p>
@@ -388,6 +480,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                   marginBottom: "1rem",
                   paddingBottom: "0.875rem",
                   borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                  position: "relative",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -409,6 +502,61 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                     </p>
                   </div>
                 </div>
+
+                {/* Tipo tags no card expandido (canto superior direito, sobressaindo) */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-10px",
+                    right: "-10px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    zIndex: 10,
+                  }}
+                >
+                  {selectedLog.technicalAction && (
+                    <div
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        background: "#f59e0b",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 2px 6px rgba(245, 158, 11, 0.4)",
+                        border: "2px solid #0d1322",
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
+                      </svg>
+                    </div>
+                  )}
+                  {selectedLog.implementation && (
+                    <div
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        background: "#3b82f6",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 2px 6px rgba(59, 130, 246, 0.4)",
+                        border: "2px solid #0d1322",
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                        <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                        <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+
                 <span
                   style={{
                     display: "inline-flex",
@@ -461,6 +609,35 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                   </p>
                 </div>
               </div>
+
+              {/* Botão Mídia */}
+              {getMediaPaths(selectedLog).length > 0 && (
+                <button
+                  onClick={() => openMediaModal(selectedLog)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "0.625rem 1rem",
+                    background: "rgba(99, 102, 241, 0.1)",
+                    border: "1px solid rgba(99, 102, 241, 0.3)",
+                    borderRadius: "8px",
+                    color: "#818cf8",
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    marginBottom: "1rem",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  Mídia ({getMediaPaths(selectedLog).length})
+                </button>
+              )}
 
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div
@@ -591,6 +768,181 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
               </svg>
             </button>
             <WorkLogForm onSuccess={() => setIsModalOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Modal Carousel de Mídia */}
+      {mediaModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.9)",
+            backdropFilter: "blur(8px)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1rem",
+            animation: "fadeIn 0.2s ease-in",
+          }}
+          onClick={() => setMediaModalOpen(false)}
+        >
+          <div
+            style={{
+              position: "relative",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              width: "100%",
+              height: "100%",
+              overflow: "hidden",
+              borderRadius: "12px",
+              background: "#000",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header com contador e fechar */}
+            <div
+              style={{
+                position: "absolute",
+                top: "1rem",
+                left: "0",
+                right: "0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "0 1rem",
+                zIndex: 20,
+                color: "white",
+              }}
+            >
+              <div style={{ fontSize: "0.875rem", fontWeight: 500, background: "rgba(0,0,0,0.5)", padding: "0.25rem 0.75rem", borderRadius: "20px" }}>
+                {mediaCurrentIndex + 1} / {mediaItems.length}
+              </div>
+              <button
+                onClick={() => setMediaModalOpen(false)}
+                style={{
+                  background: "rgba(255,255,255,0.15)",
+                  border: "none",
+                  color: "white",
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Conteúdo da mídia atual */}
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+              }}
+            >
+              {mediaItems[mediaCurrentIndex] && (
+                <div>
+                  {isImage(mediaItems[mediaCurrentIndex]) ? (
+                    <img
+                      src={mediaItems[mediaCurrentIndex]}
+                      alt="Mídia"
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "80vh",
+                        objectFit: "contain",
+                        display: "block",
+                      }}
+                    />
+                  ) : (
+                    <video
+                      src={mediaItems[mediaCurrentIndex]}
+                      controls
+                      autoPlay
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "80vh",
+                        display: "block",
+                        background: "#000",
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Setas de navegação */}
+              {mediaItems.length > 1 && (
+                <div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMediaCurrentIndex((i) => (i === 0 ? mediaItems.length - 1 : i - 1));
+                    }}
+                    style={{
+                      position: "absolute",
+                      left: "1rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "rgba(255,255,255,0.2)",
+                      border: "none",
+                      color: "white",
+                      width: "44px",
+                      height: "44px",
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 30,
+                    }}
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMediaCurrentIndex((i) => (i === mediaItems.length - 1 ? 0 : i + 1));
+                    }}
+                    style={{
+                      position: "absolute",
+                      right: "1rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "rgba(255,255,255,0.2)",
+                      border: "none",
+                      color: "white",
+                      width: "44px",
+                      height: "44px",
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 30,
+                    }}
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
