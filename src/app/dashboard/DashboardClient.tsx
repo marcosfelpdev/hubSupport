@@ -174,7 +174,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
 
       <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "flex-start" }}>
         <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -296,8 +296,8 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                   <div
                     style={{
                       position: "absolute",
-                      top: "0.75rem",
-                      right: "0.75rem",
+                      top: "1%",
+                      right: "1%",
                       display: "flex",
                       flexDirection: "column",
                       gap: "4px",
@@ -307,8 +307,8 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                     {hasTechnical && (
                       <div
                         style={{
-                          width: "20px",
-                          height: "20px",
+                          width: "18px",
+                          height: "18px",
                           borderRadius: "50%",
                           background: "#f59e0b",
                           display: "flex",
@@ -317,7 +317,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                           border: "1.5px solid #0d1322",
                         }}
                       >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
                           <circle cx="12" cy="12" r="9" />
                           <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
                         </svg>
@@ -326,8 +326,8 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                     {hasImplementation && (
                       <div
                         style={{
-                          width: "20px",
-                          height: "20px",
+                          width: "18px",
+                          height: "18px",
                           borderRadius: "50%",
                           background: "#3b82f6",
                           display: "flex",
@@ -336,7 +336,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                           border: "1.5px solid #0d1322",
                         }}
                       >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
                           <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
                           <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
                         </svg>
@@ -505,8 +505,8 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                 <div
                   style={{
                     position: "absolute",
-                    top: "0.75rem",
-                    right: "0.75rem",
+                    top: "1%",
+                    right: "1%",
                     display: "flex",
                     flexDirection: "column",
                     gap: "4px",
@@ -516,8 +516,8 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                   {selectedLog.technicalAction && (
                     <div
                       style={{
-                        width: "20px",
-                          height: "20px",
+                        width: "18px",
+                          height: "18px",
                           borderRadius: "50%",
                           background: "#f59e0b",
                           display: "flex",
@@ -526,7 +526,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                           border: "1.5px solid #0d1322",
                         }}
                       >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
                           <circle cx="12" cy="12" r="9" />
                           <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
                         </svg>
@@ -535,8 +535,8 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                     {selectedLog.implementation && (
                       <div
                         style={{
-                          width: "20px",
-                          height: "20px",
+                          width: "18px",
+                          height: "18px",
                           borderRadius: "50%",
                           background: "#3b82f6",
                           display: "flex",
@@ -545,7 +545,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                           border: "1.5px solid #0d1322",
                         }}
                       >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
                           <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
                         <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
                       </svg>
@@ -626,7 +626,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                     transition: "all 0.2s",
                   }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                     <circle cx="8.5" cy="8.5" r="1.5" />
                     <polyline points="21 15 16 10 5 21" />
@@ -657,7 +657,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                       gap: "0.375rem",
                     }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <circle cx="12" cy="12" r="10" />
                       <line x1="12" y1="8" x2="12" y2="12" />
                       <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -690,7 +690,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                       gap: "0.375rem",
                     }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                     Ação realizada
@@ -758,7 +758,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                 transition: "all 0.2s",
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
