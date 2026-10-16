@@ -296,8 +296,8 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                   <div
                     style={{
                       position: "absolute",
-                      top: "0.5rem",
-                      right: "0.5rem",
+                      top: "0.75rem",
+                      right: "0.75rem",
                       display: "flex",
                       flexDirection: "column",
                       gap: "4px",
@@ -505,8 +505,8 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                 <div
                   style={{
                     position: "absolute",
-                    top: "0.5rem",
-                    right: "0.5rem",
+                    top: "0.75rem",
+                    right: "0.75rem",
                     display: "flex",
                     flexDirection: "column",
                     gap: "4px",
