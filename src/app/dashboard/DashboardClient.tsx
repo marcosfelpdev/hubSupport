@@ -496,12 +496,12 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                   </div>
                 </div>
 
-                {/* Tipo tags no card expandido (canto superior direito, sobressaindo) */}
+                {/* Tipo tags no card expandido (abaixo do badge de status, canto direito) */}
                 <div
                   style={{
                     position: "absolute",
-                    top: "1%",
-                    right: "1%",
+                    top: "3.2rem",
+                    right: "0.75rem",
                     display: "flex",
                     flexDirection: "column",
                     gap: "4px",
