@@ -3,14 +3,14 @@
 import { useState, useTransition } from "react";
 import { createWorkLog } from "@/actions/worklog";
 
-export const STATUS_OPTIONS = [
+const STATUS_OPTIONS = [
   { value: "Realizado", label: "Já realizado" },
   { value: "Em andamento", label: "Em andamento" },
   { value: "Aguardando reunião", label: "Aguardando reunião" },
   { value: "Não foi possível realizar", label: "Não foi possível realizar" },
 ] as const;
 
-export default function WorkLogForm() {
+export default function WorkLogForm({ onSuccess }: { onSuccess?: () => void } = {}) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -29,8 +29,8 @@ export default function WorkLogForm() {
           return;
         }
         form.reset();
+        onSuccess?.();
         setMessage({ type: "success", text: "Atendimento registrado com sucesso!" });
-        setTimeout(() => setMessage(null), 4000);
       } catch (err) {
         setMessage({
           type: "error",
@@ -82,7 +82,7 @@ export default function WorkLogForm() {
             Novo Atendimento
           </h2>
           <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-            Registre os dados do suporte
+            Preencha os dados do suporte prestado
           </p>
         </div>
       </div>
@@ -160,10 +160,11 @@ export default function WorkLogForm() {
                 paddingRight: "2.5rem",
               }}
             >
-              <option value="Realizado">Já realizado</option>
-              <option value="Em andamento">Em andamento</option>
-              <option value="Aguardando reunião">Aguardando reunião</option>
-              <option value="Não foi possível realizar">Não foi possível realizar</option>
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
             <div
               style={{
@@ -236,7 +237,7 @@ export default function WorkLogForm() {
                 <polyline points="17 21 17 13 7 13 7 21" />
                 <polyline points="7 3 7 8 15 8" />
               </svg>
-              Registrar Atendimento
+              Salvar
             </>
           )}
         </button>

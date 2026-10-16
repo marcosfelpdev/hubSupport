@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createEmployee, updateEmployee, deleteEmployee } from "@/actions/employees";
+import { ROLE_OPTIONS } from "@/lib/roles";
 
 interface Employee {
   id: string;
@@ -32,6 +33,11 @@ const avatarColors = [
   "#ec4899",
   "#14b8a6",
 ];
+
+function getRoleLabel(role: string) {
+  const opt = ROLE_OPTIONS.find((o) => o.value === role);
+  return opt ? opt.label : role;
+}
 
 function getAvatarColor(id: string) {
   let hash = 0;
@@ -80,7 +86,7 @@ export default function EmployeesManager({
     return (
       emp.name.toLowerCase().includes(term) ||
       emp.email.toLowerCase().includes(term) ||
-      (emp.role === "ADMIN" ? "administrador" : "colaborador").includes(term)
+      getRoleLabel(emp.role).toLowerCase().includes(term)
     );
   });
 
@@ -357,10 +363,10 @@ export default function EmployeesManager({
                     style={{
                       fontSize: "0.825rem",
                       fontWeight: 500,
-                      color: emp.role === "ADMIN" ? "#fbbf24" : "var(--text-secondary)",
+                      color: emp.role === "ADMIN" ? "#fbbf24" : "#94a3b8",
                     }}
                   >
-                    {emp.role === "ADMIN" ? "Administrador" : "Colaborador"}
+                    {getRoleLabel(emp.role)}
                   </span>
                 </div>
 
@@ -574,6 +580,25 @@ export default function EmployeesManager({
                 />
               </div>
 
+              {/* Cargo */}
+              <div>
+                <label htmlFor="create-role">Cargo *</label>
+                <select
+                  id="create-role"
+                  name="role"
+                  className="input-dark"
+                  defaultValue="USER"
+                  disabled={isPending}
+                  style={{ cursor: "pointer" }}
+                >
+                  {ROLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Actions */}
               <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
                 <button
@@ -694,6 +719,25 @@ export default function EmployeesManager({
                   placeholder="Deixe em branco para manter a atual"
                   disabled={isPending}
                 />
+              </div>
+
+              {/* Cargo */}
+              <div>
+                <label htmlFor="edit-role">Cargo</label>
+                <select
+                  id="edit-role"
+                  name="role"
+                  className="input-dark"
+                  defaultValue={editingEmployee.role}
+                  disabled={isPending}
+                  style={{ cursor: "pointer" }}
+                >
+                  {ROLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Status Ativar / Inativar */}

@@ -1,6 +1,6 @@
 "use client";
 
-interface WorkLog {
+export interface WorkLog {
   id: string;
   requester: string;
   clientOrOffice: string;

@@ -61,6 +61,7 @@ export async function createEmployee(formData: FormData) {
     const name = formData.get("name") as string;
     const email = (formData.get("email") as string)?.toLowerCase().trim();
     const password = formData.get("password") as string;
+    const role = (formData.get("role") as string) || "USER";
 
     if (!name?.trim() || !email || !password?.trim()) {
       return { error: "Nome, e-mail e senha são obrigatórios." };
@@ -86,7 +87,7 @@ export async function createEmployee(formData: FormData) {
         name: name.trim(),
         email,
         password: hashedPassword,
-        role: "USER",
+        role,
         active: true,
       },
     });
@@ -109,6 +110,7 @@ export async function updateEmployee(formData: FormData) {
     const name = formData.get("name") as string;
     const password = formData.get("password") as string;
     const activeRaw = formData.get("active") as string;
+    const role = (formData.get("role") as string) || "USER";
 
     if (!id || !name?.trim()) {
       return { error: "ID e Nome são obrigatórios." };
@@ -125,10 +127,12 @@ export async function updateEmployee(formData: FormData) {
     const updateData: {
       name: string;
       active: boolean;
+      role: string;
       password?: string;
     } = {
       name: name.trim(),
       active: activeRaw === "true" || activeRaw === "on",
+      role,
     };
 
     // Atualiza a senha apenas se fornecida

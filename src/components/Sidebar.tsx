@@ -255,16 +255,33 @@ export default function Sidebar({ user }: { user: User }) {
                 {user.name}
               </p>
             </div>
-            <span
-              style={{
-                fontSize: "0.68rem",
-                fontWeight: 600,
-                color: user.role === "ADMIN" ? "#fbbf24" : "#94a3b8",
-                display: "inline-block",
-              }}
-            >
-              {user.role === "ADMIN" ? "👑 Administrador" : "👤 Colaborador"}
-            </span>
+          <span
+            style={{
+              fontSize: "0.68rem",
+              fontWeight: 600,
+              color:
+                user.role === "ADMIN"
+                  ? "#fbbf24"
+                  : user.role === "MANAGER"
+                    ? "#a855f7"
+                    : user.role === "TECHNICIAN"
+                      ? "#38bdf8"
+                      : user.role === "SUPPORT"
+                        ? "#22d3ee"
+                        : "#94a3b8",
+              display: "inline-block",
+            }}
+          >
+            {user.role === "ADMIN"
+              ? "👑 Administrador"
+              : user.role === "MANAGER"
+                ? "🧑‍💼 Gestor"
+                : user.role === "TECHNICIAN"
+                  ? "🔧 Técnico"
+                  : user.role === "SUPPORT"
+                    ? "🎧 Suporte"
+                    : "👤 Colaborador"}
+          </span>
           </div>
         </div>
 
