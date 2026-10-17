@@ -39,20 +39,86 @@ function formatRelativeTime(date: Date | string) {
   return `há ${diffInDays}d`;
 }
 
+// Reproduz um som suave e moderno de notificação (dois tons harmônicos)
+function playNotificationSound() {
+  try {
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const ctx = new AudioContextClass();
+
+    // Desbloqueia caso esteja suspenso
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+
+    // 1º Tom (E5 - 659.25Hz)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(659.25, ctx.currentTime);
+
+    gain1.gain.setValueAtTime(0, ctx.currentTime);
+    gain1.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.02);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.28);
+
+    // 2º Tom mais agudo e brilhante (A5 - 880Hz)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.08);
+
+    gain2.gain.setValueAtTime(0, ctx.currentTime + 0.08);
+    gain2.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+
+    osc2.start(ctx.currentTime + 0.08);
+    osc2.stop(ctx.currentTime + 0.5);
+  } catch (err) {
+    console.warn("Não foi possível reproduzir som de notificação:", err);
+  }
+}
+
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const previousUnreadRef = useRef<number | null>(null);
+  const isInitialLoadRef = useRef(true);
   const router = useRouter();
 
-  async function fetchNotifications() {
+  async function fetchNotifications(isFirst = false) {
     try {
       const data = await getNotifications();
       if (data) {
+        const count = data.unreadCount;
+
+        // Se houver novas notificações não lidas (após a carga inicial), toca o som
+        if (!isFirst && !isInitialLoadRef.current && previousUnreadRef.current !== null) {
+          if (count > previousUnreadRef.current) {
+            playNotificationSound();
+          }
+        }
+
+        previousUnreadRef.current = count;
         setNotifications(data.notifications as unknown as NotificationItem[]);
-        setUnreadCount(data.unreadCount);
+        setUnreadCount(count);
+        isInitialLoadRef.current = false;
       }
     } catch (err) {
       console.error("Erro ao carregar notificações:", err);
@@ -61,9 +127,9 @@ export default function NotificationBell() {
 
   // Polling a cada 10 segundos para atualização em tempo real
   useEffect(() => {
-    fetchNotifications();
+    fetchNotifications(true);
     const interval = setInterval(() => {
-      fetchNotifications();
+      fetchNotifications(false);
     }, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -233,27 +299,63 @@ export default function NotificationBell() {
               )}
             </div>
 
-            {unreadCount > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <button
-                onClick={handleMarkAllAsRead}
-                disabled={loading}
+                type="button"
+                title="Testar som de notificação"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playNotificationSound();
+                }}
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "#818cf8",
-                  fontSize: "0.75rem",
-                  fontWeight: 500,
+                  color: "var(--text-muted)",
                   cursor: "pointer",
-                  padding: "0.2rem 0.4rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  fontSize: "0.72rem",
+                  padding: "0.2rem 0.35rem",
                   borderRadius: "4px",
-                  transition: "color 0.15s",
+                  transition: "all 0.15s ease",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#a5b4fc")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#818cf8")}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#38bdf8";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--text-muted)";
+                }}
               >
-                Marcar lidas
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+                <span>Som</span>
               </button>
-            )}
+
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  disabled={loading}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#818cf8",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    padding: "0.2rem 0.4rem",
+                    borderRadius: "4px",
+                    transition: "color 0.15s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#a5b4fc")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#818cf8")}
+                >
+                  Marcar lidas
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Lista de Notificações */}
