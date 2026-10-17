@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import { Cog, Lightbulb } from "lucide-react";
@@ -40,6 +40,13 @@ function getInitials(name: string) {
 
 function getStatusBadgeConfig(status: string) {
   switch (status) {
+    case "Solucionado":
+      return {
+        label: "Solucionado",
+        color: "#34d399",
+        bg: "rgba(16, 185, 129, 0.15)",
+        border: "rgba(16, 185, 129, 0.35)",
+      };
     case "Realizado":
     case "Já realizado":
       return {

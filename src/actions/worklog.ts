@@ -69,7 +69,7 @@ export async function createWorkLog(formData: FormData) {
       }
     }
 
-    await prisma.workLog.create({
+    const newLog = await prisma.workLog.create({
       data: {
         requester: requester.trim(),
         clientOrOffice: clientOrOffice.trim(),
@@ -83,8 +83,39 @@ export async function createWorkLog(formData: FormData) {
       },
     });
 
+    // Se marcado como Ação Técnica e/ou Implementação, notifica todos os usuários do cargo técnico
+    if (technicalAction || implementation) {
+      const technicians = await prisma.user.findMany({
+        where: {
+          role: "TECHNICIAN",
+          active: true,
+        },
+        select: { id: true },
+      });
+
+      if (technicians.length > 0) {
+        const typeLabel =
+          technicalAction && implementation
+            ? "Ação Técnica & Implementação"
+            : technicalAction
+              ? "Ação Técnica"
+              : "Implementação";
+
+        await prisma.notification.createMany({
+          data: technicians.map((tech) => ({
+            userId: tech.id,
+            workLogId: newLog.id,
+            title: `Novo chamado: ${typeLabel}`,
+            message: `${user.name} registrou um atendimento para "${clientOrOffice.trim()}" que requer atuação técnica.`,
+            read: false,
+          })),
+        });
+      }
+    }
+
     revalidatePath("/dashboard");
-    return { success: true };
+    revalidatePath("/dashboard/tecnico");
+    return { success: true, logId: newLog.id };
   } catch (error) {
     console.error("Erro ao registrar atendimento:", error);
     return {
@@ -95,7 +126,7 @@ export async function createWorkLog(formData: FormData) {
 
 export async function getWorkLogs() {
   const session = await auth();
-  if (!session?.user?.id) return [];
+  if (!session?.user?.id && !session?.user?.email) return [];
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -121,4 +152,66 @@ export async function getWorkLogs() {
   });
 
   return logs;
+}
+
+// Busca apenas os relatórios que foram criados por outros cargos e marcados como Ação Técnica e/ou Implementação
+export async function getTechnicalWorkLogs() {
+  const session = await auth();
+  if (!session?.user?.id && !session?.user?.email) return [];
+
+  const logs = await prisma.workLog.findMany({
+    where: {
+      OR: [
+        { technicalAction: true },
+        { implementation: true },
+      ],
+      user: {
+        role: { not: "TECHNICIAN" },
+      },
+    },
+    include: {
+      user: {
+        select: { name: true, email: true, role: true },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return logs;
+}
+
+// Define o relatório como Solucionado pela equipe técnica
+export async function resolveWorkLog(workLogId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id && !session?.user?.email) {
+      return { error: "Não autorizado. Por favor, faça login novamente." };
+    }
+
+    const existing = await prisma.workLog.findUnique({
+      where: { id: workLogId },
+    });
+
+    if (!existing) {
+      return { error: "Atendimento não encontrado." };
+    }
+
+    const updated = await prisma.workLog.update({
+      where: { id: workLogId },
+      data: {
+        status: "Solucionado",
+      },
+    });
+
+    revalidatePath("/dashboard/tecnico");
+    revalidatePath("/dashboard");
+    return { success: true, status: updated.status };
+  } catch (error) {
+    console.error("Erro ao solucionar atendimento:", error);
+    return {
+      error: error instanceof Error ? error.message : "Erro ao solucionar atendimento.",
+    };
+  }
 }

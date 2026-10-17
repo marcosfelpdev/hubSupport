@@ -66,6 +66,18 @@ function getAvatarColor(userId: string) {
 
 function getStatusBadgeConfig(status: string) {
   switch (status) {
+    case "Solucionado":
+      return {
+        label: "Solucionado",
+        color: "#34d399",
+        bg: "rgba(16, 185, 129, 0.15)",
+        border: "rgba(16, 185, 129, 0.35)",
+        icon: (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        ),
+      };
     case "Realizado":
     case "Já realizado":
       return {

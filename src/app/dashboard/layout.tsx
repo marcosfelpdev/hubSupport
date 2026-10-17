@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Sidebar from "@/components/Sidebar";
+import TopBar from "@/components/TopBar";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,14 @@ export default async function DashboardLayout({
           overflowY: "auto",
         }}
       >
+        <TopBar
+          user={{
+            id: dbUser.id,
+            name: dbUser.name,
+            email: dbUser.email,
+            role: dbUser.role,
+          }}
+        />
         {children}
       </div>
     </div>

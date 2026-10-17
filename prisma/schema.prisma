@@ -18,20 +18,34 @@ model User {
   role      String    @default("USER") // "ADMIN" ou "USER"
   active    Boolean   @default(true)
   createdAt DateTime  @default(now())
-  workLogs  WorkLog[]
+  notifications Notification[]
+  workLogs      WorkLog[]
 }
 
 model WorkLog {
-  id               String   @id @default(cuid())
-  requester        String   // Solicitante
-  clientOrOffice   String   // Escritório/Cliente
-  reportedProblem  String   // Problema relatado
-  actionTaken      String   // Ação realizada
-  status           String   @default("Realizado") // Realizado, Em andamento, Aguardando reunião, Não foi possível realizar
-  technicalAction  Boolean  @default(false) // Ação técnica (envio para equipe de programadores)
-  implementation   Boolean  @default(false) // Implementação (sugestão de melhoria)
-  media            String   @default("[]") // JSON array de caminhos de arquivos anexados
-  createdAt        DateTime @default(now())
+  id               String         @id @default(cuid())
+  requester        String         // Solicitante
+  clientOrOffice   String         // Escritório/Cliente
+  reportedProblem  String         // Problema relatado
+  actionTaken      String         // Ação realizada
+  status           String         @default("Realizado") // Realizado, Em andamento, Aguardando reunião, Não foi possível realizar, Solucionado
+  technicalAction  Boolean        @default(false) // Ação técnica (envio para equipe de programadores)
+  implementation   Boolean        @default(false) // Implementação (sugestão de melhoria)
+  media            String         @default("[]") // JSON array de caminhos de arquivos anexados
+  createdAt        DateTime       @default(now())
   userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications    Notification[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workLogId String?
+  workLog   WorkLog? @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
