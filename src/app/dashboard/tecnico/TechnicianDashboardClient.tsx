@@ -520,13 +520,13 @@ export default function TechnicianDashboardClient({
                   {/* Solicitante & Escritório */}
                   <div
                     style={{
-                      display: "flex",
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
                       gap: "0.75rem",
-                      flexWrap: "wrap",
                       marginBottom: "0.5rem",
                     }}
                   >
-                    <div style={{ flex: "1 1 120px", marginBottom: "0" }}>
+                    <div style={{ minWidth: 0, marginBottom: "0" }}>
                       <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
                         Solicitante
                       </p>
@@ -543,7 +543,7 @@ export default function TechnicianDashboardClient({
                         {log.requester}
                       </p>
                     </div>
-                    <div style={{ flex: "1 1 120px", marginBottom: "0" }}>
+                    <div style={{ minWidth: 0, marginBottom: "0" }}>
                       <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
                         Escritório
                       </p>

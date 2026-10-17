@@ -403,13 +403,13 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
 
                   <div
                     style={{
-                      display: "flex",
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
                       gap: "0.75rem",
-                      flexWrap: "wrap",
                       marginBottom: "0.5rem",
                     }}
                   >
-                    <div style={{ flex: "1 1 150px", marginBottom: "0" }}>
+                    <div style={{ minWidth: 0, marginBottom: "0" }}>
                       <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
                         Solicitante
                       </p>
@@ -426,7 +426,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                         {log.requester}
                       </p>
                     </div>
-                    <div style={{ flex: "1 1 150px", marginBottom: "0" }}>
+                    <div style={{ minWidth: 0, marginBottom: "0" }}>
                       <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
                         Escritório
                       </p>
