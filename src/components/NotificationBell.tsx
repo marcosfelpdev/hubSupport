@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 import {
   getNotifications,
   markNotificationAsRead,
@@ -93,6 +94,7 @@ function playNotificationSound() {
 }
 
 export default function NotificationBell() {
+  const { isRecording } = useScreenRecording();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -146,6 +148,11 @@ export default function NotificationBell() {
   }, []);
 
   async function handleNotificationClick(item: NotificationItem) {
+    if (isRecording) {
+      alert("Uma gravação de tela está em andamento. Finalize a gravação antes de navegar para outro chamado.");
+      return;
+    }
+
     if (!item.read) {
       await markNotificationAsRead(item.id);
       setNotifications((prev) =>

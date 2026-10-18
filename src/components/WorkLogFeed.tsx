@@ -16,6 +16,16 @@ export interface WorkLog {
     name: string;
     email: string;
   };
+  aiReport?: {
+    id: string;
+    status: string;
+    videoPath?: string | null;
+    pdfPath?: string | null;
+    structuredData?: string | null;
+    errorMessage?: string | null;
+    startedAt?: Date | string | null;
+    completedAt?: Date | string | null;
+  } | null;
 }
 
 function getInitials(name: string) {

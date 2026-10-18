@@ -5,14 +5,24 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import fs from "fs/promises";
 import path from "path";
+import { processAiReportJob } from "@/lib/report-processor";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+const RECORDINGS_DIR = path.join(process.cwd(), "storage", "recordings");
 
 async function ensureUploadDir() {
   try {
     await fs.access(UPLOAD_DIR);
   } catch {
     await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  }
+}
+
+async function ensureRecordingsDir() {
+  try {
+    await fs.access(RECORDINGS_DIR);
+  } catch {
+    await fs.mkdir(RECORDINGS_DIR, { recursive: true });
   }
 }
 
@@ -23,6 +33,16 @@ async function saveUploadedFile(file: File): Promise<string> {
   const filePath = path.join(UPLOAD_DIR, fileName);
   await fs.writeFile(filePath, buffer);
   return `/uploads/${fileName}`;
+}
+
+async function saveRecordingFile(file: File): Promise<string> {
+  await ensureRecordingsDir();
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const fileName = `${Date.now()}-${cleanName}`;
+  const filePath = path.join(RECORDINGS_DIR, fileName);
+  await fs.writeFile(filePath, buffer);
+  return filePath;
 }
 
 export async function createWorkLog(formData: FormData) {
@@ -69,6 +89,18 @@ export async function createWorkLog(formData: FormData) {
       }
     }
 
+    // Processar gravação de tela anexada (se houver)
+    const recordedVideo = formData.get("recordedVideo") as File | null;
+    let savedRecordingPath: string | null = null;
+
+    if (recordedVideo && recordedVideo.size > 0) {
+      // Limite de segurança de 100MB para vídeo de tela
+      if (recordedVideo.size > 100 * 1024 * 1024) {
+        return { error: "O vídeo gravado excede o tamanho máximo permitido de 100MB." };
+      }
+      savedRecordingPath = await saveRecordingFile(recordedVideo);
+    }
+
     const newLog = await prisma.workLog.create({
       data: {
         requester: requester.trim(),
@@ -82,6 +114,25 @@ export async function createWorkLog(formData: FormData) {
         userId: user.id,
       },
     });
+
+    // Se houver gravação de tela, cria o registro do AiReport e dispara o processador assíncrono
+    if (savedRecordingPath) {
+      await prisma.aiReport.create({
+        data: {
+          workLogId: newLog.id,
+          status: "pending",
+          videoPath: savedRecordingPath,
+          startedAt: new Date(),
+        },
+      });
+
+      // Dispara o processamento em segundo plano sem bloquear a resposta HTTP
+      setImmediate(() => {
+        processAiReportJob(newLog.id).catch((err) => {
+          console.error(`[WorkLog] Erro no job em segundo plano para ${newLog.id}:`, err);
+        });
+      });
+    }
 
     // Se marcado como Ação Técnica e/ou Implementação, notifica todos os usuários do cargo técnico
     if (technicalAction || implementation) {
@@ -145,6 +196,7 @@ export async function getWorkLogs() {
       user: {
         select: { name: true, email: true },
       },
+      aiReport: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -173,6 +225,7 @@ export async function getTechnicalWorkLogs() {
       user: {
         select: { name: true, email: true, role: true },
       },
+      aiReport: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -215,3 +268,89 @@ export async function resolveWorkLog(workLogId: string) {
     };
   }
 }
+
+// Tentar processar o relatório de IA novamente sem duplicar o atendimento
+export async function retryAiReport(workLogId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id && !session?.user?.email) {
+      return { error: "Não autorizado. Por favor, faça login novamente." };
+    }
+
+    const report = await prisma.aiReport.findUnique({
+      where: { workLogId },
+    });
+
+    if (!report || !report.videoPath) {
+      return { error: "Gravação de vídeo não encontrada para este atendimento." };
+    }
+
+    if (report.status === "processing") {
+      return { error: "O relatório já está sendo processado no momento. Por favor, aguarde alguns instantes." };
+    }
+
+    // Valida se o arquivo de vídeo ainda existe no disco e não está corrompido/vazio
+    const fs = await import("fs/promises");
+    try {
+      const stats = await fs.stat(report.videoPath);
+      if (stats.size === 0) {
+        return { error: "O arquivo de gravação associado está vazio (0 bytes)." };
+      }
+    } catch {
+      return { error: "O arquivo de gravação não foi encontrado no servidor." };
+    }
+
+    // Reinicia o status para pending
+    await prisma.aiReport.update({
+      where: { workLogId },
+      data: {
+        status: "pending",
+        errorMessage: null,
+        startedAt: new Date(),
+      },
+    });
+
+    // Dispara o processador em background
+    setImmediate(() => {
+      processAiReportJob(workLogId).catch((err) => {
+        console.error(`[WorkLog] Erro no retry do relatório ${workLogId}:`, err);
+      });
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/tecnico");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao reiniciar processamento:", error);
+    return {
+      error: error instanceof Error ? error.message : "Erro ao reiniciar processamento.",
+    };
+  }
+}
+
+// Consulta o status atual do relatório de IA (usado para polling leve no frontend)
+export async function getAiReportStatus(workLogId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id && !session?.user?.email) return null;
+
+    const report = await prisma.aiReport.findUnique({
+      where: { workLogId },
+      select: {
+        id: true,
+        status: true,
+        errorMessage: true,
+        pdfPath: true,
+        videoPath: true,
+        completedAt: true,
+        startedAt: true,
+      },
+    });
+
+    return report;
+  } catch (error) {
+    console.error("Erro ao consultar status do relatório:", error);
+    return null;
+  }
+}
+

@@ -36,6 +36,7 @@ model WorkLog {
   userId           String
   user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   notifications    Notification[]
+  aiReport         AiReport?
 }
 
 model Notification {
@@ -48,4 +49,19 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model AiReport {
+  id             String    @id @default(cuid())
+  workLogId      String    @unique
+  workLog        WorkLog   @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+  status         String    @default("pending") // "pending", "processing", "completed", "failed"
+  videoPath      String?
+  pdfPath        String?
+  structuredData String?   // JSON com o relatório estruturado retornado pelo Gemini
+  errorMessage   String?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }

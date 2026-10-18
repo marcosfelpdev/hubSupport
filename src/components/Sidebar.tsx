@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
+import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 
 interface User {
   id?: string | null;
@@ -15,6 +16,7 @@ interface User {
 export default function Sidebar({ user }: { user: User }) {
   const pathname = usePathname();
   const [loggingOut, setLoggingOut] = useState(false);
+  const { isRecording } = useScreenRecording();
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -162,6 +164,39 @@ export default function Sidebar({ user }: { user: User }) {
 
         {/* Navigation Section */}
         <div>
+          {isRecording && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.5rem 0.625rem",
+                borderRadius: "6px",
+                backgroundColor: "rgba(239, 68, 68, 0.12)",
+                border: "1px solid rgba(239, 68, 68, 0.35)",
+                color: "#fca5a5",
+                fontSize: "0.72rem",
+                fontWeight: 600,
+                marginBottom: "0.875rem",
+                lineHeight: 1.3,
+                boxShadow: "0 0 10px rgba(239, 68, 68, 0.15)",
+              }}
+            >
+              <span
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  backgroundColor: "#ef4444",
+                  boxShadow: "0 0 8px #ef4444",
+                  flexShrink: 0,
+                  animation: "pulse 1.5s infinite",
+                }}
+              />
+              <span>Gravando tela: outras abas bloqueadas</span>
+            </div>
+          )}
+
           <p
             style={{
               fontSize: "0.7rem",
@@ -181,10 +216,26 @@ export default function Sidebar({ user }: { user: User }) {
                 ? pathname === item.href
                 : pathname?.startsWith(item.href);
 
+              // Bloqueia acesso às outras abas quando a gravação estiver em andamento
+              const isBlocked = isRecording && !isActive;
+
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={isBlocked ? "#" : item.href}
+                  onClick={(e) => {
+                    if (isBlocked) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  tabIndex={isBlocked ? -1 : 0}
+                  aria-disabled={isBlocked}
+                  title={
+                    isBlocked
+                      ? "Acesso bloqueado durante a gravação de tela. Finalize a gravação para trocar de aba."
+                      : undefined
+                  }
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -194,21 +245,28 @@ export default function Sidebar({ user }: { user: User }) {
                     fontSize: "0.875rem",
                     fontWeight: isActive ? 600 : 500,
                     textDecoration: "none",
-                    color: isActive ? "#ffffff" : "var(--text-secondary)",
+                    color: isBlocked
+                      ? "rgba(148, 163, 184, 0.35)"
+                      : isActive
+                        ? "#ffffff"
+                        : "var(--text-secondary)",
                     backgroundColor: isActive ? "rgba(99, 102, 241, 0.16)" : "transparent",
                     border: isActive
                       ? "1px solid rgba(99, 102, 241, 0.3)"
                       : "1px solid transparent",
+                    opacity: isBlocked ? 0.38 : 1,
+                    cursor: isBlocked ? "not-allowed" : "pointer",
+                    pointerEvents: isBlocked ? "none" : "auto",
                     transition: "all 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) {
+                    if (!isActive && !isBlocked) {
                       e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
                       e.currentTarget.style.color = "var(--text-primary)";
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive) {
+                    if (!isActive && !isBlocked) {
                       e.currentTarget.style.backgroundColor = "transparent";
                       e.currentTarget.style.color = "var(--text-secondary)";
                     }
@@ -216,14 +274,32 @@ export default function Sidebar({ user }: { user: User }) {
                 >
                   <span
                     style={{
-                      color: isActive ? "#818cf8" : "var(--text-muted)",
+                      color: isBlocked
+                        ? "rgba(148, 163, 184, 0.3)"
+                        : isActive
+                          ? "#818cf8"
+                          : "var(--text-muted)",
                       display: "flex",
                       alignItems: "center",
                     }}
                   >
                     {item.icon}
                   </span>
-                  <span>{item.label}</span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  {isBlocked && (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      style={{ opacity: 0.6, flexShrink: 0 }}
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  )}
                 </Link>
               );
             })}
@@ -309,15 +385,18 @@ export default function Sidebar({ user }: { user: User }) {
         <button
           id="btn-sidebar-logout"
           onClick={handleLogout}
-          disabled={loggingOut}
+          disabled={loggingOut || isRecording}
           className="btn-ghost"
           style={{
             width: "100%",
             justifyContent: "center",
             padding: "0.5rem",
             fontSize: "0.825rem",
-            color: "var(--text-muted)",
+            color: isRecording ? "rgba(148, 163, 184, 0.35)" : "var(--text-muted)",
+            opacity: isRecording ? 0.4 : 1,
+            cursor: isRecording ? "not-allowed" : "pointer",
           }}
+          title={isRecording ? "Finalize a gravação de tela antes de sair da conta" : undefined}
         >
           {loggingOut ? (
             <div className="spinner" style={{ width: "14px", height: "14px", borderTopColor: "var(--text-muted)" }} />

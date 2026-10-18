@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { createWorkLog } from "@/actions/worklog";
+import { Video, Trash2, Sparkles, Play, Eye } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "Realizado", label: "Já realizado" },
@@ -10,12 +11,55 @@ const STATUS_OPTIONS = [
   { value: "Não foi possível realizar", label: "Não foi possível realizar" },
 ] as const;
 
-export default function WorkLogForm({ onSuccess }: { onSuccess?: () => void } = {}) {
+interface WorkLogFormProps {
+  onSuccess?: () => void;
+  recordedVideo?: File | null;
+  onDiscardRecording?: () => void;
+}
+
+export default function WorkLogForm({
+  onSuccess,
+  recordedVideo = null,
+  onDiscardRecording,
+}: WorkLogFormProps = {}) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [technicalAction, setTechnicalAction] = useState(false);
   const [implementation, setImplementation] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [activeRecordedVideo, setActiveRecordedVideo] = useState<File | null>(recordedVideo);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showVideoPreview, setShowVideoPreview] = useState(false);
+
+  useEffect(() => {
+    setActiveRecordedVideo(recordedVideo);
+  }, [recordedVideo]);
+
+  useEffect(() => {
+    if (activeRecordedVideo) {
+      const url = URL.createObjectURL(activeRecordedVideo);
+      setPreviewUrl(url);
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setPreviewUrl(null);
+      setShowVideoPreview(false);
+    }
+  }, [activeRecordedVideo]);
+
+  function handleDiscardVideo() {
+    if (confirm("Deseja realmente remover esta gravação de tela?")) {
+      setActiveRecordedVideo(null);
+      onDiscardRecording?.();
+    }
+  }
+
+  function formatBytes(bytes: number) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,6 +75,10 @@ export default function WorkLogForm({ onSuccess }: { onSuccess?: () => void } = 
       formData.append("media", file);
     });
 
+    if (activeRecordedVideo) {
+      formData.append("recordedVideo", activeRecordedVideo);
+    }
+
     startTransition(async () => {
       try {
         const result = await createWorkLog(formData);
@@ -42,8 +90,14 @@ export default function WorkLogForm({ onSuccess }: { onSuccess?: () => void } = 
         setTechnicalAction(false);
         setImplementation(false);
         setMediaFiles([]);
+        setActiveRecordedVideo(null);
         onSuccess?.();
-        setMessage({ type: "success", text: "Atendimento registrado com sucesso!" });
+        setMessage({
+          type: "success",
+          text: activeRecordedVideo
+            ? "Atendimento registrado! O relatório com Gemini AI está sendo processado."
+            : "Atendimento registrado com sucesso!",
+        });
       } catch (err) {
         setMessage({
           type: "error",
@@ -99,6 +153,110 @@ export default function WorkLogForm({ onSuccess }: { onSuccess?: () => void } = 
           </p>
         </div>
       </div>
+
+      {/* Video gravado anexado (se houver) */}
+      {activeRecordedVideo && (
+        <div
+          style={{
+            marginBottom: "1.25rem",
+            background: "rgba(99, 102, 241, 0.08)",
+            border: "1px solid rgba(99, 102, 241, 0.3)",
+            borderRadius: "8px",
+            padding: "0.875rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.75rem",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "6px",
+                  background: "rgba(99, 102, 241, 0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#818cf8",
+                }}
+              >
+                <Video size={16} />
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span style={{ fontSize: "0.825rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                    Gravação de tela anexada
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "0.68rem",
+                      padding: "0.15rem 0.4rem",
+                      borderRadius: "4px",
+                      background: "rgba(16, 185, 129, 0.15)",
+                      color: "#34d399",
+                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                    }}
+                  >
+                    <Sparkles size={10} /> Relatório com Gemini
+                  </span>
+                </div>
+                <span style={{ fontSize: "0.725rem", color: "var(--text-muted)" }}>
+                  {activeRecordedVideo.name} &bull; {formatBytes(activeRecordedVideo.size)}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              {previewUrl && (
+                <button
+                  type="button"
+                  onClick={() => setShowVideoPreview((prev) => !prev)}
+                  className="btn-ghost"
+                  style={{ padding: "0.3rem 0.5rem", fontSize: "0.75rem" }}
+                  title={showVideoPreview ? "Ocultar prévia" : "Ver prévia do vídeo"}
+                >
+                  <Eye size={13} />
+                  {showVideoPreview ? "Ocultar" : "Prévia"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleDiscardVideo}
+                disabled={isPending}
+                className="btn-ghost"
+                style={{ padding: "0.3rem 0.5rem", fontSize: "0.75rem", color: "#f87171" }}
+                title="Remover vídeo gravado"
+              >
+                <Trash2 size={13} />
+                Remover
+              </button>
+            </div>
+          </div>
+
+          {showVideoPreview && previewUrl && (
+            <div
+              style={{
+                borderRadius: "6px",
+                overflow: "hidden",
+                background: "#000",
+                maxHeight: "220px",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <video
+                src={previewUrl}
+                controls
+                style={{ width: "100%", maxHeight: "220px", objectFit: "contain" }}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Messages */}
       {message && (

@@ -1,6 +1,7 @@
 "use client";
 
 import NotificationBell from "./NotificationBell";
+import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 
 interface User {
   id?: string | null;
@@ -10,6 +11,7 @@ interface User {
 }
 
 export default function TopBar({ user }: { user: User }) {
+  const { isRecording } = useScreenRecording();
   const isTechnician = user.role === "TECHNICIAN" || user.role === "ADMIN";
 
   return (
@@ -55,6 +57,36 @@ export default function TopBar({ user }: { user: User }) {
               }}
             />
             Equipe Técnica Online
+          </span>
+        )}
+
+        {isRecording && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.45rem",
+              padding: "0.2rem 0.75rem",
+              borderRadius: "9999px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              backgroundColor: "rgba(239, 68, 68, 0.15)",
+              color: "#fca5a5",
+              border: "1px solid rgba(239, 68, 68, 0.4)",
+              boxShadow: "0 0 12px rgba(239, 68, 68, 0.25)",
+            }}
+          >
+            <span
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                backgroundColor: "#ef4444",
+                boxShadow: "0 0 8px #ef4444",
+                animation: "pulse 1.5s infinite",
+              }}
+            />
+            Gravação em andamento (navegação bloqueada)
           </span>
         )}
       </div>

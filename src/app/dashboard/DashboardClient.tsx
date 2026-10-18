@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 import { Cog, Lightbulb } from "lucide-react";
 import WorkLogForm from "@/components/WorkLogForm";
+import ScreenRecorderButton from "@/components/ScreenRecorderButton";
+import AiReportSection from "@/components/AiReportSection";
 import { WorkLog } from "@/components/WorkLogFeed";
+import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 
 interface DashboardProps {
   logs: WorkLog[];
@@ -107,8 +110,10 @@ function isVideo(url: string) {
 }
 
 export default function DashboardClient({ logs, currentUserId, employees }: DashboardProps) {
+  const { isRecording } = useScreenRecording();
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [recordedVideo, setRecordedVideo] = useState<File | null>(null);
   const [filters, setFilters] = useState({
     requester: "",
     clientOrOffice: "",
@@ -116,6 +121,26 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
     status: "",
     employee: "",
   });
+
+  const handleRecordingComplete = (file: File) => {
+    setRecordedVideo(file);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    if (recordedVideo) {
+      if (
+        confirm(
+          "Você possui uma gravação de tela anexada. Deseja realmente fechar o formulário e descartar o vídeo?"
+        )
+      ) {
+        setRecordedVideo(null);
+        setIsModalOpen(false);
+      }
+    } else {
+      setIsModalOpen(false);
+    }
+  };
 
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
   const [mediaCurrentIndex, setMediaCurrentIndex] = useState(0);
@@ -180,14 +205,29 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
         </h1>
       </div>
 
-      <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "flex-start" }}>
-        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+      <div style={{ marginBottom: "1.5rem", display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+        <button
+          className="btn-primary"
+          disabled={isRecording}
+          onClick={() => {
+            if (isRecording) return;
+            setRecordedVideo(null);
+            setIsModalOpen(true);
+          }}
+          style={{
+            opacity: isRecording ? 0.45 : 1,
+            cursor: isRecording ? "not-allowed" : "pointer",
+          }}
+          title={isRecording ? "Finalize a gravação de tela para abrir o formulário manualmente" : undefined}
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Novo Atendimento
         </button>
+
+        <ScreenRecorderButton onRecordingComplete={handleRecordingComplete} />
       </div>
 
       <div
@@ -634,6 +674,12 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                 </button>
               )}
 
+              {/* Seção Relatório de IA */}
+              <AiReportSection
+                workLogId={selectedLog.id}
+                initialReport={selectedLog.aiReport}
+              />
+
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div
                   style={{
@@ -724,7 +770,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
             padding: "1rem",
             animation: "fadeIn 0.2s ease-in",
           }}
-          onClick={() => setIsModalOpen(false)}
+          onClick={handleCloseModal}
         >
           <div
             style={{
@@ -738,7 +784,7 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => setIsModalOpen(false)}
+              onClick={handleCloseModal}
               style={{
                 position: "absolute",
                 top: "0.75rem",
@@ -762,7 +808,14 @@ export default function DashboardClient({ logs, currentUserId, employees }: Dash
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
-            <WorkLogForm onSuccess={() => setIsModalOpen(false)} />
+            <WorkLogForm
+              recordedVideo={recordedVideo}
+              onDiscardRecording={() => setRecordedVideo(null)}
+              onSuccess={() => {
+                setIsModalOpen(false);
+                setRecordedVideo(null);
+              }}
+            />
           </div>
         </div>
       )}

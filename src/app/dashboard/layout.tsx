@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
+import { ScreenRecordingProvider } from "@/contexts/ScreenRecordingContext";
 
 export const dynamic = "force-dynamic";
 
@@ -32,28 +33,10 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-primary)" }}>
-      {/* Barra lateral de navegação à esquerda */}
-      <Sidebar
-        user={{
-          id: dbUser.id,
-          name: dbUser.name,
-          email: dbUser.email,
-          role: dbUser.role,
-        }}
-      />
-
-      {/* Área de conteúdo principal à direita */}
-      <div
-        style={{
-          flex: 1,
-          minWidth: 0,
-          display: "flex",
-          flexDirection: "column",
-          overflowY: "auto",
-        }}
-      >
-        <TopBar
+    <ScreenRecordingProvider>
+      <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-primary)" }}>
+        {/* Barra lateral de navegação à esquerda */}
+        <Sidebar
           user={{
             id: dbUser.id,
             name: dbUser.name,
@@ -61,8 +44,28 @@ export default async function DashboardLayout({
             role: dbUser.role,
           }}
         />
-        {children}
+
+        {/* Área de conteúdo principal à direita */}
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            overflowY: "auto",
+          }}
+        >
+          <TopBar
+            user={{
+              id: dbUser.id,
+              name: dbUser.name,
+              email: dbUser.email,
+              role: dbUser.role,
+            }}
+          />
+          {children}
+        </div>
       </div>
-    </div>
+    </ScreenRecordingProvider>
   );
 }

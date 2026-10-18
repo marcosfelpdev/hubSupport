@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Cog, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight, X, Download } from "lucide-react";
 import { resolveWorkLog } from "@/actions/worklog";
+import AiReportSection from "@/components/AiReportSection";
 
 export interface TechnicalWorkLog {
   id: string;
@@ -22,6 +23,16 @@ export interface TechnicalWorkLog {
     email: string;
     role?: string | null;
   };
+  aiReport?: {
+    id: string;
+    status: string;
+    videoPath?: string | null;
+    pdfPath?: string | null;
+    structuredData?: string | null;
+    errorMessage?: string | null;
+    startedAt?: Date | string | null;
+    completedAt?: Date | string | null;
+  } | null;
 }
 
 interface TechnicianDashboardProps {
@@ -807,6 +818,12 @@ export default function TechnicianDashboardClient({
                   Ver Mídias Anexadas ({getMediaPaths(selectedLog).length})
                 </button>
               )}
+
+              {/* Seção Relatório de IA */}
+              <AiReportSection
+                workLogId={selectedLog.id}
+                initialReport={selectedLog.aiReport}
+              />
 
               {/* Detalhes do Chamado */}
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.75rem" }}>
