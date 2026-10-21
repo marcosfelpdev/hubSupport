@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useTransition, useEffect } from "react";
-import { createWorkLog } from "@/actions/worklog";
+import { api } from "@/services/api";
 import { Video, Trash2, Sparkles, Play, Eye } from "lucide-react";
 
 const STATUS_OPTIONS = [
@@ -81,11 +79,7 @@ export default function WorkLogForm({
 
     startTransition(async () => {
       try {
-        const result = await createWorkLog(formData);
-        if (result?.error) {
-          setMessage({ type: "error", text: result.error });
-          return;
-        }
+        await api.worklogs.create(formData);
         form.reset();
         setTechnicalAction(false);
         setImplementation(false);

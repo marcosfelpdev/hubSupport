@@ -22,17 +22,17 @@ sequenceDiagram
     autonumber
     actor User as Atendente / Suporte
     participant Browser as Client (ScreenRecorder)
-    participant Action as Server Action (worklog.ts)
+    participant API as Express API (/api/worklogs)
     participant Processor as Background Job (report-processor.ts)
     participant Gemini as Google Gemini 2.0 Flash (Files API)
     participant PDFKit as Compilador PDF (pdf-generator.ts)
     participant DB as SQLite (Prisma)
 
     User->>Browser: Inicia e finaliza gravação de tela
-    Browser->>Action: Envia formulário + gravação (Blob vídeo)
-    Action->>DB: Cria WorkLog e AiReport (status: pending)
-    Action-->>Browser: Retorna sucesso imediatamente (não bloqueia UI)
-    Action-)Processor: Dispara processAiReportJob em background
+    Browser->>API: Envia formulário + gravação (Multipart/FormData)
+    API->>DB: Cria WorkLog e AiReport (status: pending)
+    API-->>Browser: Retorna sucesso imediatamente (não bloqueia UI)
+    API-)Processor: Dispara processAiReportJob em background
     Processor->>DB: Atualiza status para 'processing'
     Processor->>Gemini: Upload do vídeo na Files API
     Processor->>Gemini: Aguarda estado ACTIVE e envia prompt com REPORT_SCHEMA
@@ -120,4 +120,4 @@ Campos obrigatórios extraídos pela IA:
 
 ## 6. Tratamento de Erros e Retentativas
 - Se o processamento falhar (cota esgotada, arquivo corrompido, timeout), o status em `AiReport` vai para `failed` com `errorMessage` amigável.
-- A Server Action `retryAiReport(workLogId)` valida se o vídeo ainda está íntegro no disco e reinicia o job sem recriar o atendimento ou perder dados.
+- O endpoint `/api/worklogs/:id/retry-ai` (consumido no frontend via `api.worklogs.retryAi(workLogId)`) valida se o vídeo ainda está íntegro no disco e reinicia o job sem recriar o atendimento ou perder dados.

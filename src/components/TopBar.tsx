@@ -1,4 +1,3 @@
-"use client";
 
 import NotificationBell from "./NotificationBell";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";

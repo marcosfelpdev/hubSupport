@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { Sparkles, Download, RotateCw, Clock, AlertTriangle, CheckCircle2, FileText, Loader2, Video } from "lucide-react";
-import { retryAiReport, getAiReportStatus } from "@/actions/worklog";
+import { api } from "@/services/api";
 
 interface AiReportData {
   id: string;
@@ -42,7 +42,7 @@ export default function AiReportSection({
 
     const interval = setInterval(async () => {
       try {
-        const updated = await getAiReportStatus(workLogId);
+        const updated = await api.worklogs.getAiStatus(workLogId);
         if (updated) {
           setReport((prev) => ({
             ...prev,
@@ -65,20 +65,16 @@ export default function AiReportSection({
     setRetryFeedback(null);
     startRetryTransition(async () => {
       try {
-        const res = await retryAiReport(workLogId);
-        if (res?.error) {
-          setRetryFeedback(res.error);
-        } else {
-          setReport((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  status: "pending",
-                  errorMessage: null,
-                }
-              : null
-          );
-        }
+        await api.worklogs.retryAi(workLogId);
+        setReport((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "pending",
+                errorMessage: null,
+              }
+            : null
+        );
       } catch (err) {
         setRetryFeedback(err instanceof Error ? err.message : "Erro ao tentar novamente.");
       }

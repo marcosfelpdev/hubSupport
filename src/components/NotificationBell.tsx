@@ -1,30 +1,9 @@
-"use client";
-
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
-import {
-  getNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-} from "@/actions/notifications";
+import { api, NotificationItem } from "@/services/api";
 
-interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  read: boolean;
-  createdAt: Date;
-  workLogId?: string | null;
-  workLog?: {
-    id: string;
-    requester: string;
-    clientOrOffice: string;
-    technicalAction: boolean;
-    implementation: boolean;
-    status: string;
-  } | null;
-}
+
 
 function formatRelativeTime(date: Date | string) {
   const now = new Date();
@@ -102,11 +81,11 @@ export default function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const previousUnreadRef = useRef<number | null>(null);
   const isInitialLoadRef = useRef(true);
-  const router = useRouter();
+  const navigate = useNavigate();
 
   async function fetchNotifications(isFirst = false) {
     try {
-      const data = await getNotifications();
+      const data = await api.notifications.getAll();
       if (data) {
         const count = data.unreadCount;
 
@@ -118,7 +97,7 @@ export default function NotificationBell() {
         }
 
         previousUnreadRef.current = count;
-        setNotifications(data.notifications as unknown as NotificationItem[]);
+        setNotifications(data.notifications);
         setUnreadCount(count);
         isInitialLoadRef.current = false;
       }
@@ -154,7 +133,7 @@ export default function NotificationBell() {
     }
 
     if (!item.read) {
-      await markNotificationAsRead(item.id);
+      await api.notifications.markAsRead(item.id);
       setNotifications((prev) =>
         prev.map((n) => (n.id === item.id ? { ...n, read: true } : n))
       );
@@ -162,15 +141,15 @@ export default function NotificationBell() {
     }
     setIsOpen(false);
     if (item.workLogId) {
-      router.push(`/dashboard/tecnico?id=${item.workLogId}`);
+      navigate(`/dashboard/tecnico?id=${item.workLogId}`);
     } else {
-      router.push(`/dashboard/tecnico`);
+      navigate(`/dashboard/tecnico`);
     }
   }
 
   async function handleMarkAllAsRead() {
     setLoading(true);
-    await markAllNotificationsAsRead();
+    await api.notifications.markAllAsRead();
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
     setLoading(false);

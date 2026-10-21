@@ -1,10 +1,10 @@
 # Regras Permanentes do Projeto — HubSupport
 
 1. **Privacidade e Armazenamento Privado:**
-   Gravações de tela (`storage/recordings/`) e relatórios em PDF (`storage/reports/`) NUNCA devem ser movidos para a pasta `public/`. O acesso a esses arquivos deve ser exclusivamente intermediado por rotas de API autenticadas (`/api/reports/[id]/download` e `/recording`), validando a sessão ativa no NextAuth.
+   Gravações de tela (`storage/recordings/`) e relatórios em PDF (`storage/reports/`) NUNCA devem ser movidos para a pasta `public/`. O acesso a esses arquivos deve ser exclusivamente intermediado por rotas de API autenticadas (`/api/reports/:id/download` e `/api/reports/:id/recording`), validando a sessão ativa via token JWT / cookies.
 
-2. **Convenções do Next.js 16 & Server Actions:**
-   Trate sempre os parâmetros de rotas dinâmicas como Promises assíncronas (`const { id } = await params`). Valide a autenticação do usuário com `await auth()` no início de qualquer Server Action. Em jobs em segundo plano (`setImmediate`), envolva invocações de `revalidatePath` em blocos `try/catch` para evitar exceções fora do ciclo de vida da requisição HTTP.
+2. **Convenções do Backend Node.js / Express & React SPA:**
+   Mantenha a API REST padronizada em `src/server/routes/`. Todas as rotas autenticadas devem aplicar o middleware `authenticateToken`. Em jobs em segundo plano (`setImmediate`), execute o processamento de forma não-bloqueante (`processAiReportJob`) sem travar o ciclo de vida das requisições HTTP e com captura abrangente de erros em blocos `try/catch`. O frontend React SPA em `src/` deve consumir o backend exclusivamente pela camada de serviços em `src/services/api.ts`.
 
 3. **Ciclo de Vida do Gemini & Limpeza da Files API:**
    Ao processar vídeos na API do Google Gemini (`@google/genai`), implemente polling com timeout aguardando o estado `ACTIVE` do arquivo na nuvem. É obrigatório deletar o arquivo remoto temporário via `ai.files.delete` dentro de um bloco `finally` para evitar acúmulo desnecessário de dados e consumo de cota.

@@ -1,7 +1,5 @@
-"use client";
-
-import { useState, useTransition } from "react";
-import { createEmployee, updateEmployee, deleteEmployee } from "@/actions/employees";
+import { useState, useTransition, useEffect } from "react";
+import { api, EmployeeItem } from "@/services/api";
 import { ROLE_OPTIONS } from "@/lib/roles";
 
 interface Employee {
@@ -59,14 +57,21 @@ function getInitials(name: string) {
 export default function EmployeesManager({
   initialEmployees,
   currentUser,
+  onEmployeesChanged,
 }: {
   initialEmployees: Employee[];
   currentUser: CurrentUser;
+  onEmployeesChanged?: () => void;
 }) {
   const isAdmin = currentUser.role === "ADMIN";
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [searchTerm, setSearchTerm] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  // Atualiza estado local quando initialEmployees mudar
+  useEffect(() => {
+    setEmployees(initialEmployees);
+  }, [initialEmployees]);
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -97,16 +102,20 @@ export default function EmployeesManager({
     const form = e.currentTarget;
     const formData = new FormData(form);
 
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const role = (formData.get("role") as string) || "USER";
+
     startTransition(async () => {
-      const result = await createEmployee(formData);
-      if (result?.error) {
-        setActionError(result.error);
-        return;
+      try {
+        await api.employees.create({ name, email, password, role });
+        setIsCreateOpen(false);
+        showSuccess("Funcionário cadastrado com sucesso!");
+        onEmployeesChanged?.();
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Erro ao cadastrar funcionário.");
       }
-      setIsCreateOpen(false);
-      showSuccess("Funcionário cadastrado com sucesso!");
-      // Atualiza lista local
-      window.location.reload();
     });
   }
 
@@ -118,17 +127,20 @@ export default function EmployeesManager({
 
     const form = e.currentTarget;
     const formData = new FormData(form);
-    formData.set("id", editingEmployee.id);
+    const name = formData.get("name") as string;
+    const password = formData.get("password") as string;
+    const role = (formData.get("role") as string) || "USER";
+    const active = formData.get("active") === "true" || formData.get("active") === "on";
 
     startTransition(async () => {
-      const result = await updateEmployee(formData);
-      if (result?.error) {
-        setActionError(result.error);
-        return;
+      try {
+        await api.employees.update(editingEmployee.id, { name, password, role, active });
+        setEditingEmployee(null);
+        showSuccess("Funcionário atualizado com sucesso!");
+        onEmployeesChanged?.();
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Erro ao atualizar funcionário.");
       }
-      setEditingEmployee(null);
-      showSuccess("Funcionário atualizado com sucesso!");
-      window.location.reload();
     });
   }
 
@@ -138,14 +150,14 @@ export default function EmployeesManager({
     setActionError(null);
 
     startTransition(async () => {
-      const result = await deleteEmployee(deletingEmployee.id);
-      if (result?.error) {
-        setActionError(result.error);
-        return;
+      try {
+        await api.employees.delete(deletingEmployee.id);
+        setDeletingEmployee(null);
+        showSuccess("Funcionário excluído com sucesso.");
+        onEmployeesChanged?.();
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Erro ao excluir funcionário.");
       }
-      setDeletingEmployee(null);
-      showSuccess("Funcionário excluído com sucesso.");
-      window.location.reload();
     });
   }
 

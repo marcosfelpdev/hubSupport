@@ -1,7 +1,5 @@
-"use client";
-
-import { signOut } from "next-auth/react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface User {
   name?: string | null;
@@ -11,10 +9,15 @@ interface User {
 
 export default function DashboardHeader({ user }: { user: User }) {
   const [loggingOut, setLoggingOut] = useState(false);
+  const { logout } = useAuth();
 
   async function handleLogout() {
     setLoggingOut(true);
-    await signOut({ callbackUrl: "/login" });
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+    }
   }
 
   const initials = user.name

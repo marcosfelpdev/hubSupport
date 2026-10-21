@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { analyzeRecordingWithGemini, WorkLogContext } from "./gemini";
 import { generateReportPdf } from "./pdf-generator";
-import { revalidatePath } from "next/cache";
 
 export async function processAiReportJob(workLogId: string) {
   console.log(`[ReportProcessor] Iniciando processamento do relatório para WorkLog: ${workLogId}`);
@@ -74,12 +73,6 @@ export async function processAiReportJob(workLogId: string) {
     });
 
     console.log(`[ReportProcessor] Relatório gerado com sucesso para WorkLog: ${workLogId}`);
-    try {
-      revalidatePath("/dashboard");
-      revalidatePath("/dashboard/tecnico");
-    } catch {
-      // revalidatePath pode falhar se executado fora de request context
-    }
   } catch (error: unknown) {
     const err = error as Error;
     console.error(`[ReportProcessor] Erro ao processar relatório para WorkLog ${workLogId}:`, err);
@@ -119,12 +112,5 @@ export async function processAiReportJob(workLogId: string) {
         completedAt: new Date(),
       },
     });
-
-    try {
-      revalidatePath("/dashboard");
-      revalidatePath("/dashboard/tecnico");
-    } catch {
-      // ignore
-    }
   }
 }

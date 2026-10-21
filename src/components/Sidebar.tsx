@@ -1,10 +1,7 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface User {
   id?: string | null;
@@ -14,13 +11,18 @@ interface User {
 }
 
 export default function Sidebar({ user }: { user: User }) {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const [loggingOut, setLoggingOut] = useState(false);
   const { isRecording } = useScreenRecording();
+  const { logout } = useAuth();
 
   async function handleLogout() {
     setLoggingOut(true);
-    await signOut({ callbackUrl: "/login" });
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+    }
   }
 
   const initials = user.name
@@ -222,7 +224,7 @@ export default function Sidebar({ user }: { user: User }) {
               return (
                 <Link
                   key={item.href}
-                  href={isBlocked ? "#" : item.href}
+                  to={isBlocked ? "#" : item.href}
                   onClick={(e) => {
                     if (isBlocked) {
                       e.preventDefault();
