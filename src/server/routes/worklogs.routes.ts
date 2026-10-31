@@ -355,6 +355,45 @@ router.patch(
   }
 );
 
+// PATCH /api/worklogs/:id/status
+router.patch(
+  "/:id/status",
+  authenticateToken,
+  requireTechnicianOrAdmin,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const { status } = req.body;
+
+      if (!status || typeof status !== "string") {
+        res.status(400).json({ error: "Status inválido ou não informado." });
+        return;
+      }
+
+      const existing = await prisma.workLog.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      const updated = await prisma.workLog.update({
+        where: { id },
+        data: {
+          status: status.trim(),
+        },
+      });
+
+      res.json({ success: true, status: updated.status });
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao atualizar status:", error);
+      res.status(500).json({ error: "Erro ao atualizar status do atendimento." });
+    }
+  }
+);
+
 // POST /api/worklogs/:id/retry-ai
 router.post(
   "/:id/retry-ai",
