@@ -90,11 +90,11 @@ export default function TechnicianPage() {
                 border: "1px solid rgba(56, 189, 248, 0.3)",
               }}
             >
-              🔧 Equipe Técnica &bull; N2
+              🔧 Equipe Técnica
             </span>
           </div>
           <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", textTransform: "capitalize" }}>
-            {today} &bull; Triagem de chamados, alocação de portais e monitoramento de SLA
+            {today} &bull; Relatórios marcados para ação técnica ou implementação
           </p>
         </div>
 
