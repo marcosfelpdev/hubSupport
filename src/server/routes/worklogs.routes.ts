@@ -69,6 +69,47 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
       return;
     }
 
+    if (type === "recent") {
+      const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : 25;
+      const limit = isNaN(rawLimit) ? 25 : Math.min(Math.max(rawLimit, 1), 100);
+      const logs = await prisma.workLog.findMany({
+        take: limit,
+        include: {
+          user: {
+            select: { name: true, email: true, role: true },
+          },
+          aiReport: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      res.json(logs);
+      return;
+    }
+
+    if (type === "solved" || type === "solved_technical") {
+      const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : 25;
+      const limit = isNaN(rawLimit) ? 25 : Math.min(Math.max(rawLimit, 1), 100);
+      const logs = await prisma.workLog.findMany({
+        where: {
+          status: "Solucionado",
+        },
+        take: limit,
+        include: {
+          user: {
+            select: { name: true, email: true, role: true },
+          },
+          aiReport: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      res.json(logs);
+      return;
+    }
+
     // Padrão: atendimentos do dia atual
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -98,6 +139,62 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
   } catch (error) {
     console.error("[WorkLogs] Erro ao buscar atendimentos:", error);
     res.status(500).json({ error: "Erro ao buscar atendimentos." });
+  }
+});
+
+// GET /api/worklogs/dashboard-summary
+router.get("/dashboard-summary", authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const [recentLogs, solvedLogs, totalCount, solvedCount, todayCount, technicalCount] = await Promise.all([
+      // 1. Últimos atendimentos registrados (geral)
+      prisma.workLog.findMany({
+        take: 25,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: { name: true, email: true, role: true },
+          },
+          aiReport: true,
+        },
+      }),
+      // 2. Últimos relatórios marcados como Solucionado
+      prisma.workLog.findMany({
+        where: { status: "Solucionado" },
+        take: 25,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: { name: true, email: true, role: true },
+          },
+          aiReport: true,
+        },
+      }),
+      prisma.workLog.count(),
+      prisma.workLog.count({ where: { status: "Solucionado" } }),
+      prisma.workLog.count({ where: { createdAt: { gte: today, lt: tomorrow } } }),
+      prisma.workLog.count({ where: { OR: [{ technicalAction: true }, { implementation: true }] } }),
+    ]);
+
+    res.json({
+      recentLogs,
+      solvedLogs,
+      stats: {
+        total: totalCount,
+        solved: solvedCount,
+        today: todayCount,
+        technical: technicalCount,
+        inProgress: Math.max(0, totalCount - solvedCount),
+      },
+    });
+  } catch (error) {
+    console.error("[WorkLogs] Erro ao buscar resumo do dashboard:", error);
+    res.status(500).json({ error: "Erro ao buscar resumo do dashboard." });
   }
 });
 
@@ -232,7 +329,7 @@ router.patch(
   requireTechnicianOrAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
 
       const existing = await prisma.workLog.findUnique({
         where: { id },
@@ -264,7 +361,7 @@ router.post(
   authenticateToken,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
 
       const report = await prisma.aiReport.findUnique({
         where: { workLogId: id },
@@ -322,7 +419,7 @@ router.get(
   authenticateToken,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
 
       const report = await prisma.aiReport.findUnique({
         where: { workLogId: id },
