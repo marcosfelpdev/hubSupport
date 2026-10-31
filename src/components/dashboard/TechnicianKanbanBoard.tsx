@@ -240,6 +240,11 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
     e.dataTransfer.effectAllowed = "move";
   };
 
+  const handleDragEnd = () => {
+    setDraggingLogId(null);
+    setDragOverColumn(null);
+  };
+
   const handleDragOver = (colId: ColumnId, e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -248,14 +253,30 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
     }
   };
 
-  const handleDragLeave = (colId: ColumnId) => {
-    if (dragOverColumn === colId) {
-      setDragOverColumn(null);
+  const handleDragLeave = (colId: ColumnId, e: React.DragEvent) => {
+    // Só limpa se o cursor realmente saiu do container da coluna e não para um elemento interno
+    if (e.currentTarget && !e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverColumn((prev) => (prev === colId ? null : prev));
     }
   };
 
+  // Listener global de segurança para limpar o estado de drag quando a ação for finalizada ou cancelada
+  useEffect(() => {
+    const handleGlobalDragEnd = () => {
+      setDraggingLogId(null);
+      setDragOverColumn(null);
+    };
+    window.addEventListener("dragend", handleGlobalDragEnd);
+    window.addEventListener("drop", handleGlobalDragEnd);
+    return () => {
+      window.removeEventListener("dragend", handleGlobalDragEnd);
+      window.removeEventListener("drop", handleGlobalDragEnd);
+    };
+  }, []);
+
   const handleDrop = async (targetColId: ColumnId, e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverColumn(null);
     const logId = e.dataTransfer.getData("text/plain") || draggingLogId;
     if (!logId) return;
@@ -475,6 +496,8 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
               {/* Lista de Cards da Coluna (Sempre Reduzidos / Compactos) */}
               <div
+                onDragOver={(e) => handleDragOver(col.id, e)}
+                onDrop={(e) => handleDrop(col.id, e)}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -510,6 +533,19 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                         data-card-id={log.id}
                         draggable
                         onDragStart={(e) => handleDragStart(log.id, e)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                          if (dragOverColumn !== col.id) {
+                            setDragOverColumn(col.id);
+                          }
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDrop(col.id, e);
+                        }}
                         onClick={() => setSelectedLogForModal(log)}
                         className="card card-hover animate-fade-in"
                         style={{
@@ -520,6 +556,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                           background: "var(--bg-card)",
                           opacity: isDragging ? 0.35 : 1,
                           transition: "all 0.15s ease",
+                          pointerEvents: draggingLogId && draggingLogId !== log.id ? "none" : "auto",
                         }}
                       >
                         {/* Tags de tipo no canto superior direito */}
