@@ -5,6 +5,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 
 import LoginPage from "./pages/LoginPage";
+import DashboardOverviewPage from "./pages/DashboardOverviewPage";
 import DashboardPage from "./pages/DashboardPage";
 import TechnicianPage from "./pages/TechnicianPage";
 import EmployeesPage from "./pages/EmployeesPage";
@@ -28,7 +29,11 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<DashboardPage />} />
+            {/* Menu Dashboard Geral */}
+            <Route path="/dashboard" element={<DashboardOverviewPage />} />
+
+            {/* Menu Atendimentos (registro e feed diário) */}
+            <Route path="/dashboard/atendimentos" element={<DashboardPage />} />
             
             <Route
               path="/dashboard/tecnico"

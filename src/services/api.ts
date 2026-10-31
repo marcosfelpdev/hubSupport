@@ -49,9 +49,22 @@ export interface WorkLogItem {
     errorMessage?: string | null;
     pdfPath?: string | null;
     videoPath?: string | null;
+    structuredData?: string | null;
     completedAt?: string | null;
     startedAt?: string | null;
   } | null;
+}
+
+export interface DashboardSummaryData {
+  recentLogs: WorkLogItem[];
+  solvedLogs: WorkLogItem[];
+  stats: {
+    total: number;
+    solved: number;
+    today: number;
+    technical: number;
+    inProgress: number;
+  };
 }
 
 export interface NotificationItem {
@@ -155,6 +168,15 @@ export const api = {
   worklogs: {
     async getDaily(): Promise<WorkLogItem[]> {
       return request<WorkLogItem[]>("/api/worklogs");
+    },
+    async getRecent(limit = 25): Promise<WorkLogItem[]> {
+      return request<WorkLogItem[]>(`/api/worklogs?type=recent&limit=${limit}`);
+    },
+    async getSolved(limit = 25): Promise<WorkLogItem[]> {
+      return request<WorkLogItem[]>(`/api/worklogs?type=solved&limit=${limit}`);
+    },
+    async getDashboardSummary(): Promise<DashboardSummaryData> {
+      return request<DashboardSummaryData>("/api/worklogs/dashboard-summary");
     },
     async getTechnical(): Promise<WorkLogItem[]> {
       return request<WorkLogItem[]>("/api/worklogs?type=technical");
