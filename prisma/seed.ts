@@ -77,7 +77,27 @@ async function main() {
     },
   });
 
-  // 4. Criar chamados de exemplo com ação técnica e implementação se não existirem
+  // 4. Criar Tags Mestre iniciais (idempotente)
+  const defaultTags = [
+    { name: "Plataforma Web", color: "#3b82f6" },
+    { name: "Sistema ERP", color: "#f59e0b" },
+    { name: "App Mobile", color: "#10b981" },
+    { name: "PDV / Checkout", color: "#ef4444" },
+    { name: "Portal do Cliente", color: "#8b5cf6" },
+  ];
+
+  for (const tagData of defaultTags) {
+    await prisma.tag.upsert({
+      where: { name: tagData.name },
+      update: { color: tagData.color },
+      create: tagData,
+    });
+  }
+
+  const defaultTagWeb = await prisma.tag.findUnique({ where: { name: "Plataforma Web" } });
+  const defaultTagERP = await prisma.tag.findUnique({ where: { name: "Sistema ERP" } });
+
+  // 5. Criar chamados de exemplo com ação técnica e implementação se não existirem
   const countTechLogs = await prisma.workLog.count({
     where: {
       OR: [{ technicalAction: true }, { implementation: true }],
@@ -96,6 +116,7 @@ async function main() {
         implementation: false,
         media: "[]",
         userId: user1.id,
+        tagId: defaultTagERP?.id,
       },
     });
 
@@ -110,6 +131,7 @@ async function main() {
         implementation: true,
         media: "[]",
         userId: user2.id,
+        tagId: defaultTagWeb?.id,
       },
     });
 
@@ -139,6 +161,7 @@ async function main() {
   console.log(`   👤 [COLABORADOR] ${user1.name} (${user1.email})`);
   console.log(`   👤 [COLABORADOR] ${user2.name} (${user2.email})`);
   console.log(`   🔧 [TÉCNICO] ${techUser.name} (${techUser.email}) - Senha: senha123`);
+  console.log("🏷️  Tags Mestre criadas com sucesso!");
   console.log("\n✨ Seed concluído com sucesso!");
 }
 

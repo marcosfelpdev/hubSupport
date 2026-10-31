@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import { Cog, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight, X, Download } from "lucide-react";
 import { api } from "@/services/api";
 import AiReportSection from "@/components/AiReportSection";
+import TagBadge from "@/components/TagBadge";
 
 export interface TechnicalWorkLog {
   id: string;
@@ -16,6 +17,12 @@ export interface TechnicalWorkLog {
   technicalAction: boolean;
   implementation: boolean;
   media: string;
+  tagId?: string | null;
+  tag?: {
+    id: string;
+    name: string;
+    color: string;
+  } | null;
   createdAt: Date;
   userId: string;
   user: {
@@ -170,12 +177,19 @@ export default function TechnicianDashboardClient({
     status: "",
     employee: "",
     type: "", // 'technical', 'implementation' ou ''
+    tag: "",
   });
 
   // Media Modal state
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
   const [mediaCurrentIndex, setMediaCurrentIndex] = useState(0);
   const [mediaItems, setMediaItems] = useState<string[]>([]);
+
+  const tagOptions = useMemo(() => {
+    const unique = Array.from(new Set(logs.map((l) => l.tag?.name).filter(Boolean)));
+    unique.sort();
+    return unique;
+  }, [logs]);
 
   const employeeOptions = useMemo(() => {
     const unique = Array.from(new Set(employees.map((e) => e.name).filter(Boolean)));
@@ -209,7 +223,8 @@ export default function TechnicianDashboardClient({
             ? log.implementation
             : true;
 
-      return matchesRequester && matchesClient && matchesDate && matchesStatus && matchesEmployee && matchesType;
+      const matchesTag = filters.tag ? log.tag?.name === filters.tag : true;
+      return matchesRequester && matchesClient && matchesDate && matchesStatus && matchesEmployee && matchesType && matchesTag;
     });
   }, [logs, filters]);
 
@@ -310,6 +325,19 @@ onLogResolved?.();
           {statusOptions.map((status) => (
             <option key={status} value={status}>
               {getStatusBadgeConfig(status).label}
+            </option>
+          ))}
+        </select>
+        <select
+          className="input-dark"
+          value={filters.tag}
+          onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
+          style={{ maxWidth: "200px", flex: "1 1 200px", cursor: "pointer" }}
+        >
+          <option value="">Todas as plataformas / tags</option>
+          {tagOptions.map((name) => (
+            <option key={name} value={name}>
+              {name}
             </option>
           ))}
         </select>
@@ -506,8 +534,9 @@ onLogResolved?.();
                     </div>
                   </div>
 
-                  {/* Status Badge */}
-                  <div style={{ marginBottom: "0.5rem" }}>
+                  {/* Status Badge & Tag */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
+                    {log.tag && <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />}
                     <span
                       style={{
                         display: "inline-flex",
@@ -691,6 +720,10 @@ onLogResolved?.();
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  {/* Master Tag */}
+                  {selectedLog.tag && (
+                    <TagBadge name={selectedLog.tag.name} color={selectedLog.tag.color} size="md" />
+                  )}
                   {/* Tags */}
                   {selectedLog.technicalAction && (
                     <div

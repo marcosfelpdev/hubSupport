@@ -1,6 +1,7 @@
 import React from "react";
 import { X, CheckCircle2, Download, Sparkles, FileText, Clock, User, Building, AlertCircle } from "lucide-react";
 import { WorkLogItem, api } from "@/services/api";
+import TagBadge from "@/components/TagBadge";
 
 interface ReportDetailsModalProps {
   log: WorkLogItem | null;
@@ -132,9 +133,15 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                     Solucionado
                   </span>
                 )}
+                {log.tag && (
+                  <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
+                )}
               </div>
               <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "1px" }}>
                 Solicitante: <strong style={{ color: "#e2e8f0" }}>{log.requester}</strong> • Registrado em {formattedDate}
+                {log.tag && (
+                  <> • Plataforma: <strong style={{ color: log.tag.color }}>{log.tag.name}</strong></>
+                )}
               </p>
             </div>
           </div>

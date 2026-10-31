@@ -39,6 +39,7 @@ export interface WorkLogContext {
   status: string;
   technicalAction: boolean;
   implementation: boolean;
+  platform?: string;
   authorName: string;
   createdAt: Date | string;
 }
@@ -206,6 +207,7 @@ export async function analyzeRecordingWithGemini(
     status: context.status?.trim() || "Pendente",
     technicalAction: !!context.technicalAction,
     implementation: !!context.implementation,
+    platform: context.platform?.trim() || "",
     authorName: context.authorName?.trim() || "Técnico do suporte",
     createdAt: context.createdAt
       ? new Date(context.createdAt).toLocaleString("pt-BR")
@@ -273,8 +275,6 @@ export async function analyzeRecordingWithGemini(
 
   try {
     // 6. Construção da Parte de Mídia (fileData com fileUri e mimeType)
-    // Usamos createPartFromUri da SDK oficial do Gemini para garantir que
-    // a oneof 'data' no Protobuf da requisição seja preenchida corretamente com 'fileData'.
     const videoPart = createPartFromUri(fileUri, mimeType);
 
     // 7. Montagem do prompt com instruções e dados do formulário
@@ -291,6 +291,7 @@ Gere um relatório executivo técnico e formal, estritamente no formato JSON def
 - Ação Realizada: ${safeContext.actionTaken}
 - Status Atual: ${safeContext.status}
 - Classificação: ${safeContext.technicalAction ? "Ação Técnica (Dev)" : ""} ${safeContext.implementation ? "Implementação/Sugestão de Melhoria" : ""}
+${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.platform}` : ""}
 - Registrado por: ${safeContext.authorName}
 - Data de Registro: ${safeContext.createdAt}
 
@@ -302,7 +303,7 @@ Gere um relatório executivo técnico e formal, estritamente no formato JSON def
    - Data no formato DD/MM/AAAA.
    - Departamento: inclua o setor e escritório/cliente, ex: "Cível Processual | ${safeContext.clientOrOffice}".
    - Participantes: liste cada pessoa identificada com seu papel entre parênteses, ex: "${safeContext.requester} (Operação), ${safeContext.authorName} (Suporte)".
-   - Plataforma Analisada: identifique o nome do sistema ou software demonstrado no vídeo (ex: ERP Jurídico, Módulo de Protocolos, Sistema Web).
+   - Plataforma Analisada: identifique o nome do sistema ou software demonstrado no vídeo (ex: ERP Jurídico, Módulo de Protocolos, Sistema Web). Caso identificado no formulário (${safeContext.platform || "não especificado"}), dê preferência a esse contexto.
 3. **Resumo Executivo**:
    - Um parágrafo formal e objetivo formalizando o que foi demandado ou analisado durante o atendimento e qual o objetivo para a operação.
 4. **Propostas de Melhoria de Fluxo de Trabalho (Tabela)**:
@@ -340,29 +341,24 @@ Gere um relatório executivo técnico e formal, estritamente no formato JSON def
             },
           });
 
-          if (response.text) {
-            responseText = response.text;
+          responseText = response.text;
+          if (responseText && responseText.trim().length > 0) {
             break;
           }
         } catch (err: unknown) {
           lastError = err;
-          const errMsg = err instanceof Error ? err.message : String(err);
-          const isRateLimitOrDemand =
-            errMsg.includes("503") ||
-            errMsg.includes("429") ||
-            errMsg.includes("high demand") ||
-            errMsg.includes("quota") ||
-            errMsg.includes("RESOURCE_EXHAUSTED");
+          const status = (err as { status?: number })?.status;
+          console.warn(`[Gemini] Tentativa ${attempt} com modelo ${model} falhou:`, err);
 
-          console.warn(`[Gemini] Falha na tentativa ${attempt} com modelo ${model}: ${errMsg}`);
-
-          if (isRateLimitOrDemand && attempt < 3) {
-            const backoffMs = attempt * 2000;
-            console.log(`[Gemini] Aguardando ${backoffMs}ms antes da próxima tentativa...`);
-            await new Promise((resolve) => setTimeout(resolve, backoffMs));
-            continue;
+          // Se for erro de cota (429) ou indisponibilidade de serviço (503), aguarda com backoff
+          if (status === 429 || status === 503) {
+            const delay = Math.pow(2, attempt) * 1000;
+            console.log(`[Gemini] Aguardando ${delay}ms antes da próxima tentativa...`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          } else {
+            // Outros erros: não tenta novamente com o mesmo modelo
+            break;
           }
-          break; // Passa para o próximo modelo candidato se houver
         }
       }
 
@@ -387,7 +383,7 @@ Gere um relatório executivo técnico e formal, estritamente no formato JSON def
       date: parsedData.date || todayFormatted,
       department: parsedData.department || safeContext.clientOrOffice,
       participants: parsedData.participants || `${safeContext.requester} (Operação), ${safeContext.authorName} (Suporte)`,
-      platformAnalyzed: parsedData.platformAnalyzed || "Sistema Corporativo",
+      platformAnalyzed: parsedData.platformAnalyzed || safeContext.platform || "Sistema Corporativo",
       executiveSummary: parsedData.executiveSummary || safeContext.reportedProblem,
       proposals: Array.isArray(parsedData.proposals) && parsedData.proposals.length > 0
         ? parsedData.proposals

@@ -9,6 +9,7 @@ export async function processAiReportJob(workLogId: string) {
     where: { id: workLogId },
     include: {
       user: { select: { name: true, email: true } },
+      tag: true,
       aiReport: true,
     },
   });
@@ -42,6 +43,7 @@ export async function processAiReportJob(workLogId: string) {
       status: workLog.status,
       technicalAction: workLog.technicalAction,
       implementation: workLog.implementation,
+      platform: workLog.tag?.name,
       authorName: workLog.user.name,
       createdAt: workLog.createdAt,
     };
@@ -69,46 +71,22 @@ export async function processAiReportJob(workLogId: string) {
         pdfPath,
         structuredData: JSON.stringify(structuredData),
         completedAt: new Date(),
+        errorMessage: null,
       },
     });
 
     console.log(`[ReportProcessor] Relatório gerado com sucesso para WorkLog: ${workLogId}`);
-  } catch (error: unknown) {
-    const err = error as Error;
-    console.error(`[ReportProcessor] Erro ao processar relatório para WorkLog ${workLogId}:`, err);
+  } catch (error) {
+    console.error(`[ReportProcessor] Falha no processamento do relatório para WorkLog ${workLogId}:`, error);
 
-    let safeMessage = "Falha ao processar a gravação com a inteligência artificial.";
-    if (err.message) {
-      if (err.message.includes("GEMINI_API_KEY")) {
-        safeMessage = "Chave da API do Gemini não configurada no servidor.";
-      } else if (err.message.includes("quota") || err.message.includes("RESOURCE_EXHAUSTED") || err.message.includes("429")) {
-        safeMessage = "Limite de requisições da API atingido. Tente novamente mais tarde.";
-      } else if (err.message.includes("high demand") || err.message.includes("503") || err.message.includes("UNAVAILABLE")) {
-        safeMessage = "Os servidores do Gemini estão com alta demanda temporária. Tente novamente em instantes.";
-      } else if (err.message.includes("not found") || err.message.includes("não encontrado")) {
-        safeMessage = "Arquivo de gravação não encontrado no servidor.";
-      } else if (err.message.includes("vazio") || err.message.includes("0 bytes")) {
-        safeMessage = "O arquivo de gravação está vazio ou corrompido.";
-      } else {
-        // Tenta extrair mensagem limpa se for um erro JSON da API
-        try {
-          const parsed = JSON.parse(err.message);
-          if (parsed?.error?.message) {
-            safeMessage = parsed.error.message.replace(/\s+/g, " ").trim().slice(0, 180);
-          } else {
-            safeMessage = err.message.slice(0, 180);
-          }
-        } catch {
-          safeMessage = err.message.slice(0, 180);
-        }
-      }
-    }
+    const errorMsg =
+      error instanceof Error ? error.message : "Erro desconhecido durante o processamento do relatório.";
 
     await prisma.aiReport.update({
       where: { workLogId },
       data: {
         status: "failed",
-        errorMessage: safeMessage,
+        errorMessage: errorMsg,
         completedAt: new Date(),
       },
     });

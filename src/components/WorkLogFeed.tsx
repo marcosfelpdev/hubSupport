@@ -1,3 +1,4 @@
+import TagBadge from "@/components/TagBadge";
 
 export interface WorkLog {
   id: string;
@@ -9,6 +10,12 @@ export interface WorkLog {
   technicalAction: boolean;
   implementation: boolean;
   media: string;
+  tagId?: string | null;
+  tag?: {
+    id: string;
+    name: string;
+    color: string;
+  } | null;
   createdAt: Date;
   userId: string;
   user: {
@@ -261,17 +268,37 @@ export default function WorkLogFeed({
                 <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
                   <div
                     className="avatar"
-                    style={{ background: `linear-gradient(135deg, ${avatarColor}, ${avatarColor}aa)` }}
+                    style={{
+                      background: `linear-gradient(135deg, ${avatarColor}, ${avatarColor}aa)`,
+                      width: "32px",
+                      height: "32px",
+                      fontSize: "0.75rem",
+                    }}
                   >
                     {getInitials(log.user.name)}
                   </div>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                      <span
+                        style={{
+                          fontSize: "0.85rem",
+                          fontWeight: 600,
+                          color: "var(--text-primary)",
+                        }}
+                      >
                         {log.user.name}
-                      </p>
+                      </span>
                       {isOwn && (
-                        <span className="badge badge-accent" style={{ fontSize: "0.68rem", padding: "0.1rem 0.4rem" }}>
+                        <span
+                          style={{
+                            fontSize: "0.65rem",
+                            padding: "0.1rem 0.35rem",
+                            borderRadius: "4px",
+                            background: "rgba(99,102,241,0.15)",
+                            color: "#818cf8",
+                            fontWeight: 600,
+                          }}
+                        >
                           Você
                         </span>
                       )}
@@ -282,24 +309,29 @@ export default function WorkLogFeed({
                   </div>
                 </div>
 
-                {/* Status Badge */}
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.35rem",
-                    padding: "0.25rem 0.65rem",
-                    borderRadius: "9999px",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: statusConfig.color,
-                    background: statusConfig.bg,
-                    border: `1px solid ${statusConfig.border}`,
-                  }}
-                >
-                  {statusConfig.icon}
-                  {statusConfig.label}
-                </span>
+                {/* Status Badge & Tag */}
+                <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                  {log.tag && (
+                    <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
+                  )}
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                      padding: "0.25rem 0.65rem",
+                      borderRadius: "9999px",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: statusConfig.color,
+                      background: statusConfig.bg,
+                      border: `1px solid ${statusConfig.border}`,
+                    }}
+                  >
+                    {statusConfig.icon}
+                    {statusConfig.label}
+                  </span>
+                </div>
               </div>
 
               {/* Meta tags: Solicitante & Escritório/Cliente */}
