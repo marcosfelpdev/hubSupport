@@ -3,6 +3,7 @@ import { Cog, Lightbulb, Search, CheckCircle2, Clock, AlertCircle } from "lucide
 import { WorkLogItem, api } from "@/services/api";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
 import TagBadge from "@/components/TagBadge";
+import ReportCardMinimized from "@/components/ReportCardMinimized";
 
 export type ColumnId = "backlog" | "pendencias" | "em_progresso" | "finalizadas";
 
@@ -548,15 +549,12 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                   </div>
                 ) : (
                   cardsInCol.map((log) => {
-                    const avatarColor = getAvatarColor(log.userId);
-                    const statusConfig = getStatusBadgeConfig(log.status);
-                    const isSolved = log.status === "Solucionado";
                     const isDragging = draggingLogId === log.id;
 
                     return (
-                      <div
+                      <ReportCardMinimized
                         key={log.id}
-                        data-card-id={log.id}
+                        dataCardId={log.id}
                         draggable
                         onDragStart={(e) => handleDragStart(log.id, e)}
                         onDragEnd={handleDragEnd}
@@ -573,216 +571,9 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                           handleDrop(col.id, e);
                         }}
                         onClick={() => setSelectedLogForModal(log)}
-                        className="card card-hover animate-fade-in"
-                        style={{
-                          cursor: "grab",
-                          position: "relative",
-                          padding: "0.875rem",
-                          borderColor: isSolved ? "rgba(16, 185, 129, 0.3)" : "var(--border)",
-                          background: "var(--bg-card)",
-                          opacity: isDragging ? 0.35 : 1,
-                          transition: "all 0.15s ease",
-                          pointerEvents: draggingLogId && draggingLogId !== log.id ? "none" : "auto",
-                        }}
-                      >
-                        {/* Tags de tipo no canto superior direito */}
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "8px",
-                            right: "8px",
-                            display: "flex",
-                            gap: "4px",
-                            zIndex: 10,
-                          }}
-                        >
-                          {log.technicalAction && (
-                            <div
-                              title="Ação Técnica"
-                              style={{
-                                width: "18px",
-                                height: "18px",
-                                borderRadius: "50%",
-                                background: "#f59e0b",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                border: "1.5px solid #0d1322",
-                              }}
-                            >
-                              <Cog size={10} color="white" style={{ margin: "auto" }} />
-                            </div>
-                          )}
-                          {log.implementation && (
-                            <div
-                              title="Implementação"
-                              style={{
-                                width: "18px",
-                                height: "18px",
-                                borderRadius: "50%",
-                                background: "#3b82f6",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                border: "1.5px solid #0d1322",
-                              }}
-                            >
-                              <Lightbulb size={10} color="white" style={{ margin: "auto" }} />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Header do Card Reduzido: Avatar e Autor */}
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                            marginBottom: "0.5rem",
-                            paddingRight: "2.5rem",
-                          }}
-                        >
-                          <div
-                            className="avatar"
-                            style={{
-                              background: `linear-gradient(135deg, ${avatarColor}, ${avatarColor}aa)`,
-                              width: "26px",
-                              height: "26px",
-                              fontSize: "0.68rem",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {getInitials(log.user?.name)}
-                          </div>
-                          <div style={{ minWidth: 0 }}>
-                            <p
-                              style={{
-                                fontSize: "0.8rem",
-                                fontWeight: 600,
-                                color: "var(--text-primary)",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                margin: 0,
-                              }}
-                            >
-                              {log.user?.name || "Autor desconhecido"}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Status Badge & Tag de Plataforma */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "0.25rem",
-                              padding: "0.15rem 0.5rem",
-                              borderRadius: "9999px",
-                              fontSize: "0.68rem",
-                              fontWeight: 600,
-                              color: statusConfig.color,
-                              background: statusConfig.bg,
-                              border: `1px solid ${statusConfig.border}`,
-                            }}
-                          >
-                            {isSolved && (
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                            {statusConfig.label}
-                          </span>
-
-                          {log.tag && (
-                            <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
-                          )}
-                        </div>
-
-                        {/* Solicitante & Escritório (Grid 2 colunas) */}
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 1fr",
-                            gap: "0.5rem",
-                            marginBottom: "0.5rem",
-                          }}
-                        >
-                          <div style={{ minWidth: 0 }}>
-                            <p style={{ fontSize: "0.68rem", color: "var(--text-muted)", margin: "0 0 0.1rem" }}>
-                              Solicitante
-                            </p>
-                            <p
-                              style={{
-                                fontSize: "0.76rem",
-                                color: "var(--text-primary)",
-                                fontWeight: 500,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                margin: 0,
-                              }}
-                            >
-                              {log.requester}
-                            </p>
-                          </div>
-                          <div style={{ minWidth: 0 }}>
-                            <p style={{ fontSize: "0.68rem", color: "var(--text-muted)", margin: "0 0 0.1rem" }}>
-                              Escritório
-                            </p>
-                            <p
-                              style={{
-                                fontSize: "0.76rem",
-                                color: "#e0e7ff",
-                                fontWeight: 500,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                margin: 0,
-                              }}
-                            >
-                              {log.clientOrOffice}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Problema relatado (compacto, até 2 linhas) */}
-                        <div>
-                          <p style={{ fontSize: "0.68rem", color: "#f87171", margin: "0 0 0.1rem", fontWeight: 600 }}>
-                            Problema relatado
-                          </p>
-                          <p
-                            style={{
-                              fontSize: "0.75rem",
-                              color: "var(--text-secondary)",
-                              lineHeight: 1.35,
-                              display: "-webkit-box",
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: "vertical",
-                              overflow: "hidden",
-                              margin: 0,
-                            }}
-                          >
-                            {log.reportedProblem}
-                          </p>
-                        </div>
-
-                        {/* Rodapé: Data */}
-                        <div
-                          style={{
-                            marginTop: "0.5rem",
-                            paddingTop: "0.35rem",
-                            borderTop: "1px solid rgba(255, 255, 255, 0.05)",
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            fontSize: "0.65rem",
-                            color: "var(--text-muted)",
-                          }}
-                        >
-                          <span>{formatDate(log.createdAt)}</span>
-                        </div>
-                      </div>
+                        isDragging={isDragging}
+                        log={log}
+                      />
                     );
                   })
                 )}

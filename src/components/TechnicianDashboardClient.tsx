@@ -6,6 +6,7 @@ import { Cog, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight, X, Download } 
 import { api } from "@/services/api";
 import AiReportSection from "@/components/AiReportSection";
 import TagBadge from "@/components/TagBadge";
+import ReportCardMinimized from "@/components/ReportCardMinimized";
 
 export interface TechnicalWorkLog {
   id: string;
@@ -418,213 +419,14 @@ onLogResolved?.();
           ) : (
             filteredLogs.map((log) => {
               const isSelected = log.id === validSelectedLogId;
-              const avatarColor = getAvatarColor(log.userId);
-              const statusConfig = getStatusBadgeConfig(log.status);
-              const hasTechnical = log.technicalAction;
-              const hasImplementation = log.implementation;
-              const isSolved = log.status === "Solucionado";
-
               return (
-                <div
+                <ReportCardMinimized
                   key={log.id}
                   id={`card-tech-${log.id}`}
+                  log={log}
+                  isSelected={isSelected}
                   onClick={() => setSelectedLogId(log.id)}
-                  className="card card-hover animate-fade-in"
-                  style={{
-                    cursor: "pointer",
-                    position: "relative",
-                    borderColor: isSelected
-                      ? "#38bdf8"
-                      : isSolved
-                        ? "rgba(16, 185, 129, 0.25)"
-                        : "var(--border)",
-                    boxShadow: isSelected
-                      ? "0 0 0 1px #38bdf8, 0 8px 20px rgba(56, 189, 248, 0.15)"
-                      : "none",
-                    padding: "0.875rem",
-                    zIndex: 1,
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {/* Tipo tags (canto superior direito) */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "4px",
-                      zIndex: 10,
-                    }}
-                  >
-                    {hasTechnical && (
-                      <div
-                        title="Ação Técnica"
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          background: "#f59e0b",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          border: "1.5px solid #0d1322",
-                        }}
-                      >
-                        <Cog size={9} strokeWidth={1.5} color="white" />
-                      </div>
-                    )}
-                    {hasImplementation && (
-                      <div
-                        title="Implementação"
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          background: "#3b82f6",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          border: "1.5px solid #0d1322",
-                        }}
-                      >
-                        <Lightbulb size={9} strokeWidth={1.5} color="white" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Header do Card minimizado: Avatar e Status */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "0.625rem",
-                      paddingRight: "1.5rem",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
-                      <div
-                        className="avatar"
-                        style={{
-                          background: `linear-gradient(135deg, ${avatarColor}, ${avatarColor}aa)`,
-                          width: "28px",
-                          height: "28px",
-                          fontSize: "0.7rem",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {getInitials(log.user.name)}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <p
-                          style={{
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                            color: "var(--text-primary)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {log.user.name}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Badge & Tag */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
-                    {log.tag && <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />}
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.25rem",
-                        padding: "0.15rem 0.5rem",
-                        borderRadius: "9999px",
-                        fontSize: "0.7rem",
-                        fontWeight: 600,
-                        color: statusConfig.color,
-                        background: statusConfig.bg,
-                        border: `1px solid ${statusConfig.border}`,
-                      }}
-                    >
-                      {isSolved && (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                      {statusConfig.label}
-                    </span>
-                  </div>
-
-                  {/* Solicitante & Escritório */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "0.75rem",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    <div style={{ minWidth: 0, marginBottom: "0" }}>
-                      <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
-                        Solicitante
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "0.78rem",
-                          color: "var(--text-primary)",
-                          fontWeight: 500,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {log.requester}
-                      </p>
-                    </div>
-                    <div style={{ minWidth: 0, marginBottom: "0" }}>
-                      <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
-                        Escritório
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "0.78rem",
-                          color: "#e0e7ff",
-                          fontWeight: 500,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {log.clientOrOffice}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Problema relatado (preview) */}
-                  <div>
-                    <p style={{ fontSize: "0.72rem", color: "#f87171", marginBottom: "0.125rem", fontWeight: 600 }}>
-                      Problema relatado
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "0.76rem",
-                        color: "var(--text-secondary)",
-                        lineHeight: 1.4,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {log.reportedProblem}
-                    </p>
-                  </div>
-                </div>
+                />
               );
             })
           )}
