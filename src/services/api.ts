@@ -187,9 +187,15 @@ export const api = {
         body: formData,
       });
     },
-    async resolve(id: string): Promise<{ success: boolean; status: string }> {
-      return request<{ success: boolean; status: string }>(`/api/worklogs/${id}/resolve`, {
+    async resolve(id: string): Promise<{ success: boolean; status: string; error?: string }> {
+      return request<{ success: boolean; status: string; error?: string }>(`/api/worklogs/${id}/resolve`, {
         method: "PATCH",
+      });
+    },
+    async updateStatus(id: string, status: string): Promise<{ success: boolean; status: string; error?: string }> {
+      return request<{ success: boolean; status: string; error?: string }>(`/api/worklogs/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
       });
     },
     async retryAi(id: string): Promise<{ success: boolean }> {
