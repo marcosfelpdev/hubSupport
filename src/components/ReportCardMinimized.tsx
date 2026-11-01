@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Maximize2, Paperclip } from "lucide-react";
 import { hexToRgba } from "./TagBadge";
 
 export interface ReportCardMinimizedLog {
@@ -13,6 +13,7 @@ export interface ReportCardMinimizedLog {
   createdAt: Date | string;
   technicalAction?: boolean;
   implementation?: boolean;
+  media?: string;
   userId?: string;
   user?: {
     name?: string;
@@ -43,7 +44,15 @@ export interface ReportCardMinimizedProps {
   dataCardId?: string;
 }
 
-function getStatusPill(status: string) {
+interface StatusPillConfig {
+  label: string;
+  badgeClass: string;
+  color: string;
+  bg: string;
+  border: string;
+}
+
+function getStatusPill(status: string): StatusPillConfig {
   const norm = (status || "").toLowerCase().trim();
 
   if (
@@ -57,6 +66,7 @@ function getStatusPill(status: string) {
   ) {
     return {
       label: "Solucionado",
+      badgeClass: "text-emerald-400 bg-emerald-950/40 border border-emerald-500/40",
       color: "#34d399",
       bg: "rgba(6, 78, 59, 0.4)",
       border: "1px solid rgba(16, 185, 129, 0.4)",
@@ -66,6 +76,7 @@ function getStatusPill(status: string) {
   if (norm === "em progresso" || norm === "em andamento") {
     return {
       label: "Em progresso",
+      badgeClass: "text-blue-400 bg-blue-950/40 border border-blue-500/40",
       color: "#60a5fa",
       bg: "rgba(30, 58, 138, 0.35)",
       border: "1px solid rgba(59, 130, 246, 0.4)",
@@ -81,6 +92,7 @@ function getStatusPill(status: string) {
   ) {
     return {
       label: "Pendência",
+      badgeClass: "text-amber-400 bg-amber-950/40 border border-amber-500/40",
       color: "#fbbf24",
       bg: "rgba(120, 53, 15, 0.4)",
       border: "1px solid rgba(245, 158, 11, 0.4)",
@@ -90,6 +102,7 @@ function getStatusPill(status: string) {
   if (norm === "não foi possível realizar" || norm === "não realizado") {
     return {
       label: "Não realizado",
+      badgeClass: "text-rose-400 bg-rose-950/40 border border-rose-500/40",
       color: "#f87171",
       bg: "rgba(136, 19, 55, 0.4)",
       border: "1px solid rgba(239, 68, 68, 0.4)",
@@ -99,6 +112,7 @@ function getStatusPill(status: string) {
   if (norm === "backlog") {
     return {
       label: "Backlog",
+      badgeClass: "text-indigo-400 bg-indigo-950/40 border border-indigo-500/40",
       color: "#818cf8",
       bg: "rgba(49, 46, 129, 0.4)",
       border: "1px solid rgba(99, 102, 241, 0.4)",
@@ -107,16 +121,26 @@ function getStatusPill(status: string) {
 
   return {
     label: status || "Registrado",
+    badgeClass: "text-slate-300 bg-slate-800/50 border border-slate-700/50",
     color: "#cbd5e1",
     bg: "rgba(30, 41, 59, 0.5)",
     border: "1px solid rgba(71, 85, 105, 0.5)",
   };
 }
 
-function getFooterConfig(technicalAction?: boolean, implementation?: boolean) {
+interface FooterConfig {
+  label: string;
+  badgeClass: string;
+  color: string;
+  bg: string;
+  borderTop: string;
+}
+
+function getFooterConfig(technicalAction?: boolean, implementation?: boolean): FooterConfig {
   if (technicalAction && implementation) {
     return {
       label: "Ação Técnica · Implementação",
+      badgeClass: "text-amber-300 bg-amber-950/35 border-t border-amber-500/30",
       color: "#fbbf24",
       bg: "rgba(120, 53, 15, 0.35)",
       borderTop: "1px solid rgba(180, 83, 9, 0.5)",
@@ -125,6 +149,7 @@ function getFooterConfig(technicalAction?: boolean, implementation?: boolean) {
   if (technicalAction) {
     return {
       label: "Ação Técnica",
+      badgeClass: "text-orange-300 bg-orange-950/30 border-t border-orange-500/30",
       color: "#fb923c",
       bg: "rgba(124, 45, 18, 0.3)",
       borderTop: "1px solid rgba(194, 65, 12, 0.5)",
@@ -133,6 +158,7 @@ function getFooterConfig(technicalAction?: boolean, implementation?: boolean) {
   if (implementation) {
     return {
       label: "Implementação",
+      badgeClass: "text-purple-300 bg-purple-950/30 border-t border-purple-500/30",
       color: "#c084fc",
       bg: "rgba(76, 29, 149, 0.3)",
       borderTop: "1px solid rgba(109, 40, 217, 0.5)",
@@ -140,6 +166,7 @@ function getFooterConfig(technicalAction?: boolean, implementation?: boolean) {
   }
   return {
     label: "Atendimento",
+    badgeClass: "text-cyan-300 bg-cyan-950/30 border-t border-cyan-500/30",
     color: "#22d3ee",
     bg: "rgba(22, 78, 99, 0.3)",
     borderTop: "1px solid rgba(14, 116, 144, 0.5)",
@@ -178,12 +205,46 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
   const statusPill = getStatusPill(log.status);
   const footerConfig = getFooterConfig(log.technicalAction, log.implementation);
   const formattedDate = formatDate(log.createdAt);
-  const hasAiReport = !!log.aiReport;
+
+  const isAiGenerating = Boolean(
+    log.aiReport &&
+      (log.aiReport.status === "pending" ||
+        log.aiReport.status === "processing" ||
+        (!log.aiReport.pdfPath && log.aiReport.status !== "failed"))
+  );
+
+  const isAiCompleted = Boolean(
+    log.aiReport &&
+      (log.aiReport.status === "completed" || Boolean(log.aiReport.pdfPath))
+  );
+
+  const mediaCount = React.useMemo(() => {
+    if (!log.media) return 0;
+    try {
+      const parsed = JSON.parse(log.media);
+      return Array.isArray(parsed) ? parsed.length : 0;
+    } catch {
+      return 0;
+    }
+  }, [log.media]);
 
   const tagColor = log.tag?.color || "#06b6d4";
-  const tagBg = log.tag ? hexToRgba(tagColor, 0.25) : "rgba(6, 182, 212, 0.25)";
-  const tagBorder = log.tag ? hexToRgba(tagColor, 0.4) : "rgba(6, 182, 212, 0.4)";
+  const tagBg = log.tag ? hexToRgba(tagColor, 0.2) : "rgba(6, 182, 212, 0.2)";
+  const tagBorder = log.tag ? hexToRgba(tagColor, 0.35) : "rgba(6, 182, 212, 0.35)";
   const tagName = log.tag?.name || "Geral";
+  const titleText = log.title || log.reportedProblem || "Sem título informado.";
+
+  const cursorClasses = draggable
+    ? "cursor-grab active:cursor-grabbing"
+    : onClick
+    ? "cursor-pointer"
+    : "";
+
+  const stateClasses = isDragging
+    ? "opacity-40 scale-[0.98]"
+    : isSelected
+    ? "bg-[#182338] ring-2 ring-sky-400 shadow-[0_0_24px_rgba(56,189,248,0.3)] border-sky-400/90 border-l-[4px] border-l-sky-400"
+    : "border-slate-800/80 hover:border-slate-700 hover:shadow-xl hover:-translate-y-0.5";
 
   return (
     <div
@@ -195,235 +256,115 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
       onDragOver={onDragOver}
       onDrop={onDrop}
       onClick={onClick}
-      style={{
-        width: "100%",
-        height: "204px",
-        minHeight: "204px",
-        maxHeight: "204px",
-        backgroundColor: "#161a23",
-        border: isSelected ? "1.5px solid #06b6d4" : "1px solid #1e293b",
-        boxShadow: isSelected
-          ? "0 0 15px rgba(6, 182, 212, 0.25), 0 10px 25px -5px rgba(0, 0, 0, 0.5)"
-          : "0 10px 25px -5px rgba(0, 0, 0, 0.4)",
-        borderRadius: "0.75rem",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        fontFamily: "'Inter', sans-serif",
-        overflow: "hidden",
-        transition: "all 0.15s ease",
-        position: "relative",
-        userSelect: "none",
-        cursor: draggable ? "grab" : "pointer",
-        opacity: isDragging ? 0.35 : 1,
-        ...style,
-      }}
-      className={`card-hover ${className}`}
+      style={style}
+      className={`group w-full shrink-0 min-h-[185px] h-[185px] bg-[#151c2c]/80 backdrop-blur-sm border rounded-xl overflow-hidden shadow-md flex flex-col justify-between transition-all duration-200 select-none ${cursorClasses} ${stateClasses} ${className}`.trim()}
     >
-      {/* Conteúdo com padding e espaçamento estritamente baseado na referência */}
-      <div
-        style={{
-          padding: "0.875rem 1rem 0.65rem 1rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-          flex: 1,
-          justifyContent: "space-between",
-          minHeight: 0,
-        }}
-      >
-        {/* Linha 1: Plataforma & Status */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "0.5rem",
-          }}
-        >
+      {/* Conteúdo interno do card */}
+      <div className="p-3.5 pb-2 flex flex-col justify-between flex-1 min-h-0 gap-1.5">
+        {/* Linha Superior: Tag da Plataforma & Status / IA */}
+        <div className="flex items-center justify-between gap-2 shrink-0">
           <span
+            className="inline-block px-2.5 py-0.5 rounded text-xs font-semibold max-w-[140px] truncate border select-none transition-colors"
             style={{
-              padding: "0.125rem 0.625rem",
-              borderRadius: "0.25rem",
-              fontSize: "0.75rem",
-              fontWeight: 600,
               color: tagColor,
               backgroundColor: tagBg,
-              border: `1px solid ${tagBorder}`,
-              maxWidth: "140px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              display: "inline-block",
+              borderColor: tagBorder,
             }}
             title={tagName}
           >
             {tagName}
           </span>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              flexShrink: 0,
-            }}
-          >
-            {hasAiReport && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Indicador visual de Card Aberto / Maximizado */}
+            {isSelected && (
               <span
-                title="Relatório de IA disponível"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  color: "#818cf8",
-                }}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-500/20 text-sky-300 border border-sky-400/40 shadow-xs animate-fade-in"
+                title="Chamado aberto / maximizado"
               >
-                <Sparkles size={12} />
+                <Maximize2 size={10} className="text-sky-400" />
+                <span>Aberto</span>
               </span>
             )}
+
+            {/* Símbolo de IA: piscando sutilmente enquanto processa, fixo quando concluído */}
+            {isAiGenerating ? (
+              <span
+                title="IA gerando relatório PDF em segundo plano..."
+                className="inline-flex items-center text-indigo-300 animate-sparkle cursor-help"
+              >
+                <Sparkles size={13} />
+              </span>
+            ) : isAiCompleted ? (
+              <span
+                title="Relatório de IA e PDF disponíveis"
+                className="inline-flex items-center text-indigo-400 drop-shadow-[0_0_4px_rgba(129,140,248,0.5)]"
+              >
+                <Sparkles size={13} />
+              </span>
+            ) : null}
+
             <span
-              style={{
-                padding: "0.125rem 0.5rem",
-                borderRadius: "9999px",
-                fontSize: "10px",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                color: statusPill.color,
-                backgroundColor: statusPill.bg,
-                border: statusPill.border,
-                whiteSpace: "nowrap",
-                display: "inline-block",
-              }}
+              className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap ${statusPill.badgeClass}`}
             >
               {statusPill.label}
             </span>
           </div>
         </div>
 
-        {/* Linha 2: Valor do Título centralizado com fonte maior */}
-        <div
-          style={{
-            position: "relative",
-            minHeight: "48px",
-            maxHeight: "54px",
-            height: "50px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            width: "100%",
-          }}
-        >
+        {/* Linha Central: Título com line-clamp-2 */}
+        <div className="flex items-center justify-center my-auto min-h-[44px] px-1">
           <p
-            title={log.title || log.reportedProblem || "Sem título informado."}
-            style={{
-              color: "#ffffff",
-              fontSize: "0.9rem",
-              fontWeight: 700,
-              lineHeight: 1.25,
-              margin: 0,
-              padding: "0 0.25rem",
-              textAlign: "center",
-              wordBreak: "break-word",
-              whiteSpace: "normal",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
+            title={titleText}
+            className="text-sm font-semibold text-slate-100 text-center leading-snug line-clamp-2 break-words"
           >
-            {log.title || log.reportedProblem || "Sem título informado."}
+            {titleText}
           </p>
         </div>
 
-        {/* Linha 3: Divisor */}
-        <div
-          style={{
-            height: "1px",
-            backgroundColor: "rgba(51, 65, 85, 0.7)",
-            width: "100%",
-            margin: "0.125rem 0",
-          }}
-        />
+        {/* Linha Divisória Sutil */}
+        <div className="w-full border-t border-slate-800/80 my-1 shrink-0" />
 
-        {/* Linha 4: Solicitante & Data */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            gap: "0.5rem",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.125rem",
-              minWidth: 0,
-              flex: 1,
-            }}
-          >
-            <span
-              style={{
-                color: "#64748b",
-                fontSize: "10px",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                fontWeight: 600,
-              }}
-            >
+        {/* Linha Inferior: Solicitante, Empresa & Data */}
+        <div className="flex items-end justify-between gap-2 min-w-0 shrink-0">
+          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Solicitante
             </span>
             <div
-              style={{
-                fontSize: "0.75rem",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+              className="text-xs truncate"
+              title={`${log.requester || "Não informado"}${log.clientOrOffice ? ` · ${log.clientOrOffice}` : ""}`}
             >
-              <span style={{ fontWeight: 500, color: "#e2e8f0" }}>
+              <span className="font-medium text-slate-300">
                 {log.requester || "Não informado"}
               </span>
               {log.clientOrOffice && (
-                <span style={{ color: "#94a3b8" }}>
-                  {" "}· {log.clientOrOffice}
-                </span>
+                <span className="text-slate-400"> · {log.clientOrOffice}</span>
               )}
             </div>
           </div>
-          <span
-            style={{
-              color: "#64748b",
-              fontSize: "11px",
-              fontWeight: 500,
-              flexShrink: 0,
-              marginLeft: "0.25rem",
-            }}
-          >
-            {formattedDate}
-          </span>
+          <div className="flex items-center gap-2 shrink-0 ml-1">
+            {mediaCount > 0 && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-300 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700/60"
+                title={`${mediaCount} mídia(s) anexada(s)`}
+              >
+                <Paperclip size={10} className="text-sky-400" />
+                <span>{mediaCount}</span>
+              </span>
+            )}
+            {formattedDate && (
+              <span className="text-[11px] text-slate-500 font-medium">
+                {formattedDate}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Rodapé: Categoria do Atendimento (Atendimento / Ação Técnica / Implementação) */}
+      {/* Rodapé: Faixa de Categoria */}
       <div
-        style={{
-          width: "100%",
-          padding: "0.25rem 0.5rem",
-          fontSize: "9px",
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          fontWeight: 700,
-          textAlign: "center",
-          flexShrink: 0,
-          color: footerConfig.color,
-          backgroundColor: footerConfig.bg,
-          borderTop: footerConfig.borderTop,
-        }}
+        className={`w-full py-1 px-2 text-[9px] uppercase tracking-widest font-bold text-center shrink-0 ${footerConfig.badgeClass}`}
       >
         {footerConfig.label}
       </div>

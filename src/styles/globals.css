@@ -331,3 +331,21 @@ label {
   color: white;
   flex-shrink: 0;
 }
+
+/* Subtle sparkle pulse for AI generating state */
+@keyframes sparkle-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px rgba(129, 140, 248, 0.8));
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(0.85);
+    filter: drop-shadow(0 0 0px transparent);
+  }
+}
+
+.animate-sparkle {
+  animation: sparkle-pulse 1.6s ease-in-out infinite;
+}

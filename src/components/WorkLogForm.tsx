@@ -25,6 +25,8 @@ export default function WorkLogForm({
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [technicalAction, setTechnicalAction] = useState(false);
   const [implementation, setImplementation] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>("Realizado");
+  const isTechnicalOrImplementation = technicalAction || implementation;
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -150,8 +152,10 @@ export default function WorkLogForm({
     const form = e.currentTarget;
     const formData = new FormData(form);
 
+    const finalStatus = isTechnicalOrImplementation ? "Backlog" : selectedStatus;
     formData.set("technicalAction", technicalAction ? "on" : "off");
     formData.set("implementation", implementation ? "on" : "off");
+    formData.set("status", finalStatus);
     formData.set("tagId", selectedTagId);
     formData.set("actionTaken", "");
     formData.delete("media");
@@ -170,6 +174,7 @@ export default function WorkLogForm({
         form.reset();
         setTechnicalAction(false);
         setImplementation(false);
+        setSelectedStatus("Realizado");
         setSelectedTagId(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
         setMediaFiles([]);
@@ -381,28 +386,62 @@ export default function WorkLogForm({
           </div>
 
           <div>
-            <label htmlFor="status">
-              Status <span style={{ color: "#ef4444" }}>*</span>
+            <label
+              htmlFor="status"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "0.375rem",
+              }}
+            >
+              <span>
+                Status <span style={{ color: "#ef4444" }}>*</span>
+              </span>
+              {isTechnicalOrImplementation && (
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    color: "#818cf8",
+                    fontWeight: 600,
+                  }}
+                >
+                  Fixo em Backlog
+                </span>
+              )}
             </label>
             <div style={{ position: "relative" }}>
               <select
                 id="status"
                 name="status"
                 className="input-dark"
-                defaultValue="Realizado"
-                disabled={isPending}
+                value={isTechnicalOrImplementation ? "Backlog" : selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                disabled={isPending || isTechnicalOrImplementation}
                 style={{
-                  cursor: "pointer",
+                  cursor: isTechnicalOrImplementation ? "not-allowed" : "pointer",
                   appearance: "none",
                   WebkitAppearance: "none",
                   paddingRight: "2.5rem",
+                  opacity: isTechnicalOrImplementation ? 0.75 : 1,
+                  backgroundColor: isTechnicalOrImplementation
+                    ? "rgba(15, 23, 42, 0.85)"
+                    : undefined,
+                  borderColor: isTechnicalOrImplementation
+                    ? "rgba(99, 102, 241, 0.4)"
+                    : undefined,
+                  color: isTechnicalOrImplementation ? "#c7d2fe" : undefined,
                 }}
               >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
+                {isTechnicalOrImplementation ? (
+                  <option value="Backlog">Backlog (Padrão para Equipe Técnica)</option>
+                ) : (
+                  STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))
+                )}
               </select>
               <div
                 style={{
@@ -411,14 +450,49 @@ export default function WorkLogForm({
                   top: "50%",
                   transform: "translateY(-50%)",
                   pointerEvents: "none",
-                  color: "var(--text-muted)",
+                  color: isTechnicalOrImplementation
+                    ? "rgba(129, 140, 248, 0.8)"
+                    : "var(--text-muted)",
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
+                {isTechnicalOrImplementation ? (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                )}
               </div>
             </div>
+            {isTechnicalOrImplementation && (
+              <p
+                style={{
+                  fontSize: "0.72rem",
+                  color: "var(--text-muted)",
+                  marginTop: "0.35rem",
+                  lineHeight: 1.3,
+                }}
+              >
+                Chamados para a equipe técnica iniciam obrigatoriamente na coluna <strong style={{ color: "#a5b4fc" }}>Backlog</strong> do Kanban.
+              </p>
+            )}
           </div>
         </div>
 

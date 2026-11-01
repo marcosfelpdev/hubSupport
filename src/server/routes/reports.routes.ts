@@ -44,7 +44,8 @@ router.get("/:id/download", authenticateToken, async (req: Request, res: Respons
     const downloadFileName = `relatorio-${clientSafeName}-${workLog.id.slice(0, 8)}.pdf`;
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${downloadFileName}"`);
+    const isInline = req.query.view === "inline";
+    res.setHeader("Content-Disposition", `${isInline ? "inline" : "attachment"}; filename="${downloadFileName}"`);
     res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
 
     res.sendFile(pdfFilePath);

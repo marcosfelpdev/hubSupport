@@ -1,8 +1,16 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Cog, Lightbulb, Search, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import {
+  Cog,
+  Lightbulb,
+  Search,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Inbox,
+  X,
+} from "lucide-react";
 import { WorkLogItem, api } from "@/services/api";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
-import TagBadge from "@/components/TagBadge";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
 
 export type ColumnId = "backlog" | "pendencias" | "em_progresso" | "finalizadas";
@@ -10,118 +18,48 @@ export type ColumnId = "backlog" | "pendencias" | "em_progresso" | "finalizadas"
 interface ColumnDef {
   id: ColumnId;
   title: string;
-  color: string;
-  badgeBg: string;
-  borderHover: string;
+  dotColor: string;
+  headerBorder: string;
+  badgeClass: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+  isDefault?: boolean;
 }
 
 const COLUMNS: ColumnDef[] = [
   {
     id: "backlog",
     title: "Backlog",
-    color: "#818cf8",
-    badgeBg: "rgba(99, 102, 241, 0.15)",
-    borderHover: "rgba(99, 102, 241, 0.5)",
+    dotColor: "bg-indigo-400",
+    headerBorder: "border-indigo-500",
+    badgeClass: "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30",
+    icon: Inbox,
+    isDefault: true,
   },
   {
     id: "pendencias",
     title: "Pendências",
-    color: "#fbbf24",
-    badgeBg: "rgba(245, 158, 11, 0.15)",
-    borderHover: "rgba(245, 158, 11, 0.5)",
+    dotColor: "bg-amber-400",
+    headerBorder: "border-amber-500",
+    badgeClass: "bg-amber-500/15 text-amber-300 border border-amber-500/30",
+    icon: AlertCircle,
   },
   {
     id: "em_progresso",
     title: "Em progresso",
-    color: "#60a5fa",
-    badgeBg: "rgba(59, 130, 246, 0.15)",
-    borderHover: "rgba(59, 130, 246, 0.5)",
+    dotColor: "bg-sky-400",
+    headerBorder: "border-sky-500",
+    badgeClass: "bg-sky-500/15 text-sky-300 border border-sky-500/30",
+    icon: Clock,
   },
   {
     id: "finalizadas",
     title: "Finalizadas",
-    color: "#34d399",
-    badgeBg: "rgba(16, 185, 129, 0.15)",
-    borderHover: "rgba(16, 185, 129, 0.5)",
+    dotColor: "bg-emerald-400",
+    headerBorder: "border-emerald-500",
+    badgeClass: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30",
+    icon: CheckCircle2,
   },
 ];
-
-const avatarColors = [
-  "#6366f1",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#06b6d4",
-  "#ec4899",
-  "#14b8a6",
-];
-
-function getAvatarColor(userId?: string) {
-  if (!userId) return avatarColors[0];
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
-function getInitials(name?: string) {
-  if (!name) return "US";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString("pt-BR");
-}
-
-function getStatusBadgeConfig(status: string) {
-  switch (status) {
-    case "Solucionado":
-    case "Finalizadas":
-      return {
-        label: "Solucionado",
-        color: "#34d399",
-        bg: "rgba(16, 185, 129, 0.15)",
-        border: "rgba(16, 185, 129, 0.35)",
-      };
-    case "Em andamento":
-    case "Em progresso":
-      return {
-        label: "Em progresso",
-        color: "#60a5fa",
-        bg: "rgba(59, 130, 246, 0.12)",
-        border: "rgba(59, 130, 246, 0.3)",
-      };
-    case "Pendências":
-    case "Aguardando reunião":
-      return {
-        label: "Pendências",
-        color: "#fbbf24",
-        bg: "rgba(245, 158, 11, 0.12)",
-        border: "rgba(245, 158, 11, 0.3)",
-      };
-    case "Não foi possível realizar":
-      return {
-        label: "Não foi possível realizar",
-        color: "#f87171",
-        bg: "rgba(239, 68, 68, 0.12)",
-        border: "rgba(239, 68, 68, 0.3)",
-      };
-    default:
-      return {
-        label: status || "Backlog",
-        color: "#818cf8",
-        bg: "rgba(99, 102, 241, 0.12)",
-        border: "rgba(99, 102, 241, 0.25)",
-      };
-  }
-}
 
 function getColumnForStatus(status: string): ColumnId {
   const normalized = (status || "").toLowerCase().trim();
@@ -174,7 +112,6 @@ interface TechnicianKanbanBoardProps {
 
 export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   logs: initialLogs,
-  employees,
   onLogResolved,
 }) => {
   const [logs, setLogs] = useState<WorkLogItem[]>(initialLogs);
@@ -184,7 +121,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   const [draggingLogId, setDraggingLogId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<ColumnId | null>(null);
 
-  // Filtros simples
+  // Filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"" | "technical" | "implementation">("");
   const [filterAuthor, setFilterAuthor] = useState("");
@@ -194,6 +131,61 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   useEffect(() => {
     setLogs(initialLogs);
   }, [initialLogs]);
+
+  // Polling leve para atualizar cards com relatórios de IA sendo gerados
+  useEffect(() => {
+    const hasGenerating = logs.some(
+      (l) =>
+        l.aiReport &&
+        (l.aiReport.status === "pending" ||
+          l.aiReport.status === "processing" ||
+          (!l.aiReport.pdfPath && l.aiReport.status !== "failed"))
+    );
+
+    if (!hasGenerating) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const pendingLogs = logs.filter(
+          (l) =>
+            l.aiReport &&
+            (l.aiReport.status === "pending" ||
+              l.aiReport.status === "processing" ||
+              (!l.aiReport.pdfPath && l.aiReport.status !== "failed"))
+        );
+
+        let changed = false;
+        const updated = [...logs];
+
+        await Promise.all(
+          pendingLogs.map(async (pLog) => {
+            const status = await api.worklogs.getAiStatus(pLog.id);
+            if (status && status.status !== pLog.aiReport?.status) {
+              const idx = updated.findIndex((x) => x.id === pLog.id);
+              if (idx !== -1) {
+                updated[idx] = {
+                  ...updated[idx],
+                  aiReport: {
+                    ...updated[idx].aiReport,
+                    ...status,
+                  },
+                };
+                changed = true;
+              }
+            }
+          })
+        );
+
+        if (changed) {
+          setLogs(updated);
+        }
+      } catch (err) {
+        console.error("[Kanban] Erro ao sincronizar status de IA:", err);
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [logs]);
 
   const authorOptions = useMemo(() => {
     const list = Array.from(new Set(logs.map((l) => l.user?.name).filter(Boolean)));
@@ -228,6 +220,25 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
       return true;
     });
   }, [logs, searchTerm, filterType, filterAuthor, filterTag]);
+
+  // Contagens para o totalizador métrico
+  const technicalCount = useMemo(
+    () => filteredLogs.filter((l) => l.technicalAction).length,
+    [filteredLogs]
+  );
+  const implementationCount = useMemo(
+    () => filteredLogs.filter((l) => l.implementation).length,
+    [filteredLogs]
+  );
+
+  const hasActiveFilters = Boolean(searchTerm || filterType || filterAuthor || filterTag);
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setFilterType("");
+    setFilterAuthor("");
+    setFilterTag("");
+  };
 
   // Agrupamento por colunas
   const columnsData = useMemo(() => {
@@ -321,7 +332,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
       onLogResolved?.();
     } catch (err) {
       console.error("[Kanban] Erro ao mover card:", err);
-      // Reverte caso dê erro
+      // Reverte caso ocorra falha
       setLogs((prev) =>
         prev.map((l) => (l.id === logId ? { ...l, status: log.status } : l))
       );
@@ -329,107 +340,106 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   };
 
   return (
-    <div style={{ width: "100%" }}>
-      {/* Barra de Filtros limpa e compacta */}
-      <div
-        style={{
-          background: "var(--bg-card)",
-          border: "1px solid var(--border)",
-          borderRadius: "0.75rem",
-          padding: "0.875rem 1rem",
-          marginBottom: "1.25rem",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.75rem",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", flex: 1 }}>
-          {/* Busca por texto */}
-          <div style={{ position: "relative", minWidth: "220px", flex: "1 1 240px" }}>
-            <Search
-              size={15}
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--text-muted)",
-              }}
-            />
-            <input
-              type="text"
-              className="input-dark"
-              placeholder="Buscar por solicitante, cliente, plataforma..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: "2rem", width: "100%", fontSize: "0.825rem" }}
-            />
+    <div className="w-full">
+      {/* Barra de Filtros Moderna (Task 2) */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-5 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* Controles de Filtro */}
+          <div className="flex flex-wrap items-center gap-3 flex-1">
+            {/* Campo de Busca Polido */}
+            <div className="relative min-w-[240px] flex-1 max-w-md">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none"
+              />
+              <input
+                type="text"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs rounded-lg pl-9 pr-3 py-2 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-inner"
+                placeholder="Buscar por solicitante, cliente, plataforma ou problema..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Dropdown: Tipo */}
+            <select
+              className="bg-[var(--bg-secondary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as "" | "technical" | "implementation")}
+            >
+              <option value="">Todos os tipos</option>
+              <option value="technical">Ação Técnica</option>
+              <option value="implementation">Implementação</option>
+            </select>
+
+            {/* Dropdown: Tag */}
+            <select
+              className="bg-[var(--bg-secondary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all max-w-[170px]"
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+            >
+              <option value="">Todas as tags</option>
+              {tagOptions.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+
+            {/* Dropdown: Autor */}
+            <select
+              className="bg-[var(--bg-secondary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all max-w-[180px]"
+              value={filterAuthor}
+              onChange={(e) => setFilterAuthor(e.target.value)}
+            >
+              <option value="">Todos os autores</option>
+              {authorOptions.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+
+            {/* Botão para limpar filtros */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--text-muted)] hover:text-sky-400 hover:bg-white/5 transition-colors cursor-pointer"
+                title="Limpar todos os filtros"
+              >
+                <X size={14} />
+                <span>Limpar filtros</span>
+              </button>
+            )}
           </div>
 
-          {/* Filtro por tipo (Ação Técnica / Implementação) */}
-          <select
-            className="input-dark"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as any)}
-            style={{ maxWidth: "160px", flex: "1 1 160px", cursor: "pointer", fontSize: "0.825rem" }}
-          >
-            <option value="">Todos os tipos</option>
-            <option value="technical">Ação Técnica</option>
-            <option value="implementation">Implementação</option>
-          </select>
-
-          {/* Filtro por tag de plataforma */}
-          <select
-            className="input-dark"
-            value={filterTag}
-            onChange={(e) => setFilterTag(e.target.value)}
-            style={{ maxWidth: "170px", flex: "1 1 170px", cursor: "pointer", fontSize: "0.825rem" }}
-          >
-            <option value="">Todas as tags</option>
-            {tagOptions.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-
-          {/* Filtro por autor */}
-          <select
-            className="input-dark"
-            value={filterAuthor}
-            onChange={(e) => setFilterAuthor(e.target.value)}
-            style={{ maxWidth: "180px", flex: "1 1 180px", cursor: "pointer", fontSize: "0.825rem" }}
-          >
-            <option value="">Todos os autores</option>
-            {authorOptions.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Resumo totalizador */}
-        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-          Total exibido: <strong style={{ color: "var(--text-primary)" }}>{filteredLogs.length}</strong> chamados
+          {/* Totalizador Métrico Aprimorado */}
+          <div className="flex items-center gap-2 flex-wrap text-xs text-[var(--text-secondary)]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] shadow-xs">
+              <span className="text-[var(--text-muted)]">Total:</span>
+              <strong className="text-[var(--text-primary)] font-bold">{filteredLogs.length}</strong>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/25 shadow-xs">
+              <Cog size={13} className="text-sky-400" />
+              <span>Ação Técnica:</span>
+              <strong className="font-bold">{technicalCount}</strong>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/25 shadow-xs">
+              <Lightbulb size={13} className="text-purple-400" />
+              <span>Implementação:</span>
+              <strong className="font-bold">{implementationCount}</strong>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Grid das 4 Colunas do Kanban */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-          gap: "1rem",
-          alignItems: "start",
-          minHeight: "calc(100vh - 280px)",
-        }}
-      >
+      {/* Grid das 4 Colunas do Kanban (Task 3) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start min-h-[calc(100vh-270px)]">
         {COLUMNS.map((col) => {
           const cardsInCol = columnsData[col.id];
           const isOver = dragOverColumn === col.id;
+          const EmptyIcon = col.icon;
 
           return (
             <div
@@ -438,46 +448,23 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               onDragOver={(e) => handleDragOver(col.id, e)}
               onDragLeave={(e) => handleDragLeave(col.id, e)}
               onDrop={(e) => handleDrop(col.id, e)}
-              style={{
-                background: "rgba(15, 23, 42, 0.4)",
-                border: isOver
-                  ? `2px dashed ${col.color}`
-                  : "1px solid var(--border)",
-                borderRadius: "0.75rem",
-                display: "flex",
-                flexDirection: "column",
-                minHeight: "calc(100vh - 280px)",
-                maxHeight: "calc(100vh - 280px)",
-                transition: "all 0.15s ease",
-                padding: "0.875rem",
-                overflow: "hidden",
-              }}
+              className={`rounded-2xl p-3.5 flex flex-col h-[calc(100vh-270px)] min-h-[500px] max-h-[calc(100vh-270px)] transition-all duration-200 overflow-hidden ${
+                isOver
+                  ? "border-2 border-dashed border-sky-400 bg-sky-500/10 shadow-[0_0_20px_rgba(56,189,248,0.15)]"
+                  : "bg-[var(--bg-secondary)]/50 border border-[var(--border)] hover:border-[var(--border-light)]"
+              }`}
             >
               {/* Cabeçalho da Coluna */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingBottom: "0.75rem",
-                  marginBottom: "0.75rem",
-                  borderBottom: `2px solid ${col.color}`,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" }}>
+              <div className={`flex items-center justify-between pb-3 mb-3 border-b-2 shrink-0 ${col.headerBorder}`}>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${col.dotColor}`} />
+                  <span className="text-sm font-bold text-[var(--text-primary)] tracking-tight">
                     {col.title}
                   </span>
-                  {col.id === "backlog" && (
+                  {col.isDefault && (
                     <span
                       title="Coluna padrão onde novos chamados técnicos e implementações são inseridos"
-                      style={{
-                        fontSize: "0.65rem",
-                        padding: "0.1rem 0.4rem",
-                        borderRadius: "4px",
-                        backgroundColor: "rgba(255, 255, 255, 0.08)",
-                        color: "var(--text-muted)",
-                      }}
+                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/10 text-[var(--text-muted)] border border-white/5"
                     >
                       Padrão
                     </span>
@@ -485,68 +472,34 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                 </div>
 
                 <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    minWidth: "22px",
-                    height: "22px",
-                    padding: "0 0.4rem",
-                    borderRadius: "9999px",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: col.color,
-                    background: col.badgeBg,
-                  }}
+                  className={`inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs font-bold ${col.badgeClass}`}
                 >
                   {cardsInCol.length}
                 </span>
               </div>
 
-              {/* Slot / Dropzone quando arrastando sobre */}
+              {/* Slot / Feedback de Dropzone quando arrastando sobre */}
               {isOver && (
-                <div
-                  style={{
-                    padding: "0.75rem",
-                    marginBottom: "0.75rem",
-                    borderRadius: "8px",
-                    border: `1px dashed ${col.color}`,
-                    background: col.badgeBg,
-                    color: col.color,
-                    textAlign: "center",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  Solte aqui para mover para {col.title}
+                <div className="py-2.5 px-3 mb-3 rounded-xl border border-dashed border-sky-400 bg-sky-500/15 text-sky-300 text-xs font-semibold text-center animate-pulse flex items-center justify-center gap-1.5 shrink-0">
+                  <span>Solte para mover para {col.title}</span>
                 </div>
               )}
 
-              {/* Lista de Cards da Coluna (Sempre Reduzidos / Compactos) */}
+              {/* Lista rolável de Cards da Coluna */}
               <div
                 onDragOver={(e) => handleDragOver(col.id, e)}
                 onDrop={(e) => handleDrop(col.id, e)}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
-                  overflowY: "auto",
-                  flex: 1,
-                  paddingRight: "0.2rem",
-                }}
+                className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-1.5"
               >
                 {cardsInCol.length === 0 && !isOver ? (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "3rem 1rem",
-                      color: "var(--text-muted)",
-                      border: "1px dashed var(--border)",
-                      borderRadius: "8px",
-                      fontSize: "0.8rem",
-                    }}
-                  >
-                    Nenhum chamado em {col.title}
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center rounded-xl border border-dashed border-[var(--border-light)]/40 bg-[var(--bg-card)]/30 my-auto min-h-[160px]">
+                    <EmptyIcon size={26} className="text-[var(--text-muted)]/50 mb-2 stroke-[1.5]" />
+                    <p className="text-xs font-medium text-[var(--text-secondary)]">
+                      Nenhum chamado nesta etapa
+                    </p>
+                    <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                      {col.id === "backlog" ? "Novos itens aparecerão aqui" : "Arraste um card para cá"}
+                    </p>
                   </div>
                 ) : (
                   cardsInCol.map((log) => {
@@ -573,6 +526,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                         }}
                         onClick={() => setSelectedLogForModal(log)}
                         isDragging={isDragging}
+                        isSelected={selectedLogForModal?.id === log.id}
                         log={log}
                       />
                     );

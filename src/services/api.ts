@@ -223,6 +223,10 @@ export const api = {
     getDownloadReportUrl(id: string): string {
       return `/api/reports/${id}/download`;
     },
+    getViewReportUrl(id: string): string {
+      const token = getToken();
+      return `/api/reports/${id}/download?view=inline${token ? `&token=${encodeURIComponent(token)}` : ""}`;
+    },
     getDownloadRecordingUrl(id: string): string {
       return `/api/reports/${id}/recording`;
     },

@@ -266,6 +266,10 @@ router.post(
       const isImplementation =
         implementation === "on" || implementation === "true" || implementation === true;
 
+      // Se for ação técnica ou implementação, o chamado destina-se à equipe técnica
+      // e deve obrigatoriamente iniciar na coluna "Backlog" do Kanban
+      const finalStatus = isTechnicalAction || isImplementation ? "Backlog" : status.trim();
+
       const newLog = await prisma.workLog.create({
         data: {
           title: finalTitle,
@@ -273,7 +277,7 @@ router.post(
           clientOrOffice: clientOrOffice.trim(),
           reportedProblem: finalDescription,
           actionTaken: (actionTaken || "").trim(),
-          status: status.trim(),
+          status: finalStatus,
           technicalAction: isTechnicalAction,
           implementation: isImplementation,
           media: JSON.stringify(mediaPaths),
