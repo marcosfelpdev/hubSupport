@@ -48,7 +48,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
 // PATCH /api/notifications/:id/read
 router.patch("/:id/read", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     await prisma.notification.update({
       where: { id },

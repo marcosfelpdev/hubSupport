@@ -6,8 +6,6 @@ import {
   Search,
   Calendar,
   X,
-  ChevronLeft,
-  ChevronRight,
   Paperclip,
   CheckCircle2,
   Clock,
@@ -20,6 +18,7 @@ import AiReportSection from "@/components/AiReportSection";
 import TagBadge from "@/components/TagBadge";
 import { WorkLog } from "@/components/WorkLogFeed";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
+import MediaGalleryModal from "@/components/MediaGalleryModal";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 
 interface DashboardProps {
@@ -131,10 +130,6 @@ function getMediaPaths(log: any): string[] {
   } catch {
     return [];
   }
-}
-
-function isImage(url: string) {
-  return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
 }
 
 export default function DashboardClient({
@@ -547,80 +542,13 @@ export default function DashboardClient({
         </div>
       )}
 
-      {/* Modal Carousel de Mídia */}
-      {mediaModalOpen && (
-        <div
-          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
-          onClick={() => setMediaModalOpen(false)}
-        >
-          <div
-            className="relative max-w-5xl max-h-[90vh] w-full h-full overflow-hidden rounded-2xl bg-black shadow-2xl flex flex-col items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header com contador e botão de fechar */}
-            <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-20 text-white">
-              <div className="text-xs font-semibold bg-black/60 px-3 py-1 rounded-full backdrop-blur-xs">
-                {mediaCurrentIndex + 1} / {mediaItems.length}
-              </div>
-              <button
-                onClick={() => setMediaModalOpen(false)}
-                className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full cursor-pointer transition-colors"
-                title="Fechar"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Visualizador de Mídia */}
-            <div className="w-full h-full flex items-center justify-center p-4">
-              {mediaItems[mediaCurrentIndex] && (
-                <div className="flex items-center justify-center w-full h-full">
-                  {isImage(mediaItems[mediaCurrentIndex]) ? (
-                    <img
-                      src={mediaItems[mediaCurrentIndex]}
-                      alt="Mídia"
-                      className="max-w-full max-h-[80vh] object-contain rounded-lg"
-                    />
-                  ) : (
-                    <video
-                      src={mediaItems[mediaCurrentIndex]}
-                      controls
-                      autoPlay
-                      className="max-w-full max-h-[80vh] rounded-lg bg-black"
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Botões de Navegação */}
-              {mediaItems.length > 1 && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMediaCurrentIndex((i) => (i === 0 ? mediaItems.length - 1 : i - 1));
-                    }}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2.5 rounded-full cursor-pointer transition-colors z-30"
-                    title="Mídia anterior"
-                  >
-                    <ChevronLeft size={24} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMediaCurrentIndex((i) => (i === mediaItems.length - 1 ? 0 : i + 1));
-                    }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2.5 rounded-full cursor-pointer transition-colors z-30"
-                    title="Próxima mídia"
-                  >
-                    <ChevronRight size={24} />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal / Visualizador de Mídias Anexadas */}
+      <MediaGalleryModal
+        isOpen={mediaModalOpen}
+        onClose={() => setMediaModalOpen(false)}
+        mediaUrls={mediaItems}
+        initialIndex={mediaCurrentIndex}
+      />
     </div>
   );
 }

@@ -1,12 +1,13 @@
-
+"use client";
 
 import { useMemo, useState, useTransition, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Cog, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight, X, Download } from "lucide-react";
+import { Cog, Lightbulb, CheckCircle2, Paperclip, AlertCircle, FileText } from "lucide-react";
 import { api } from "@/services/api";
 import AiReportSection from "@/components/AiReportSection";
 import TagBadge from "@/components/TagBadge";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
+import MediaGalleryModal from "@/components/MediaGalleryModal";
 
 export interface TechnicalWorkLog {
   id: string;
@@ -25,7 +26,7 @@ export interface TechnicalWorkLog {
     name: string;
     color: string;
   } | null;
-  createdAt: Date;
+  createdAt: Date | string;
   userId: string;
   user: {
     name: string;
@@ -61,7 +62,8 @@ const avatarColors = [
   "#ec4899",
 ];
 
-function getAvatarColor(userId: string) {
+function getAvatarColor(userId?: string) {
+  if (!userId) return avatarColors[0];
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
     hash = userId.charCodeAt(i) + ((hash << 5) - hash);
@@ -69,7 +71,8 @@ function getAvatarColor(userId: string) {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 }
 
-function getInitials(name: string) {
+function getInitials(name?: string) {
+  if (!name) return "US";
   return name
     .split(" ")
     .map((n) => n[0])
@@ -78,56 +81,72 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
-function getStatusBadgeConfig(status: string) {
-  switch (status) {
-    case "Solucionado":
-      return {
-        label: "Solucionado",
-        color: "#34d399",
-        bg: "rgba(16, 185, 129, 0.15)",
-        border: "rgba(16, 185, 129, 0.35)",
-      };
-    case "Realizado":
-    case "Já realizado":
-      return {
-        label: "Já realizado",
-        color: "#34d399",
-        bg: "rgba(16, 185, 129, 0.12)",
-        border: "rgba(16, 185, 129, 0.3)",
-      };
-    case "Em andamento":
-      return {
-        label: "Em andamento",
-        color: "#60a5fa",
-        bg: "rgba(59, 130, 246, 0.12)",
-        border: "rgba(59, 130, 246, 0.3)",
-      };
-    case "Aguardando reunião":
-      return {
-        label: "Aguardando reunião",
-        color: "#fbbf24",
-        bg: "rgba(245, 158, 11, 0.12)",
-        border: "rgba(245, 158, 11, 0.3)",
-      };
-    case "Não foi possível realizar":
-      return {
-        label: "Não foi possível realizar",
-        color: "#f87171",
-        bg: "rgba(239, 68, 68, 0.12)",
-        border: "rgba(239, 68, 68, 0.3)",
-      };
-    default:
-      return {
-        label: status || "Registrado",
-        color: "#818cf8",
-        bg: "rgba(99, 102, 241, 0.12)",
-        border: "rgba(99, 102, 241, 0.25)",
-      };
+function getStatusPillConfig(status: string) {
+  const norm = (status || "").toLowerCase().trim();
+
+  if (
+    norm === "solucionado" ||
+    norm === "finalizadas" ||
+    norm === "finalizado" ||
+    norm === "concluído" ||
+    norm === "concluido" ||
+    norm === "realizado" ||
+    norm === "já realizado"
+  ) {
+    return {
+      label: "Solucionado",
+      badgeClass: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+      dotClass: "bg-emerald-500",
+    };
   }
+
+  if (norm === "em progresso" || norm === "em andamento") {
+    return {
+      label: "Em andamento",
+      badgeClass: "bg-sky-50 text-sky-700 border border-sky-200",
+      dotClass: "bg-sky-500",
+    };
+  }
+
+  if (
+    norm === "pendências" ||
+    norm === "pendencias" ||
+    norm === "pendente" ||
+    norm === "aguardando reunião" ||
+    norm === "aguardando reuniao"
+  ) {
+    return {
+      label: "Aguardando reunião",
+      badgeClass: "bg-amber-50 text-amber-700 border border-amber-200",
+      dotClass: "bg-amber-500",
+    };
+  }
+
+  if (norm === "não foi possível realizar" || norm === "não realizado") {
+    return {
+      label: "Não foi possível realizar",
+      badgeClass: "bg-rose-50 text-rose-700 border border-rose-200",
+      dotClass: "bg-rose-500",
+    };
+  }
+
+  return {
+    label: status || "Registrado",
+    badgeClass: "bg-slate-100 text-slate-700 border border-slate-200",
+    dotClass: "bg-slate-400",
+  };
 }
 
-function formatDate(date: Date) {
-  return new Date(date).toLocaleDateString("pt-BR");
+function formatDate(date: Date | string) {
+  try {
+    return new Date(date).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
 }
 
 function getMediaPaths(log: TechnicalWorkLog): string[] {
@@ -138,17 +157,8 @@ function getMediaPaths(log: TechnicalWorkLog): string[] {
   }
 }
 
-function isImage(url: string) {
-  return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
-}
-
-function isVideo(url: string) {
-  return /\.(mp4|webm|ogg|mov)$/i.test(url);
-}
-
 export default function TechnicianDashboardClient({
   logs: initialLogs,
-  currentUserId,
   employees,
   onLogResolved,
 }: TechnicianDashboardProps) {
@@ -251,7 +261,7 @@ export default function TechnicianDashboardClient({
     startTransition(async () => {
       try {
         const res = await api.worklogs.resolve(logId);
-onLogResolved?.();
+        onLogResolved?.();
         if (res.error) {
           setActionFeedback({ type: "error", text: res.error });
           return;
@@ -278,63 +288,48 @@ onLogResolved?.();
     });
   }
 
+  const selectedStatusPill = selectedLog ? getStatusPillConfig(selectedLog.status) : null;
+
   return (
-    <div style={{ width: "100%" }}>
+    <div className="w-full">
       {/* Barra de Filtros */}
-      <div
-        style={{
-          background: "var(--bg-card)",
-          border: "1px solid var(--border)",
-          borderRadius: "0.75rem",
-          padding: "1rem",
-          marginBottom: "1.5rem",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.75rem",
-          alignItems: "center",
-        }}
-      >
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-6 flex flex-wrap gap-3 items-center shadow-xs">
         <input
           type="text"
-          className="input-dark"
+          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1"
           placeholder="Pesquisar por solicitante"
           value={filters.requester}
           onChange={(e) => setFilters({ ...filters, requester: e.target.value })}
-          style={{ maxWidth: "200px", flex: "1 1 200px" }}
         />
         <input
           type="text"
-          className="input-dark"
+          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[220px] flex-1"
           placeholder="Pesquisar por escritório/cliente"
           value={filters.clientOrOffice}
           onChange={(e) => setFilters({ ...filters, clientOrOffice: e.target.value })}
-          style={{ maxWidth: "220px", flex: "1 1 220px" }}
         />
         <input
           type="date"
-          className="input-dark"
+          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[180px] flex-1"
           value={filters.date}
           onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-          style={{ maxWidth: "180px", flex: "1 1 180px" }}
         />
         <select
-          className="input-dark"
+          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.status}
           onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-          style={{ maxWidth: "200px", flex: "1 1 200px", cursor: "pointer" }}
         >
           <option value="">Todos os status</option>
           {statusOptions.map((status) => (
             <option key={status} value={status}>
-              {getStatusBadgeConfig(status).label}
+              {getStatusPillConfig(status).label}
             </option>
           ))}
         </select>
         <select
-          className="input-dark"
+          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.tag}
           onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
-          style={{ maxWidth: "200px", flex: "1 1 200px", cursor: "pointer" }}
         >
           <option value="">Todas as plataformas / tags</option>
           {tagOptions.map((name) => (
@@ -344,20 +339,18 @@ onLogResolved?.();
           ))}
         </select>
         <select
-          className="input-dark"
+          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.type}
           onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-          style={{ maxWidth: "200px", flex: "1 1 200px", cursor: "pointer" }}
         >
           <option value="">Todos os tipos</option>
           <option value="technical">Ação Técnica</option>
           <option value="implementation">Implementação</option>
         </select>
         <select
-          className="input-dark"
+          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.employee}
           onChange={(e) => setFilters({ ...filters, employee: e.target.value })}
-          style={{ maxWidth: "200px", flex: "1 1 200px", cursor: "pointer" }}
         >
           <option value="">Todos os autores</option>
           {employeeOptions.map((name) => (
@@ -368,52 +361,16 @@ onLogResolved?.();
         </select>
       </div>
 
-      {/* Grid Principal: Cards minimizados ao lado (esquerda) e Card expandido ao centro */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "320px 1fr",
-          gap: "1.5rem",
-          alignItems: "start",
-          minHeight: "calc(100vh - 280px)",
-        }}
-      >
+      {/* Grid Principal: Cards minimizados ao lado (esquerda) e Card expandido ao lado (direita) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-h-[calc(100vh-280px)]">
         {/* Coluna Esquerda: Cards minimizados */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
-            maxHeight: "calc(100vh - 300px)",
-            overflowY: "auto",
-            paddingRight: "0.25rem",
-          }}
-        >
+        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 max-h-[calc(100vh-270px)] overflow-y-auto pr-1">
           {filteredLogs.length === 0 ? (
-            <div
-              className="card"
-              style={{
-                textAlign: "center",
-                padding: "2.5rem 1rem",
-                borderStyle: "dashed",
-              }}
-            >
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  background: "rgba(56, 189, 248, 0.1)",
-                  color: "#38bdf8",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 0.75rem",
-                }}
-              >
+            <div className="bg-white border border-dashed border-slate-200 rounded-2xl text-center py-12 px-4 shadow-xs">
+              <div className="w-10 h-10 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center mx-auto mb-3 shadow-2xs">
                 <Cog size={20} />
               </div>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
+              <p className="text-slate-500 text-xs font-medium">
                 Nenhum chamado técnico encontrado
               </p>
             </div>
@@ -433,76 +390,43 @@ onLogResolved?.();
           )}
         </div>
 
-        {/* Coluna Central: Card expandido */}
-        <div
-          className="card"
-          style={{
-            minHeight: "calc(100vh - 300px)",
-            maxHeight: "calc(100vh - 300px)",
-            overflowY: "auto",
-            position: "relative",
-          }}
-        >
+        {/* Coluna Central / Direita: Card expandido */}
+        <div className="lg:col-span-7 xl:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 shadow-xs min-h-[calc(100vh-270px)] max-h-[calc(100vh-270px)] overflow-y-auto relative">
           {selectedLog ? (
-            <div className="animate-fade-in">
+            <div className="flex flex-col gap-5 animate-fade-in">
               {/* Alerta de Feedback de Ação */}
               {actionFeedback && (
                 <div
-                  className={`alert animate-fade-in ${
-                    actionFeedback.type === "success" ? "alert-success" : "alert-error"
+                  className={`p-3.5 rounded-xl border text-xs font-semibold flex items-center gap-2 shadow-2xs animate-fade-in ${
+                    actionFeedback.type === "success"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-rose-50 text-rose-700 border-rose-200"
                   }`}
-                  style={{ marginBottom: "1rem" }}
                 >
                   {actionFeedback.type === "success" ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
+                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
                   ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="15" y1="9" x2="9" y2="15" />
-                      <line x1="9" y1="9" x2="15" y2="15" />
-                    </svg>
+                    <AlertCircle size={16} className="text-rose-600 shrink-0" />
                   )}
-                  {actionFeedback.text}
+                  <span>{actionFeedback.text}</span>
                 </div>
               )}
 
               {/* Topo do card expandido */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "1.25rem",
-                  paddingBottom: "1rem",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                  position: "relative",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
+                <div className="flex items-center gap-3">
                   <div
-                    className="avatar"
-                    style={{
-                      background: `linear-gradient(135deg, ${getAvatarColor(selectedLog.userId)}, ${getAvatarColor(selectedLog.userId)}aa)`,
-                    }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-2xs"
+                    style={{ backgroundColor: getAvatarColor(selectedLog.userId) }}
                   >
                     {getInitials(selectedLog.user.name)}
                   </div>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <p style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-slate-900 leading-tight">
                         {selectedLog.user.name}
                       </p>
-                      <span
-                        style={{
-                          fontSize: "0.68rem",
-                          padding: "1px 6px",
-                          borderRadius: "4px",
-                          backgroundColor: "rgba(255, 255, 255, 0.06)",
-                          color: "var(--text-muted)",
-                        }}
-                      >
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                         {selectedLog.user.role === "ADMIN"
                           ? "Administrador"
                           : selectedLog.user.role === "SUPPORT"
@@ -512,7 +436,7 @@ onLogResolved?.();
                               : "Colaborador"}
                       </span>
                     </div>
-                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                    <p className="text-xs text-slate-500 mt-0.5">
                       Registrado em {formatDate(selectedLog.createdAt)} às{" "}
                       {new Date(selectedLog.createdAt).toLocaleTimeString("pt-BR", {
                         hour: "2-digit",
@@ -522,160 +446,86 @@ onLogResolved?.();
                   </div>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div className="flex items-center gap-2 flex-wrap">
                   {/* Master Tag */}
                   {selectedLog.tag && (
                     <TagBadge name={selectedLog.tag.name} color={selectedLog.tag.color} size="md" />
                   )}
-                  {/* Tags */}
+
+                  {/* Tags Ação Técnica / Implementação */}
                   {selectedLog.technicalAction && (
                     <div
                       title="Ação Técnica"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.35rem",
-                        padding: "0.2rem 0.5rem",
-                        borderRadius: "6px",
-                        background: "rgba(245, 158, 11, 0.15)",
-                        border: "1px solid rgba(245, 158, 11, 0.3)",
-                        color: "#fbbf24",
-                        fontSize: "0.72rem",
-                        fontWeight: 600,
-                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold shadow-2xs"
                     >
                       <Cog size={12} />
-                      Ação Técnica
+                      <span>Ação Técnica</span>
                     </div>
                   )}
                   {selectedLog.implementation && (
                     <div
                       title="Implementação"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.35rem",
-                        padding: "0.2rem 0.5rem",
-                        borderRadius: "6px",
-                        background: "rgba(59, 130, 246, 0.15)",
-                        border: "1px solid rgba(59, 130, 246, 0.3)",
-                        color: "#60a5fa",
-                        fontSize: "0.72rem",
-                        fontWeight: 600,
-                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-xs font-semibold shadow-2xs"
                     >
                       <Lightbulb size={12} />
-                      Implementação
+                      <span>Implementação</span>
                     </div>
                   )}
 
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.35rem",
-                      padding: "0.25rem 0.75rem",
-                      borderRadius: "9999px",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      color: getStatusBadgeConfig(selectedLog.status).color,
-                      background: getStatusBadgeConfig(selectedLog.status).bg,
-                      border: `1px solid ${getStatusBadgeConfig(selectedLog.status).border}`,
-                    }}
-                  >
-                    {selectedLog.status === "Solucionado" && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                    {getStatusBadgeConfig(selectedLog.status).label}
-                  </span>
+                  {selectedStatusPill && (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold shadow-2xs ${selectedStatusPill.badgeClass}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selectedStatusPill.dotClass}`} />
+                      <span>{selectedStatusPill.label}</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* Título do Chamado (se houver) */}
               {selectedLog.title && (
-                <div
-                  style={{
-                    background: "rgba(99, 102, 241, 0.08)",
-                    border: "1px solid rgba(99, 102, 241, 0.25)",
-                    borderRadius: "8px",
-                    padding: "0.875rem 1rem",
-                    marginBottom: "1.25rem",
-                  }}
-                >
-                  <p style={{ fontSize: "0.72rem", color: "#a5b4fc", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600, marginBottom: "0.25rem" }}>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
                     Título do Atendimento
-                  </p>
-                  <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#ffffff", margin: 0 }}>
+                  </span>
+                  <h3 className="text-base font-bold text-slate-900">
                     {selectedLog.title}
                   </h3>
                 </div>
               )}
 
               {/* Solicitante & Escritório */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1.25rem" }}>
-                <div
-                  style={{
-                    flex: "1 1 250px",
-                    background: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "8px",
-                    padding: "0.75rem",
-                  }}
-                >
-                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.375rem" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
                     Solicitante
-                  </p>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-primary)", fontWeight: 600 }}>
-                    {selectedLog.requester}
+                  </span>
+                  <p className="text-xs font-semibold text-slate-800">
+                    {selectedLog.requester || "Não informado"}
                   </p>
                 </div>
-                <div
-                  style={{
-                    flex: "1 1 250px",
-                    background: "rgba(99, 102, 241, 0.08)",
-                    border: "1px solid rgba(99, 102, 241, 0.2)",
-                    borderRadius: "8px",
-                    padding: "0.75rem",
-                  }}
-                >
-                  <p style={{ fontSize: "0.75rem", color: "#a5b4fc", marginBottom: "0.375rem" }}>
+                <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
                     Escritório / Cliente
-                  </p>
-                  <p style={{ fontSize: "0.9rem", color: "#e0e7ff", fontWeight: 600 }}>
-                    {selectedLog.clientOrOffice}
+                  </span>
+                  <p className="text-xs font-semibold text-slate-800">
+                    {selectedLog.clientOrOffice || "Não informado"}
                   </p>
                 </div>
               </div>
 
               {/* Botão Mídia (se houver) */}
               {getMediaPaths(selectedLog).length > 0 && (
-                <button
-                  onClick={() => openMediaModal(selectedLog)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "0.625rem 1rem",
-                    background: "rgba(99, 102, 241, 0.1)",
-                    border: "1px solid rgba(99, 102, 241, 0.3)",
-                    borderRadius: "8px",
-                    color: "#818cf8",
-                    fontSize: "0.85rem",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    marginBottom: "1rem",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  Ver Mídias Anexadas ({getMediaPaths(selectedLog).length})
-                </button>
+                <div>
+                  <button
+                    onClick={() => openMediaModal(selectedLog)}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors border border-slate-200 cursor-pointer shadow-2xs"
+                  >
+                    <Paperclip size={14} className="text-slate-500" />
+                    <span>Visualizar Mídias ({getMediaPaths(selectedLog).length})</span>
+                  </button>
+                </div>
               )}
 
               {/* Seção Relatório de IA */}
@@ -685,116 +535,47 @@ onLogResolved?.();
               />
 
               {/* Detalhes do Chamado */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.75rem" }}>
+              <div className="space-y-4">
                 {/* Problema relatado */}
-                <div
-                  style={{
-                    background: "rgba(15, 23, 42, 0.5)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "8px",
-                    padding: "1rem",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                      color: "#f87171",
-                      marginBottom: "0.625rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.375rem",
-                    }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    Descrição
-                  </p>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", lineHeight: 1.6, whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
-                    {selectedLog.reportedProblem}
+                <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
+                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600 mb-2">
+                    <AlertCircle size={14} />
+                    <span>Descrição do Problema</span>
+                  </div>
+                  <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap break-words">
+                    {selectedLog.reportedProblem || "Nenhuma descrição fornecida."}
                   </p>
                 </div>
 
                 {/* Ação realizada (se houver histórico) */}
-                {selectedLog.actionTaken && selectedLog.actionTaken.trim() !== "" ? (
-                  <div
-                    style={{
-                      background: "rgba(15, 23, 42, 0.5)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "8px",
-                      padding: "1rem",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                        color: "#34d399",
-                        marginBottom: "0.625rem",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.375rem",
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Ação realizada pelo autor
-                    </p>
-                    <p style={{ fontSize: "0.9rem", color: "var(--text-primary)", lineHeight: 1.6, whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
+                {selectedLog.actionTaken && selectedLog.actionTaken.trim() !== "" && (
+                  <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 mb-2">
+                      <CheckCircle2 size={14} />
+                      <span>Ação Realizada pelo Autor</span>
+                    </div>
+                    <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap break-words">
                       {selectedLog.actionTaken}
                     </p>
                   </div>
-                ) : null}
+                )}
               </div>
 
               {/* SEÇÃO DE AÇÃO TÉCNICA: BOTÃO "SOLUCIONADO" */}
-              <div
-                style={{
-                  borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-                  paddingTop: "1.25rem",
-                  marginTop: "1.5rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "1rem",
-                }}
-              >
+              <div className="border-t border-slate-200 pt-5 mt-2 flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <h4 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: "0.25rem" }}>
+                  <h4 className="text-sm font-bold text-slate-900 mb-0.5">
                     Resolução Técnica
                   </h4>
-                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                  <p className="text-xs text-slate-500">
                     Quando o chamado for atendido e resolvido, defina-o como solucionado.
                   </p>
                 </div>
 
                 <div>
                   {selectedLog.status === "Solucionado" ? (
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        padding: "0.625rem 1.25rem",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(16, 185, 129, 0.15)",
-                        border: "1px solid rgba(16, 185, 129, 0.4)",
-                        color: "#34d399",
-                        fontWeight: 600,
-                        fontSize: "0.875rem",
-                        boxShadow: "0 0 15px rgba(16, 185, 129, 0.2)",
-                      }}
-                    >
-                      <CheckCircle2 size={18} />
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-xs shadow-2xs">
+                      <CheckCircle2 size={16} className="text-emerald-600" />
                       <span>Solucionado</span>
                     </div>
                   ) : (
@@ -802,223 +583,37 @@ onLogResolved?.();
                       id="btn-solucionado"
                       onClick={() => handleMarkSolved(selectedLog.id)}
                       disabled={isPending}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.6rem",
-                        padding: "0.75rem 1.5rem",
-                        borderRadius: "8px",
-                        backgroundColor: "#10b981",
-                        border: "1px solid #059669",
-                        color: "#ffffff",
-                        fontWeight: 600,
-                        fontSize: "0.9rem",
-                        cursor: isPending ? "not-allowed" : "pointer",
-                        transition: "all 0.2s ease",
-                        boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isPending) {
-                          e.currentTarget.style.backgroundColor = "#059669";
-                          e.currentTarget.style.transform = "translateY(-1px)";
-                          e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.6)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isPending) {
-                          e.currentTarget.style.backgroundColor = "#10b981";
-                          e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = "0 4px 14px rgba(16, 185, 129, 0.4)";
-                        }
-                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isPending ? (
-                        <div
-                          className="spinner"
-                          style={{ width: "16px", height: "16px", borderTopColor: "white" }}
-                        />
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : (
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
+                        <CheckCircle2 size={16} />
                       )}
-                      <span>Solucionado</span>
+                      <span>Marcar como Solucionado</span>
                     </button>
                   )}
                 </div>
               </div>
             </div>
           ) : (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                textAlign: "center",
-                padding: "2rem",
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "50%",
-                    background: "rgba(56, 189, 248, 0.1)",
-                    color: "#38bdf8",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    margin: "0 auto 1rem",
-                  }}
-                >
-                  <Cog size={24} />
-                </div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-                  Selecione um chamado ao lado para visualizar os detalhes e a opção de solucioná-lo
-                </p>
-              </div>
+            <div className="flex flex-col items-center justify-center h-full text-center py-20 text-slate-400">
+              <FileText size={36} className="opacity-30 mb-2" />
+              <p className="text-xs font-medium">
+                Selecione um chamado ao lado para visualizar os detalhes completos e a opção de solucioná-lo
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Lightbox / Modal de Mídia */}
-      {mediaModalOpen && mediaItems.length > 0 && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.85)",
-            backdropFilter: "blur(6px)",
-            zIndex: 1000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "1.5rem",
-          }}
-          onClick={() => setMediaModalOpen(false)}
-        >
-          <div
-            style={{
-              position: "relative",
-              maxWidth: "90vw",
-              maxHeight: "90vh",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Fechar */}
-            <button
-              onClick={() => setMediaModalOpen(false)}
-              style={{
-                position: "absolute",
-                top: "-40px",
-                right: "0",
-                background: "transparent",
-                border: "none",
-                color: "white",
-                cursor: "pointer",
-              }}
-            >
-              <X size={24} />
-            </button>
-
-            {/* Conteúdo da mídia */}
-            {isImage(mediaItems[mediaCurrentIndex]) ? (
-              <img
-                src={mediaItems[mediaCurrentIndex]}
-                alt="Mídia anexada"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "75vh",
-                  objectFit: "contain",
-                  borderRadius: "8px",
-                }}
-              />
-            ) : isVideo(mediaItems[mediaCurrentIndex]) ? (
-              <video
-                src={mediaItems[mediaCurrentIndex]}
-                controls
-                autoPlay
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "75vh",
-                  borderRadius: "8px",
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  padding: "3rem",
-                  background: "#0d1322",
-                  borderRadius: "12px",
-                  textAlign: "center",
-                  border: "1px solid var(--border)",
-                }}
-              >
-                <p style={{ color: "white", marginBottom: "1rem" }}>Arquivo anexado</p>
-                <a
-                  href={mediaItems[mediaCurrentIndex]}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-primary"
-                  style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}
-                >
-                  <Download size={16} /> Baixar / Visualizar Arquivo
-                </a>
-              </div>
-            )}
-
-            {/* Navegação caso tenha mais de 1 mídia */}
-            {mediaItems.length > 1 && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "1rem",
-                  marginTop: "1rem",
-                  color: "white",
-                }}
-              >
-                <button
-                  onClick={() =>
-                    setMediaCurrentIndex((prev) => (prev > 0 ? prev - 1 : mediaItems.length - 1))
-                  }
-                  className="btn-ghost"
-                  style={{ padding: "0.4rem" }}
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <span style={{ fontSize: "0.85rem" }}>
-                  {mediaCurrentIndex + 1} / {mediaItems.length}
-                </span>
-                <button
-                  onClick={() =>
-                    setMediaCurrentIndex((prev) => (prev < mediaItems.length - 1 ? prev + 1 : 0))
-                  }
-                  className="btn-ghost"
-                  style={{ padding: "0.4rem" }}
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Modal / Visualizador de Mídias Anexadas */}
+      <MediaGalleryModal
+        isOpen={mediaModalOpen}
+        onClose={() => setMediaModalOpen(false)}
+        mediaUrls={mediaItems}
+        initialIndex={mediaCurrentIndex}
+      />
     </div>
   );
 }

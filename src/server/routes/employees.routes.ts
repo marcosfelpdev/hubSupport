@@ -97,7 +97,7 @@ router.post("/", authenticateToken, requireAdmin, async (req: Request, res: Resp
 // PUT /api/employees/:id
 router.put("/:id", authenticateToken, requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, password, active, role = "USER" } = req.body;
 
     if (!name?.trim()) {
@@ -150,7 +150,7 @@ router.put("/:id", authenticateToken, requireAdmin, async (req: Request, res: Re
 // DELETE /api/employees/:id
 router.delete("/:id", authenticateToken, requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const adminUser = req.user!;
 
     if (id === adminUser.id) {
