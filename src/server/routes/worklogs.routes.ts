@@ -59,6 +59,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
           user: {
             select: { name: true, email: true, role: true },
           },
+          tag: true,
           aiReport: true,
         },
         orderBy: {
@@ -78,6 +79,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
           user: {
             select: { name: true, email: true, role: true },
           },
+          tag: true,
           aiReport: true,
         },
         orderBy: {
@@ -100,6 +102,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
           user: {
             select: { name: true, email: true, role: true },
           },
+          tag: true,
           aiReport: true,
         },
         orderBy: {
@@ -128,6 +131,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
         user: {
           select: { name: true, email: true, role: true },
         },
+        tag: true,
         aiReport: true,
       },
       orderBy: {
@@ -160,6 +164,7 @@ router.get("/dashboard-summary", authenticateToken, async (req: Request, res: Re
           user: {
             select: { name: true, email: true, role: true },
           },
+          tag: true,
           aiReport: true,
         },
       }),
@@ -172,6 +177,7 @@ router.get("/dashboard-summary", authenticateToken, async (req: Request, res: Re
           user: {
             select: { name: true, email: true, role: true },
           },
+          tag: true,
           aiReport: true,
         },
       }),
@@ -189,12 +195,12 @@ router.get("/dashboard-summary", authenticateToken, async (req: Request, res: Re
         solved: solvedCount,
         today: todayCount,
         technical: technicalCount,
-        inProgress: Math.max(0, totalCount - solvedCount),
+        inProgress: totalCount - solvedCount,
       },
     });
   } catch (error) {
     console.error("[WorkLogs] Erro ao buscar resumo do dashboard:", error);
-    res.status(500).json({ error: "Erro ao buscar resumo do dashboard." });
+    res.status(500).json({ error: "Erro ao carregar dados do dashboard." });
   }
 });
 
@@ -217,6 +223,7 @@ router.post(
         status = "Realizado",
         technicalAction,
         implementation,
+        tagId,
       } = req.body;
 
       if (
@@ -250,6 +257,8 @@ router.post(
       const isImplementation =
         implementation === "on" || implementation === "true" || implementation === true;
 
+      const cleanTagId = tagId && typeof tagId === "string" && tagId.trim() !== "" ? tagId.trim() : null;
+
       const newLog = await prisma.workLog.create({
         data: {
           requester: requester.trim(),
@@ -261,6 +270,7 @@ router.post(
           implementation: isImplementation,
           media: JSON.stringify(mediaPaths),
           userId: user.id,
+          tagId: cleanTagId,
         },
       });
 

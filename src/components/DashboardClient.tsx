@@ -5,6 +5,7 @@ import { Cog, Lightbulb } from "lucide-react";
 import WorkLogForm from "@/components/WorkLogForm";
 import ScreenRecorderButton from "@/components/ScreenRecorderButton";
 import AiReportSection from "@/components/AiReportSection";
+import TagBadge from "@/components/TagBadge";
 import { WorkLog } from "@/components/WorkLogFeed";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 
@@ -121,6 +122,7 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
     date: "",
     status: "",
     employee: "",
+    tag: "",
   });
 
   const handleRecordingComplete = (file: File) => {
@@ -147,6 +149,12 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
   const [mediaCurrentIndex, setMediaCurrentIndex] = useState(0);
   const [mediaItems, setMediaItems] = useState<string[]>([]);
 
+  const tagOptions = useMemo(() => {
+    const unique = Array.from(new Set(logs.map((l) => l.tag?.name).filter(Boolean)));
+    unique.sort();
+    return unique;
+  }, [logs]);
+
   const employeeOptions = useMemo(() => {
     const unique = Array.from(new Set(employees.map((e) => e.name).filter(Boolean)));
     unique.sort();
@@ -172,7 +180,8 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
         : true;
       const matchesStatus = filters.status ? log.status === filters.status : true;
       const matchesEmployee = filters.employee ? log.user.name === filters.employee : true;
-      return matchesRequester && matchesClient && matchesDate && matchesStatus && matchesEmployee;
+      const matchesTag = filters.tag ? log.tag?.name === filters.tag : true;
+      return matchesRequester && matchesClient && matchesDate && matchesStatus && matchesEmployee && matchesTag;
     });
   }, [logs, filters]);
 
@@ -277,6 +286,19 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
           {statusOptions.map((status) => (
             <option key={status} value={status}>
               {getStatusBadgeConfig(status).label}
+            </option>
+          ))}
+        </select>
+        <select
+          className="input-dark"
+          value={filters.tag}
+          onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
+          style={{ maxWidth: "200px", flex: "1 1 200px", cursor: "pointer" }}
+        >
+          <option value="">Todas as plataformas / tags</option>
+          {tagOptions.map((name) => (
+            <option key={name} value={name}>
+              {name}
             </option>
           ))}
         </select>
@@ -423,23 +445,26 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
                         </p>
                       </div>
                     </div>
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.25rem",
-                        padding: "0.2rem 0.5rem",
-                        borderRadius: "9999px",
-                        fontSize: "0.7rem",
-                        fontWeight: 600,
-                        color: statusConfig.color,
-                        background: statusConfig.bg,
-                        border: `1px solid ${statusConfig.border}`,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {statusConfig.label}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      {log.tag && <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />}
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.25rem",
+                          padding: "0.2rem 0.5rem",
+                          borderRadius: "9999px",
+                          fontSize: "0.7rem",
+                          fontWeight: 600,
+                          color: statusConfig.color,
+                          background: statusConfig.bg,
+                          border: `1px solid ${statusConfig.border}`,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {statusConfig.label}
+                      </span>
+                    </div>
                   </div>
 
                   <div
@@ -593,22 +618,25 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
                   )}
                 </div>
 
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.35rem",
-                    padding: "0.25rem 0.7rem",
-                    borderRadius: "9999px",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: getStatusBadgeConfig(selectedLog.status).color,
-                    background: getStatusBadgeConfig(selectedLog.status).bg,
-                    border: `1px solid ${getStatusBadgeConfig(selectedLog.status).border}`,
-                  }}
-                >
-                  {getStatusBadgeConfig(selectedLog.status).label}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  {selectedLog.tag && <TagBadge name={selectedLog.tag.name} color={selectedLog.tag.color} size="md" />}
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                      padding: "0.25rem 0.7rem",
+                      borderRadius: "9999px",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: getStatusBadgeConfig(selectedLog.status).color,
+                      background: getStatusBadgeConfig(selectedLog.status).bg,
+                      border: `1px solid ${getStatusBadgeConfig(selectedLog.status).border}`,
+                    }}
+                  >
+                    {getStatusBadgeConfig(selectedLog.status).label}
+                  </span>
+                </div>
               </div>
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1.25rem" }}>
@@ -644,6 +672,24 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
                     {selectedLog.clientOrOffice}
                   </p>
                 </div>
+                {selectedLog.tag && (
+                  <div
+                    style={{
+                      flex: "1 1 200px",
+                      background: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                      padding: "0.75rem",
+                    }}
+                  >
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.375rem" }}>
+                      Plataforma / Tag
+                    </p>
+                    <div style={{ marginTop: "0.25rem" }}>
+                      <TagBadge name={selectedLog.tag.name} color={selectedLog.tag.color} size="md" />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Botão Mídia */}

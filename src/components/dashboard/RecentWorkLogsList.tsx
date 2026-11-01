@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Clock, Search, Cog, Lightbulb, Sparkles, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
 import { WorkLogItem } from "@/services/api";
+import TagBadge from "@/components/TagBadge";
 
 interface RecentWorkLogsListProps {
   logs: WorkLogItem[];
@@ -15,6 +16,7 @@ const avatarColors = [
   "#8b5cf6",
   "#06b6d4",
   "#ec4899",
+  "#14b8a6",
 ];
 
 function getAvatarColor(id: string) {
@@ -114,7 +116,8 @@ export const RecentWorkLogsList: React.FC<RecentWorkLogsListProps> = ({ logs, on
         log.requester?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.clientOrOffice?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.reportedProblem?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.user?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+        log.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.tag?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
         statusFilter === "ALL" || log.status === statusFilter;
@@ -206,7 +209,7 @@ export const RecentWorkLogsList: React.FC<RecentWorkLogsListProps> = ({ logs, on
           />
           <input
             type="text"
-            placeholder="Buscar por cliente, solicitante ou problema..."
+            placeholder="Buscar por cliente, solicitante, plataforma..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -421,6 +424,10 @@ export const RecentWorkLogsList: React.FC<RecentWorkLogsListProps> = ({ logs, on
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", flexWrap: "wrap" }}>
+                    {log.tag && (
+                      <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
+                    )}
+
                     {log.technicalAction && (
                       <span
                         title="Ação técnica solicitada"

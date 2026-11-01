@@ -9,6 +9,7 @@ import DashboardOverviewPage from "./pages/DashboardOverviewPage";
 import DashboardPage from "./pages/DashboardPage";
 import TechnicianPage from "./pages/TechnicianPage";
 import EmployeesPage from "./pages/EmployeesPage";
+import SettingsPage from "./pages/SettingsPage";
 
 export default function App() {
   return (
@@ -52,6 +53,9 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Menu Configurações */}
+            <Route path="/dashboard/configuracoes" element={<SettingsPage />} />
           </Route>
 
           {/* Fallback 404 para rotas desconhecidas */}

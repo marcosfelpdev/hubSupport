@@ -25,6 +25,17 @@ export interface UserProfile {
   active: boolean;
 }
 
+export interface TagItem {
+  id: string;
+  name: string;
+  color: string;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: {
+    workLogs: number;
+  };
+}
+
 export interface WorkLogItem {
   id: string;
   requester: string;
@@ -36,6 +47,8 @@ export interface WorkLogItem {
   implementation: boolean;
   media: string;
   userId: string;
+  tagId?: string | null;
+  tag?: TagItem | null;
   createdAt: string;
   updatedAt: string;
   user: {
@@ -211,6 +224,30 @@ export const api = {
     },
     getDownloadRecordingUrl(id: string): string {
       return `/api/reports/${id}/recording`;
+    },
+  },
+
+  // Tags Mestre / Categorias de Plataforma
+  tags: {
+    async getAll(): Promise<TagItem[]> {
+      return request<TagItem[]>("/api/tags");
+    },
+    async create(data: { name: string; color?: string }): Promise<{ success: boolean; tag: TagItem }> {
+      return request<{ success: boolean; tag: TagItem }>("/api/tags", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    async update(id: string, data: { name: string; color?: string }): Promise<{ success: boolean; tag: TagItem }> {
+      return request<{ success: boolean; tag: TagItem }>(`/api/tags/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+    },
+    async delete(id: string): Promise<{ success: boolean }> {
+      return request<{ success: boolean }>(`/api/tags/${id}`, {
+        method: "DELETE",
+      });
     },
   },
 

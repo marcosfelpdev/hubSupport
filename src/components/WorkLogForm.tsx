@@ -1,6 +1,7 @@
 import { useState, useTransition, useEffect } from "react";
-import { api } from "@/services/api";
-import { Video, Trash2, Sparkles, Play, Eye } from "lucide-react";
+import { api, TagItem } from "@/services/api";
+import { hexToRgba } from "@/components/TagBadge";
+import { Video, Trash2, Sparkles, Play, Eye, Check } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "Realizado", label: "Já realizado" },
@@ -28,6 +29,29 @@ export default function WorkLogForm({
   const [activeRecordedVideo, setActiveRecordedVideo] = useState<File | null>(recordedVideo);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showVideoPreview, setShowVideoPreview] = useState(false);
+
+  // Tags Mestre para Contextualização de Plataformas
+  const [tags, setTags] = useState<TagItem[]>([]);
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [loadingTags, setLoadingTags] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadTags() {
+      try {
+        const data = await api.tags.getAll();
+        if (mounted) setTags(data);
+      } catch (err) {
+        console.error("[WorkLogForm] Erro ao carregar tags:", err);
+      } finally {
+        if (mounted) setLoadingTags(false);
+      }
+    }
+    loadTags();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     setActiveRecordedVideo(recordedVideo);
@@ -69,6 +93,10 @@ export default function WorkLogForm({
     formData.set("technicalAction", technicalAction ? "on" : "off");
     formData.set("implementation", implementation ? "on" : "off");
 
+    if (selectedTagId) {
+      formData.set("tagId", selectedTagId);
+    }
+
     mediaFiles.forEach((file) => {
       formData.append("media", file);
     });
@@ -83,6 +111,7 @@ export default function WorkLogForm({
         form.reset();
         setTechnicalAction(false);
         setImplementation(false);
+        setSelectedTagId(null);
         setMediaFiles([]);
         setActiveRecordedVideo(null);
         onSuccess?.();
@@ -380,6 +409,82 @@ export default function WorkLogForm({
             disabled={isPending}
             style={{ resize: "vertical", lineHeight: 1.5 }}
           />
+        </div>
+
+        {/* Seleção de Tag Mestre (Contexto / Plataforma) - Acima de Ação Técnica / Implementação */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.375rem" }}>
+            <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "var(--text-secondary)", margin: 0 }}>
+              Tag de Plataforma <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 400 }}>(opcional - 1 tag por atendimento)</span>
+            </label>
+            {selectedTagId && (
+              <button
+                type="button"
+                onClick={() => setSelectedTagId(null)}
+                className="btn-ghost"
+                style={{ fontSize: "0.72rem", padding: "0.1rem 0.4rem", color: "var(--text-muted)" }}
+              >
+                Limpar seleção
+              </button>
+            )}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+              background: "rgba(15, 23, 42, 0.5)",
+              border: "1px solid var(--border)",
+              borderRadius: "8px",
+              padding: "0.75rem 0.875rem",
+              minHeight: "48px",
+              alignItems: "center",
+            }}
+          >
+            {loadingTags ? (
+              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>Carregando tags...</span>
+            ) : tags.length === 0 ? (
+              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                Nenhuma tag configurada. Acesse <strong>Configurações</strong> na barra lateral para cadastrar tags de plataforma.
+              </span>
+            ) : (
+              tags.map((tag) => {
+                const isSelected = selectedTagId === tag.id;
+                const bg = isSelected ? hexToRgba(tag.color, 0.28) : hexToRgba(tag.color, 0.12);
+                const border = isSelected ? `2px solid ${tag.color}` : `1px solid ${hexToRgba(tag.color, 0.35)}`;
+
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => setSelectedTagId(isSelected ? null : tag.id)}
+                    title={isSelected ? `Tag selecionada: ${tag.name} (clique para desmarcar)` : `Selecionar ${tag.name}`}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                      padding: "0.3rem 0.7rem",
+                      borderRadius: "6px",
+                      fontSize: "0.8rem",
+                      fontWeight: 600,
+                      color: tag.color,
+                      backgroundColor: bg,
+                      border: border,
+                      boxShadow: isSelected ? `0 0 10px ${hexToRgba(tag.color, 0.4)}` : "none",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {isSelected && <Check size={12} strokeWidth={3} />}
+                    <span>{tag.name}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
 
         {/* Checklist: Ação Técnica / Implementação */}

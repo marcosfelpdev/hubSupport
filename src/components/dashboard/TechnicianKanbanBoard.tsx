@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Cog, Lightbulb, Search, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { WorkLogItem, api } from "@/services/api";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
+import TagBadge from "@/components/TagBadge";
 
 export type ColumnId = "backlog" | "pendencias" | "em_progresso" | "finalizadas";
 
@@ -52,6 +53,7 @@ const avatarColors = [
   "#8b5cf6",
   "#06b6d4",
   "#ec4899",
+  "#14b8a6",
 ];
 
 function getAvatarColor(userId?: string) {
@@ -185,6 +187,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"" | "technical" | "implementation">("");
   const [filterAuthor, setFilterAuthor] = useState("");
+  const [filterTag, setFilterTag] = useState("");
 
   // Sincroniza quando initialLogs mudar
   useEffect(() => {
@@ -193,6 +196,12 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
   const authorOptions = useMemo(() => {
     const list = Array.from(new Set(logs.map((l) => l.user?.name).filter(Boolean)));
+    list.sort();
+    return list;
+  }, [logs]);
+
+  const tagOptions = useMemo(() => {
+    const list = Array.from(new Set(logs.map((l) => l.tag?.name).filter(Boolean))) as string[];
     list.sort();
     return list;
   }, [logs]);
@@ -206,15 +215,17 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
           log.requester.toLowerCase().includes(query) ||
           log.clientOrOffice.toLowerCase().includes(query) ||
           log.reportedProblem.toLowerCase().includes(query) ||
-          (log.user?.name && log.user.name.toLowerCase().includes(query));
+          (log.user?.name && log.user.name.toLowerCase().includes(query)) ||
+          (log.tag?.name && log.tag.name.toLowerCase().includes(query));
         if (!matchesQuery) return false;
       }
       if (filterType === "technical" && !log.technicalAction) return false;
       if (filterType === "implementation" && !log.implementation) return false;
       if (filterAuthor && log.user?.name !== filterAuthor) return false;
+      if (filterTag && log.tag?.name !== filterTag) return false;
       return true;
     });
-  }, [logs, searchTerm, filterType, filterAuthor]);
+  }, [logs, searchTerm, filterType, filterAuthor, filterTag]);
 
   // Agrupamento por colunas
   const columnsData = useMemo(() => {
@@ -348,7 +359,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
             <input
               type="text"
               className="input-dark"
-              placeholder="Buscar por solicitante, cliente ou problema..."
+              placeholder="Buscar por solicitante, cliente, plataforma..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ paddingLeft: "2rem", width: "100%", fontSize: "0.825rem" }}
@@ -360,11 +371,26 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
             className="input-dark"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as any)}
-            style={{ maxWidth: "180px", flex: "1 1 180px", cursor: "pointer", fontSize: "0.825rem" }}
+            style={{ maxWidth: "160px", flex: "1 1 160px", cursor: "pointer", fontSize: "0.825rem" }}
           >
             <option value="">Todos os tipos</option>
             <option value="technical">Ação Técnica</option>
             <option value="implementation">Implementação</option>
+          </select>
+
+          {/* Filtro por tag de plataforma */}
+          <select
+            className="input-dark"
+            value={filterTag}
+            onChange={(e) => setFilterTag(e.target.value)}
+            style={{ maxWidth: "170px", flex: "1 1 170px", cursor: "pointer", fontSize: "0.825rem" }}
+          >
+            <option value="">Todas as tags</option>
+            {tagOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
           </select>
 
           {/* Filtro por autor */}
@@ -372,7 +398,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
             className="input-dark"
             value={filterAuthor}
             onChange={(e) => setFilterAuthor(e.target.value)}
-            style={{ maxWidth: "200px", flex: "1 1 200px", cursor: "pointer", fontSize: "0.825rem" }}
+            style={{ maxWidth: "180px", flex: "1 1 180px", cursor: "pointer", fontSize: "0.825rem" }}
           >
             <option value="">Todos os autores</option>
             {authorOptions.map((name) => (
@@ -408,7 +434,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               key={col.id}
               data-column-id={col.id}
               onDragOver={(e) => handleDragOver(col.id, e)}
-              onDragLeave={() => handleDragLeave(col.id)}
+              onDragLeave={(e) => handleDragLeave(col.id, e)}
               onDrop={(e) => handleDrop(col.id, e)}
               style={{
                 background: "rgba(15, 23, 42, 0.4)",
@@ -580,7 +606,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                                 background: "#f59e0b",
                                 display: "flex",
                                 alignItems: "center",
-                                justifyCenter: "center",
+                                justifyContent: "center",
                                 border: "1.5px solid #0d1322",
                               }}
                             >
@@ -597,7 +623,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                                 background: "#3b82f6",
                                 display: "flex",
                                 alignItems: "center",
-                                justifyCenter: "center",
+                                justifyContent: "center",
                                 border: "1.5px solid #0d1322",
                               }}
                             >
@@ -645,8 +671,8 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                           </div>
                         </div>
 
-                        {/* Status Badge */}
-                        <div style={{ marginBottom: "0.5rem" }}>
+                        {/* Status Badge & Tag de Plataforma */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
                           <span
                             style={{
                               display: "inline-flex",
@@ -668,6 +694,10 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                             )}
                             {statusConfig.label}
                           </span>
+
+                          {log.tag && (
+                            <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
+                          )}
                         </div>
 
                         {/* Solicitante & Escritório (Grid 2 colunas) */}

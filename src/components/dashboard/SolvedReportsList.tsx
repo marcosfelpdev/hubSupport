@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { CheckCircle2, Search, Download, FileText, Sparkles, Cog, Lightbulb, ExternalLink, ShieldCheck } from "lucide-react";
 import { WorkLogItem, api } from "@/services/api";
+import TagBadge from "@/components/TagBadge";
 
 interface SolvedReportsListProps {
   logs: WorkLogItem[];
@@ -45,6 +46,7 @@ export const SolvedReportsList: React.FC<SolvedReportsListProps> = ({ logs, onSe
         log.clientOrOffice?.toLowerCase().includes(term) ||
         log.actionTaken?.toLowerCase().includes(term) ||
         log.reportedProblem?.toLowerCase().includes(term) ||
+        log.tag?.name?.toLowerCase().includes(term) ||
         aiTitle.includes(term)
       );
     });
@@ -128,7 +130,7 @@ export const SolvedReportsList: React.FC<SolvedReportsListProps> = ({ logs, onSe
           />
           <input
             type="text"
-            placeholder="Buscar por cliente, solicitante ou solução..."
+            placeholder="Buscar por cliente, solicitante, plataforma..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -303,6 +305,10 @@ export const SolvedReportsList: React.FC<SolvedReportsListProps> = ({ logs, onSe
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    {log.tag && (
+                      <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
+                    )}
+
                     {log.technicalAction && (
                       <span
                         title="Ação técnica"

@@ -9,6 +9,7 @@ import worklogsRoutes from "./routes/worklogs.routes";
 import reportsRoutes from "./routes/reports.routes";
 import notificationsRoutes from "./routes/notifications.routes";
 import employeesRoutes from "./routes/employees.routes";
+import tagsRoutes from "./routes/tags.routes";
 
 export const app = express();
 
@@ -42,10 +43,13 @@ app.use("/api/worklogs", worklogsRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/employees", employeesRoutes);
+app.use("/api/tags", tagsRoutes);
 
 // Servir frontend SPA compilado se existir (Modo Produção ou Build Estática)
 const DIST_DIR = path.join(process.cwd(), "dist");
-if (fs.existsSync(DIST_DIR)) {
+if (!fs.existsSync(DIST_DIR)) {
+  // ok
+} else {
   app.use(express.static(DIST_DIR));
   app.use((req: Request, res: Response, next: NextFunction) => {
     // Se a rota começar com /api, não serve o index.html
