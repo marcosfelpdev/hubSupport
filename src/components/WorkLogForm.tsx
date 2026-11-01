@@ -1,7 +1,7 @@
 import { useState, useTransition, useEffect, useRef } from "react";
 import { api, TagItem } from "@/services/api";
 import { hexToRgba } from "@/components/TagBadge";
-import { Video, Trash2, Sparkles, Play, Eye, Check, UploadCloud, X, Paperclip } from "lucide-react";
+import { Video, Trash2, Sparkles, Play, Eye, Check, UploadCloud, X, Paperclip, Cog, Lightbulb } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "Realizado", label: "Já realizado" },
@@ -582,10 +582,7 @@ export default function WorkLogForm({
               transition: "all 0.2s",
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
-            </svg>
+            <Cog size={15} strokeWidth={2} />
             <span>Ação Técnica</span>
           </button>
           <button
@@ -610,10 +607,7 @@ export default function WorkLogForm({
               transition: "all 0.2s",
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
-              <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
-            </svg>
+            <Lightbulb size={15} strokeWidth={2} />
             <span>Implementação</span>
           </button>
         </div>
