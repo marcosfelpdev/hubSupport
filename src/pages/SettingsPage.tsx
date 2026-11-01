@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { TagItem, api } from "@/services/api";
 import TagBadge from "@/components/TagBadge";
 import {
@@ -312,7 +313,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Modal de Criação / Edição de Tag */}
-      {isModalOpen && (
+      {isModalOpen && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isSubmitting && setIsModalOpen(false)}
@@ -461,11 +462,12 @@ export default function SettingsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal de Confirmação de Exclusão */}
-      {deletingTag && (
+      {deletingTag && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isDeleting && setDeletingTag(null)}
@@ -525,7 +527,8 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </main>
   );

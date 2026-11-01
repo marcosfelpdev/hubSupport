@@ -1,4 +1,5 @@
 import { useState, useTransition, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { api, EmployeeItem } from "@/services/api";
 import { ROLE_OPTIONS } from "@/lib/roles";
 import {
@@ -422,7 +423,7 @@ export default function EmployeesManager({
       </div>
 
       {/* ================= MODAL: CRIAR FUNCIONÁRIO (Estilo Invite Members do Vídeo) ================= */}
-      {isCreateOpen && (
+      {isCreateOpen && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isPending && setIsCreateOpen(false)}
@@ -592,11 +593,12 @@ export default function EmployeesManager({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ================= MODAL: EDITAR FUNCIONÁRIO ================= */}
-      {editingEmployee && (
+      {editingEmployee && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isPending && setEditingEmployee(null)}
@@ -775,11 +777,12 @@ export default function EmployeesManager({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ================= MODAL: EXCLUIR FUNCIONÁRIO ================= */}
-      {deletingEmployee && (
+      {deletingEmployee && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isPending && setDeletingEmployee(null)}
@@ -841,7 +844,8 @@ export default function EmployeesManager({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </main>
   );

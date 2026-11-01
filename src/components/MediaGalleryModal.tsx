@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight, Download, FileText, Video } from "lucide-react";
 
 interface MediaGalleryModalProps {
@@ -66,7 +67,7 @@ export default function MediaGalleryModal({
 
   const activeUrl = mediaUrls[currentIndex] || mediaUrls[0];
 
-  return (
+  const modalContent = (
     <div
       className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 animate-fade-in"
       onClick={onClose}
@@ -215,5 +216,7 @@ export default function MediaGalleryModal({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined" ? createPortal(modalContent, document.body) : null;
 }
 

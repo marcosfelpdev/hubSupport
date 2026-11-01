@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   CheckCircle2,
@@ -219,7 +220,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
     minute: "2-digit",
   });
 
-  return (
+  const modalContent = (
     <div
       className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-fade-in"
       onClick={onClose}
@@ -882,4 +883,6 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
       </div>
     </div>
   );
+
+  return typeof document !== "undefined" ? createPortal(modalContent, document.body) : null;
 };

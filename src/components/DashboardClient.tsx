@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Cog,
   Lightbulb,
@@ -513,7 +514,7 @@ export default function DashboardClient({
       </div>
 
       {/* Modal Formulário de Criação */}
-      {isModalOpen && (
+      {isModalOpen && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in"
           onClick={handleCloseModal}
@@ -539,7 +540,8 @@ export default function DashboardClient({
               }}
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal / Visualizador de Mídias Anexadas */}
