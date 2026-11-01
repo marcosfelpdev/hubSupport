@@ -364,11 +364,6 @@ export default function WorkLogForm({
                 )}
               </div>
             </div>
-            {isTechnicalOrImplementation && (
-              <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
-                Chamados técnicos iniciam obrigatoriamente na coluna <strong className="text-slate-800">Backlog</strong> do Kanban.
-              </p>
-            )}
           </div>
         </div>
 
