@@ -31,125 +31,50 @@ export const SolvedReportsList: React.FC<SolvedReportsListProps> = ({ logs, onSe
   }, [logs, searchTerm]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        borderRadius: "0.875rem",
-        overflow: "hidden",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.25)",
-        height: "100%",
-        minHeight: "580px",
-      }}
-    >
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs flex flex-col h-full min-h-[580px]">
       {/* Header */}
-      <div
-        style={{
-          padding: "1.25rem 1.25rem 1rem",
-          borderBottom: "1px solid var(--border)",
-          backgroundColor: "rgba(15, 23, 42, 0.4)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
-            <div
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(16, 185, 129, 0.15)",
-                border: "1px solid rgba(16, 185, 129, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#34d399",
-              }}
-            >
+      <div className="p-4 border-b border-slate-200 bg-white">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
               <CheckCircle2 size={16} />
             </div>
             <div>
-              <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2 }}>
+              <h2 className="text-sm font-bold text-slate-900 leading-tight">
                 Relatórios Solucionados
               </h2>
-              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "1px" }}>
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 Chamados marcados como Solucionado pelo técnico
               </p>
             </div>
           </div>
 
-          <span
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              padding: "0.2rem 0.6rem",
-              borderRadius: "999px",
-              backgroundColor: "rgba(16, 185, 129, 0.12)",
-              color: "#34d399",
-              border: "1px solid rgba(16, 185, 129, 0.25)",
-            }}
-          >
+          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
             {solvedLogs.length} {solvedLogs.length === 1 ? "solucionado" : "solucionados"}
           </span>
         </div>
 
         {/* Busca rápida */}
-        <div style={{ position: "relative", marginTop: "0.75rem" }}>
+        <div className="relative">
           <Search
             size={14}
-            style={{
-              position: "absolute",
-              left: "0.75rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-            }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
           />
           <input
             type="text"
             placeholder="Buscar por cliente, solicitante, plataforma..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.45rem 0.75rem 0.45rem 2.2rem",
-              fontSize: "0.8rem",
-              backgroundColor: "rgba(8, 12, 22, 0.7)",
-              border: "1px solid var(--border)",
-              borderRadius: "0.5rem",
-              color: "var(--text-primary)",
-              outline: "none",
-            }}
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors"
           />
         </div>
       </div>
 
       {/* Lista Vertical */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "0.875rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.75rem",
-        }}
-      >
+      <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
         {solvedLogs.length === 0 ? (
-          <div
-            style={{
-              padding: "2.5rem 1rem",
-              textAlign: "center",
-              color: "var(--text-muted)",
-              fontSize: "0.825rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <ShieldCheck size={28} style={{ opacity: 0.35, color: "var(--text-muted)" }} />
+          <div className="py-12 px-4 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
+            <ShieldCheck size={28} className="opacity-40 text-slate-400" />
             <span>Nenhum relatório solucionado encontrado.</span>
           </div>
         ) : (

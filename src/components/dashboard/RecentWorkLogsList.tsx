@@ -31,157 +31,70 @@ export const RecentWorkLogsList: React.FC<RecentWorkLogsListProps> = ({ logs, on
   }, [logs, searchTerm, statusFilter]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        borderRadius: "0.875rem",
-        overflow: "hidden",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.25)",
-        height: "100%",
-        minHeight: "580px",
-      }}
-    >
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs flex flex-col h-full min-h-[580px]">
       {/* Header */}
-      <div
-        style={{
-          padding: "1.25rem 1.25rem 1rem",
-          borderBottom: "1px solid var(--border)",
-          backgroundColor: "rgba(15, 23, 42, 0.4)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
-            <div
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(99, 102, 241, 0.15)",
-                border: "1px solid rgba(99, 102, 241, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#818cf8",
-              }}
-            >
+      <div className="p-4 border-b border-slate-200 bg-white">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
               <Clock size={16} />
             </div>
             <div>
-              <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2 }}>
+              <h2 className="text-sm font-bold text-slate-900 leading-tight">
                 Últimos Atendimentos
               </h2>
-              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "1px" }}>
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 Atendimentos registrados recentemente
               </p>
             </div>
           </div>
 
-          <span
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              padding: "0.2rem 0.6rem",
-              borderRadius: "999px",
-              backgroundColor: "rgba(99, 102, 241, 0.12)",
-              color: "#a5b4fc",
-              border: "1px solid rgba(99, 102, 241, 0.25)",
-            }}
-          >
+          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
             {filteredLogs.length} {filteredLogs.length === 1 ? "registro" : "registros"}
           </span>
         </div>
 
         {/* Busca rápida */}
-        <div style={{ position: "relative", marginTop: "0.75rem" }}>
+        <div className="relative">
           <Search
             size={14}
-            style={{
-              position: "absolute",
-              left: "0.75rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-            }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
           />
           <input
             type="text"
             placeholder="Buscar por cliente, solicitante, plataforma..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.45rem 0.75rem 0.45rem 2.2rem",
-              fontSize: "0.8rem",
-              backgroundColor: "rgba(8, 12, 22, 0.7)",
-              border: "1px solid var(--border)",
-              borderRadius: "0.5rem",
-              color: "var(--text-primary)",
-              outline: "none",
-            }}
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors"
           />
         </div>
 
         {/* Filtro por status rápido */}
-        <div
-          style={{
-            display: "flex",
-            gap: "0.375rem",
-            marginTop: "0.625rem",
-            overflowX: "auto",
-            paddingBottom: "0.2rem",
-          }}
-        >
-          {["ALL", "Em andamento", "Realizado", "Aguardando reunião", "Solucionado"].map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              style={{
-                fontSize: "0.7rem",
-                padding: "0.2rem 0.5rem",
-                borderRadius: "0.375rem",
-                border: "1px solid",
-                borderColor: statusFilter === st ? "rgba(99, 102, 241, 0.5)" : "var(--border)",
-                backgroundColor: statusFilter === st ? "rgba(99, 102, 241, 0.2)" : "rgba(255, 255, 255, 0.02)",
-                color: statusFilter === st ? "#ffffff" : "var(--text-muted)",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                transition: "all 0.15s ease",
-              }}
-            >
-              {st === "ALL" ? "Todos" : st}
-            </button>
-          ))}
+        <div className="flex gap-1.5 mt-2.5 overflow-x-auto pb-0.5">
+          {["ALL", "Em andamento", "Realizado", "Aguardando reunião", "Solucionado"].map((st) => {
+            const isActive = statusFilter === st;
+            return (
+              <button
+                key={st}
+                onClick={() => setStatusFilter(st)}
+                className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                    : "bg-slate-100/80 hover:bg-slate-200/70 text-slate-600 border-transparent"
+                }`}
+              >
+                {st === "ALL" ? "Todos" : st}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Lista Vertical */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "0.875rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.75rem",
-        }}
-      >
+      <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
         {filteredLogs.length === 0 ? (
-          <div
-            style={{
-              padding: "2.5rem 1rem",
-              textAlign: "center",
-              color: "var(--text-muted)",
-              fontSize: "0.825rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <Clock size={28} style={{ opacity: 0.35, color: "var(--text-muted)" }} />
+          <div className="py-12 px-4 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
+            <Clock size={28} className="opacity-40 text-slate-400" />
             <span>Nenhum atendimento encontrado.</span>
           </div>
         ) : (
