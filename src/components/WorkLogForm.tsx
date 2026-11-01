@@ -363,93 +363,95 @@ export default function WorkLogForm({
       )}
 
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-        {/* Título - Primeiro campo de cima para baixo */}
-        <div>
-          <label htmlFor="title">
-            Título <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <input
-            id="title"
-            name="title"
-            type="text"
-            className="input-dark"
-            placeholder="Ex: Erro ao sincronizar API de faturamento"
-            required
-            disabled={isPending}
-          />
-        </div>
-
-        {/* Solicitante */}
-        <div>
-          <label htmlFor="requester">
-            Solicitante <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <input
-            id="requester"
-            name="requester"
-            type="text"
-            className="input-dark"
-            placeholder="Nome de quem solicitou o suporte"
-            required
-            disabled={isPending}
-          />
-        </div>
-
-        {/* Escritório / Cliente */}
-        <div>
-          <label htmlFor="clientOrOffice">
-            Escritório / Cliente <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <input
-            id="clientOrOffice"
-            name="clientOrOffice"
-            type="text"
-            className="input-dark"
-            placeholder="Ex: Matriz SP / Filial RJ / Cliente X"
-            required
-            disabled={isPending}
-          />
-        </div>
-
-        {/* Status Dropdown */}
-        <div>
-          <label htmlFor="status">
-            Status <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <div style={{ position: "relative" }}>
-            <select
-              id="status"
-              name="status"
+        {/* Linha 1: Título e Status lado a lado */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+          <div>
+            <label htmlFor="title">
+              Título <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              id="title"
+              name="title"
+              type="text"
               className="input-dark"
-              defaultValue="Realizado"
+              placeholder="Ex: Erro ao sincronizar API de faturamento"
+              required
               disabled={isPending}
-              style={{
-                cursor: "pointer",
-                appearance: "none",
-                WebkitAppearance: "none",
-                paddingRight: "2.5rem",
-              }}
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <div
-              style={{
-                position: "absolute",
-                right: "0.875rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-                color: "var(--text-muted)",
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+            />
+          </div>
+
+          <div>
+            <label htmlFor="status">
+              Status <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <div style={{ position: "relative" }}>
+              <select
+                id="status"
+                name="status"
+                className="input-dark"
+                defaultValue="Realizado"
+                disabled={isPending}
+                style={{
+                  cursor: "pointer",
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  paddingRight: "2.5rem",
+                }}
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <div
+                style={{
+                  position: "absolute",
+                  right: "0.875rem",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  pointerEvents: "none",
+                  color: "var(--text-muted)",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Linha 2: Solicitante e Escritório / Cliente lado a lado */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+          <div>
+            <label htmlFor="requester">
+              Solicitante <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              id="requester"
+              name="requester"
+              type="text"
+              className="input-dark"
+              placeholder="Nome de quem solicitou o suporte"
+              required
+              disabled={isPending}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="clientOrOffice">
+              Escritório / Cliente <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              id="clientOrOffice"
+              name="clientOrOffice"
+              type="text"
+              className="input-dark"
+              placeholder="Ex: Matriz SP / Filial RJ / Cliente X"
+              required
+              disabled={isPending}
+            />
           </div>
         </div>
 

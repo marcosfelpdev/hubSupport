@@ -665,7 +665,7 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
         >
           <div
             style={{
-              maxWidth: "480px",
+              maxWidth: "680px",
               width: "100%",
               maxHeight: "90vh",
               overflowY: "auto",
