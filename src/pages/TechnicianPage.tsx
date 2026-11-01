@@ -10,12 +10,19 @@ export default function TechnicianPage() {
   const [logs, setLogs] = useState<WorkLogItem[]>([]);
   const [employees, setEmployees] = useState<{ name: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"kanban" | "classic">("kanban");
 
-  const fetchTechnicalData = async () => {
+  const fetchTechnicalData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        if (logs.length === 0) {
+          setLoading(true);
+        } else {
+          setIsRefreshing(true);
+        }
+      }
       setError(null);
       const [logsData, employeesData] = await Promise.all([
         api.worklogs.getTechnical(),
@@ -25,9 +32,12 @@ export default function TechnicianPage() {
       setEmployees(employeesData.map((e) => ({ name: e.name })));
     } catch (err) {
       console.error("[TechnicianPage] Erro ao carregar dados técnicos:", err);
-      setError(err instanceof Error ? err.message : "Erro ao carregar atendimentos técnicos.");
+      if (logs.length === 0) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar atendimentos técnicos.");
+      }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -73,13 +83,13 @@ export default function TechnicianPage() {
           {/* Botão de atualização rápida */}
           <button
             type="button"
-            onClick={fetchTechnicalData}
-            disabled={loading}
+            onClick={() => fetchTechnicalData(false)}
+            disabled={loading || isRefreshing}
             title="Atualizar chamados"
-            className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer"
+            className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            <RefreshCw size={14} className={loading ? "animate-spin text-slate-400" : "text-slate-500"} />
-            <span>Atualizar</span>
+            <RefreshCw size={14} className={loading || isRefreshing ? "animate-spin text-slate-400" : "text-slate-500"} />
+            <span>{isRefreshing ? "Sincronizando..." : "Atualizar"}</span>
           </button>
 
           {/* Switcher de visualização: Kanban vs Lista */}
@@ -132,7 +142,7 @@ export default function TechnicianPage() {
           </div>
           <button
             type="button"
-            onClick={fetchTechnicalData}
+            onClick={() => fetchTechnicalData(false)}
             className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-red-50 text-red-700 border border-red-200 transition-colors duration-150 cursor-pointer shadow-xs"
           >
             Tentar novamente
@@ -143,14 +153,14 @@ export default function TechnicianPage() {
           logs={logs}
           currentUserId={user.id}
           employees={employees}
-          onLogResolved={fetchTechnicalData}
+          onLogResolved={() => fetchTechnicalData(true)}
         />
       ) : (
         <TechnicianDashboardClient
           logs={logs}
           currentUserId={user.id}
           employees={employees}
-          onLogResolved={fetchTechnicalData}
+          onLogResolved={() => fetchTechnicalData(true)}
         />
       )}
     </main>

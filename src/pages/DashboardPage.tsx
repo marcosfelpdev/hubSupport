@@ -10,9 +10,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent && logs.length === 0) {
+        setLoading(true);
+      }
       setError(null);
       const [logsData, employeesData] = await Promise.all([
         api.worklogs.getDaily(),
@@ -22,7 +24,9 @@ export default function DashboardPage() {
       setEmployees(employeesData.map((e) => ({ name: e.name })));
     } catch (err) {
       console.error("[DashboardPage] Erro ao carregar dados:", err);
-      setError(err instanceof Error ? err.message : "Erro ao carregar dados do dashboard.");
+      if (logs.length === 0) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar dados do dashboard.");
+      }
     } finally {
       setLoading(false);
     }
@@ -62,7 +66,7 @@ export default function DashboardPage() {
         <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl p-4 flex items-center justify-between text-sm shadow-xs mb-6">
           <span>{error}</span>
           <button
-            onClick={fetchDashboardData}
+            onClick={() => fetchDashboardData(false)}
             className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline px-2 py-1 rounded transition-colors"
           >
             Tentar novamente
@@ -73,7 +77,7 @@ export default function DashboardPage() {
           logs={logs}
           currentUserId={user.id}
           employees={employees}
-          onLogCreated={fetchDashboardData}
+          onLogCreated={() => fetchDashboardData(true)}
         />
       )}
     </main>
