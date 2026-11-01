@@ -1,7 +1,7 @@
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { api, TagItem } from "@/services/api";
 import { hexToRgba } from "@/components/TagBadge";
-import { Video, Trash2, Sparkles, Play, Eye, Check } from "lucide-react";
+import { Video, Trash2, Sparkles, Play, Eye, Check, UploadCloud, X, Paperclip, Cog, Lightbulb } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "Realizado", label: "Já realizado" },
@@ -26,6 +26,8 @@ export default function WorkLogForm({
   const [technicalAction, setTechnicalAction] = useState(false);
   const [implementation, setImplementation] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeRecordedVideo, setActiveRecordedVideo] = useState<File | null>(recordedVideo);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showVideoPreview, setShowVideoPreview] = useState(false);
@@ -77,6 +79,56 @@ export default function WorkLogForm({
     }
   }
 
+  function addFiles(newFiles: File[]) {
+    setMediaFiles((prev) => {
+      const existingKeys = new Set(prev.map((f) => `${f.name}_${f.size}`));
+      const unique = newFiles.filter((f) => !existingKeys.has(`${f.name}_${f.size}`));
+      return [...prev, ...unique];
+    });
+  }
+
+  function removeFile(indexToRemove: number) {
+    setMediaFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  }
+
+  function handleDragEnter(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(true);
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDraggingOver(false);
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files || []);
+    if (droppedFiles.length > 0) {
+      addFiles(droppedFiles);
+    }
+  }
+
+  function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      addFiles(files);
+    }
+    if (e.target) e.target.value = "";
+  }
+
   function formatBytes(bytes: number) {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -102,6 +154,7 @@ export default function WorkLogForm({
     formData.set("implementation", implementation ? "on" : "off");
     formData.set("tagId", selectedTagId);
     formData.set("actionTaken", "");
+    formData.delete("media");
 
     mediaFiles.forEach((file) => {
       formData.append("media", file);
@@ -118,6 +171,7 @@ export default function WorkLogForm({
         setTechnicalAction(false);
         setImplementation(false);
         setSelectedTagId(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
         setMediaFiles([]);
         setActiveRecordedVideo(null);
         onSuccess?.();
@@ -309,93 +363,95 @@ export default function WorkLogForm({
       )}
 
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-        {/* Título - Primeiro campo de cima para baixo */}
-        <div>
-          <label htmlFor="title">
-            Título <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <input
-            id="title"
-            name="title"
-            type="text"
-            className="input-dark"
-            placeholder="Ex: Erro ao sincronizar API de faturamento"
-            required
-            disabled={isPending}
-          />
-        </div>
-
-        {/* Solicitante */}
-        <div>
-          <label htmlFor="requester">
-            Solicitante <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <input
-            id="requester"
-            name="requester"
-            type="text"
-            className="input-dark"
-            placeholder="Nome de quem solicitou o suporte"
-            required
-            disabled={isPending}
-          />
-        </div>
-
-        {/* Escritório / Cliente */}
-        <div>
-          <label htmlFor="clientOrOffice">
-            Escritório / Cliente <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <input
-            id="clientOrOffice"
-            name="clientOrOffice"
-            type="text"
-            className="input-dark"
-            placeholder="Ex: Matriz SP / Filial RJ / Cliente X"
-            required
-            disabled={isPending}
-          />
-        </div>
-
-        {/* Status Dropdown */}
-        <div>
-          <label htmlFor="status">
-            Status <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <div style={{ position: "relative" }}>
-            <select
-              id="status"
-              name="status"
+        {/* Linha 1: Título e Status lado a lado */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+          <div>
+            <label htmlFor="title">
+              Título <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              id="title"
+              name="title"
+              type="text"
               className="input-dark"
-              defaultValue="Realizado"
+              placeholder="Ex: Erro ao sincronizar API de faturamento"
+              required
               disabled={isPending}
-              style={{
-                cursor: "pointer",
-                appearance: "none",
-                WebkitAppearance: "none",
-                paddingRight: "2.5rem",
-              }}
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <div
-              style={{
-                position: "absolute",
-                right: "0.875rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-                color: "var(--text-muted)",
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+            />
+          </div>
+
+          <div>
+            <label htmlFor="status">
+              Status <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <div style={{ position: "relative" }}>
+              <select
+                id="status"
+                name="status"
+                className="input-dark"
+                defaultValue="Realizado"
+                disabled={isPending}
+                style={{
+                  cursor: "pointer",
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  paddingRight: "2.5rem",
+                }}
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <div
+                style={{
+                  position: "absolute",
+                  right: "0.875rem",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  pointerEvents: "none",
+                  color: "var(--text-muted)",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Linha 2: Solicitante e Escritório / Cliente lado a lado */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+          <div>
+            <label htmlFor="requester">
+              Solicitante <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              id="requester"
+              name="requester"
+              type="text"
+              className="input-dark"
+              placeholder="Nome de quem solicitou o suporte"
+              required
+              disabled={isPending}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="clientOrOffice">
+              Escritório / Cliente <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <input
+              id="clientOrOffice"
+              name="clientOrOffice"
+              type="text"
+              className="input-dark"
+              placeholder="Ex: Matriz SP / Filial RJ / Cliente X"
+              required
+              disabled={isPending}
+            />
           </div>
         </div>
 
@@ -526,10 +582,7 @@ export default function WorkLogForm({
               transition: "all 0.2s",
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M9.1 9.1c1.6 1.6 4.2 1.6 5.8 0s1.6-4.2 0-5.8l-5.6 5.6" />
-            </svg>
+            <Cog size={15} strokeWidth={2} />
             <span>Ação Técnica</span>
           </button>
           <button
@@ -554,43 +607,183 @@ export default function WorkLogForm({
               transition: "all 0.2s",
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M13 2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
-              <path d="M6.3 17.4l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0l2.1 1.3a1 1 0 0 0 1.4 0l2.1-1.3a1 1 0 0 1 1.4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" />
-            </svg>
+            <Lightbulb size={15} strokeWidth={2} />
             <span>Implementação</span>
           </button>
         </div>
 
-        {/* Anexo de Mídia */}
+        {/* Anexo de Mídia - Drag and Drop */}
         <div>
-          <label htmlFor="media">
-            Anexar Mídia <span style={{ color: "#94a3b8" }}>*(opcional)</span>
-          </label>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.375rem" }}>
+            <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "var(--text-secondary)", margin: 0 }}>
+              Anexar Mídia <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 400 }}>(opcional)</span>
+            </label>
+            {mediaFiles.length > 0 && (
+              <span style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 600 }}>
+                {mediaFiles.length} {mediaFiles.length === 1 ? "arquivo" : "arquivos"}
+              </span>
+            )}
+          </div>
+
+          {/* Input oculto acionado pelo clique na dropzone */}
           <input
+            ref={fileInputRef}
             id="media"
-            name="media"
             type="file"
             multiple
             accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx"
-            className="input-dark"
             disabled={isPending}
-            onChange={(e) => {
-              const files = Array.from((e.target as HTMLInputElement).files ?? []);
-              setMediaFiles(files);
-            }}
-            style={{
-              padding: "0.625rem 0.875rem",
-              border: "1px dashed var(--border-light)",
-              color: "var(--text-muted)",
-              cursor: "pointer",
-              background: "transparent",
-            }}
+            onChange={handleFileInputChange}
+            style={{ display: "none" }}
           />
+
+          {/* Área de Drop / Arrastar e Soltar */}
+          <div
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              padding: "1.25rem 1rem",
+              border: isDraggingOver
+                ? "2px dashed #818cf8"
+                : "1.5px dashed rgba(99, 102, 241, 0.35)",
+              borderRadius: "8px",
+              backgroundColor: isDraggingOver
+                ? "rgba(99, 102, 241, 0.15)"
+                : "rgba(15, 23, 42, 0.4)",
+              boxShadow: isDraggingOver ? "0 0 16px rgba(99, 102, 241, 0.3)" : "none",
+              cursor: isPending ? "not-allowed" : "pointer",
+              transition: "all 0.2s ease",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              gap: "0.5rem",
+              userSelect: "none",
+            }}
+          >
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                background: isDraggingOver ? "rgba(99, 102, 241, 0.25)" : "rgba(99, 102, 241, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: isDraggingOver ? "#c7d2fe" : "#818cf8",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <UploadCloud size={20} />
+            </div>
+
+            <div>
+              <p style={{ fontSize: "0.85rem", fontWeight: 500, color: "var(--text-primary)", margin: 0 }}>
+                {isDraggingOver ? (
+                  <span style={{ color: "#a5b4fc", fontWeight: 600 }}>Solte os arquivos aqui</span>
+                ) : (
+                  <>
+                    Arraste e solte arquivos aqui ou{" "}
+                    <span style={{ color: "#818cf8", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+                      procure no dispositivo
+                    </span>
+                  </>
+                )}
+              </p>
+              <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", margin: "0.25rem 0 0 0" }}>
+                Imagens, documentos ou vídeos (até 100MB por arquivo)
+              </p>
+            </div>
+          </div>
+
+          {/* Lista de arquivos selecionados */}
           {mediaFiles.length > 0 && (
-            <p style={{ fontSize: "0.75rem", color: "#60a5fa", marginTop: "0.375rem" }}>
-              {mediaFiles.length} arquivo(s) selecionado(s)
-            </p>
+            <div style={{ marginTop: "0.625rem", display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0.15rem" }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                  Arquivos prontos para upload:
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMediaFiles([]);
+                  }}
+                  className="btn-ghost"
+                  style={{ fontSize: "0.7rem", padding: "0.1rem 0.4rem", color: "#f87171" }}
+                >
+                  Remover todos
+                </button>
+              </div>
+
+              {mediaFiles.map((file, idx) => (
+                <div
+                  key={`${file.name}_${idx}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0.45rem 0.75rem",
+                    background: "rgba(15, 23, 42, 0.6)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "6px",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0, flex: 1 }}>
+                    <Paperclip size={14} color="#818cf8" style={{ flexShrink: 0 }} />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p
+                        style={{
+                          fontSize: "0.78rem",
+                          color: "var(--text-primary)",
+                          margin: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontWeight: 500,
+                        }}
+                        title={file.name}
+                      >
+                        {file.name}
+                      </p>
+                      <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
+                        {formatBytes(file.size)}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFile(idx);
+                    }}
+                    disabled={isPending}
+                    title="Remover este arquivo"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--text-muted)",
+                      cursor: "pointer",
+                      padding: "0.25rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "4px",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
