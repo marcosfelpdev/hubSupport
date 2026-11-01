@@ -16,6 +16,7 @@ export const RecentWorkLogsList: React.FC<RecentWorkLogsListProps> = ({ logs, on
     return logs.filter((log) => {
       const matchesSearch =
         !searchTerm.trim() ||
+        log.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.requester?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.clientOrOffice?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.reportedProblem?.toLowerCase().includes(searchTerm.toLowerCase()) ||

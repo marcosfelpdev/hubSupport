@@ -32,10 +32,11 @@ export interface StructuredReportData {
 }
 
 export interface WorkLogContext {
+  title?: string;
   requester: string;
   clientOrOffice: string;
   reportedProblem: string;
-  actionTaken: string;
+  actionTaken?: string;
   status: string;
   technicalAction: boolean;
   implementation: boolean;
@@ -200,10 +201,11 @@ export async function analyzeRecordingWithGemini(
 
   // 3. Sanitização dos dados do contexto do atendimento
   const safeContext = {
+    title: context.title?.trim() || "",
     requester: context.requester?.trim() || "Não informado",
     clientOrOffice: context.clientOrOffice?.trim() || "Não informado",
     reportedProblem: context.reportedProblem?.trim() || "Não informado",
-    actionTaken: context.actionTaken?.trim() || "Não informado",
+    actionTaken: context.actionTaken?.trim() || "",
     status: context.status?.trim() || "Pendente",
     technicalAction: !!context.technicalAction,
     implementation: !!context.implementation,
@@ -285,10 +287,11 @@ Analise detalhadamente a gravação de tela em anexo (áudio com as falas e víd
 Gere um relatório executivo técnico e formal, estritamente no formato JSON definido, seguindo o padrão padrão de relatório corporativo da empresa:
 
 ### Informações do Atendimento:
+${safeContext.title ? `- Título: ${safeContext.title}` : ""}
 - Solicitante: ${safeContext.requester}
 - Escritório / Cliente: ${safeContext.clientOrOffice}
-- Problema Relatado: ${safeContext.reportedProblem}
-- Ação Realizada: ${safeContext.actionTaken}
+- Descrição: ${safeContext.reportedProblem}
+${safeContext.actionTaken ? `- Ação Realizada: ${safeContext.actionTaken}` : ""}
 - Status Atual: ${safeContext.status}
 - Classificação: ${safeContext.technicalAction ? "Ação Técnica (Dev)" : ""} ${safeContext.implementation ? "Implementação/Sugestão de Melhoria" : ""}
 ${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.platform}` : ""}

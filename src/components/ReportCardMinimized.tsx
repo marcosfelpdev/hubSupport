@@ -4,6 +4,7 @@ import { hexToRgba } from "./TagBadge";
 
 export interface ReportCardMinimizedLog {
   id: string;
+  title?: string;
   requester?: string;
   clientOrOffice?: string;
   reportedProblem?: string;
@@ -300,62 +301,41 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
           </div>
         </div>
 
-        {/* Linha 2: Descrição com tamanho padrão imutável de até 3 linhas e fade-out */}
+        {/* Linha 2: Valor do Título centralizado com fonte maior */}
         <div
           style={{
+            position: "relative",
+            minHeight: "48px",
+            maxHeight: "54px",
+            height: "50px",
             display: "flex",
-            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            width: "100%",
           }}
         >
-          <span
+          <p
+            title={log.title || log.reportedProblem || "Sem título informado."}
             style={{
-              color: "#e26b6b",
-              fontSize: "10px",
+              color: "#ffffff",
+              fontSize: "0.9rem",
               fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              display: "block",
-            }}
-          >
-            Descrição
-          </span>
-          <div
-            style={{
-              position: "relative",
-              height: "44px",
-              maxHeight: "44px",
+              lineHeight: 1.25,
+              margin: 0,
+              padding: "0 0.25rem",
+              textAlign: "center",
+              wordBreak: "break-word",
+              whiteSpace: "normal",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
               overflow: "hidden",
-              marginTop: "0.125rem",
+              textOverflow: "ellipsis",
             }}
           >
-            <p
-              style={{
-                color: "#ffffff",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                lineHeight: "15px",
-                margin: 0,
-                padding: 0,
-                wordBreak: "break-word",
-                whiteSpace: "normal",
-              }}
-            >
-              {log.reportedProblem || "Sem descrição informada."}
-            </p>
-            {/* Fade-out suave ao bater no limite de 3 linhas do card */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "12px",
-                background: "linear-gradient(to top, #161a23 15%, transparent 100%)",
-                pointerEvents: "none",
-              }}
-              aria-hidden="true"
-            />
-          </div>
+            {log.title || log.reportedProblem || "Sem título informado."}
+          </p>
         </div>
 
         {/* Linha 3: Divisor */}

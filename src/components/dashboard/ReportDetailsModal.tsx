@@ -116,7 +116,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                  {log.clientOrOffice}
+                  {log.title || log.clientOrOffice}
                 </h3>
                 {isSolved && (
                   <span
@@ -138,6 +138,9 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                 )}
               </div>
               <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "1px" }}>
+                {log.title && (
+                  <>Escritório / Cliente: <strong style={{ color: "#e2e8f0" }}>{log.clientOrOffice}</strong> • </>
+                )}
                 Solicitante: <strong style={{ color: "#e2e8f0" }}>{log.requester}</strong> • Registrado em {formattedDate}
                 {log.tag && (
                   <> • Plataforma: <strong style={{ color: log.tag.color }}>{log.tag.name}</strong></>
@@ -173,11 +176,11 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
             gap: "1.25rem",
           }}
         >
-          {/* Card: Problema e Ação */}
+          {/* Card: Descrição e Ação (se houver histórico) */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: log.actionTaken && log.actionTaken.trim() !== "" ? "1fr 1fr" : "1fr",
               gap: "1rem",
             }}
           >
@@ -200,38 +203,40 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                   marginBottom: "0.5rem",
                 }}
               >
-                Problema Relatado
+                Descrição
               </span>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-primary)", lineHeight: 1.5 }}>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-primary)", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
                 {log.reportedProblem}
               </p>
             </div>
 
-            <div
-              style={{
-                backgroundColor: "rgba(15, 23, 42, 0.6)",
-                border: "1px solid rgba(16, 185, 129, 0.25)",
-                borderRadius: "0.75rem",
-                padding: "1rem",
-              }}
-            >
-              <span
+            {log.actionTaken && log.actionTaken.trim() !== "" && (
+              <div
                 style={{
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  color: "#34d399",
-                  display: "block",
-                  marginBottom: "0.5rem",
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  border: "1px solid rgba(16, 185, 129, 0.25)",
+                  borderRadius: "0.75rem",
+                  padding: "1rem",
                 }}
               >
-                Solução / Ação Realizada
-              </span>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-primary)", lineHeight: 1.5 }}>
-                {log.actionTaken}
-              </p>
-            </div>
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#34d399",
+                    display: "block",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Solução / Ação Realizada
+                </span>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-primary)", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+                  {log.actionTaken}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Relatório Estruturado de IA se houver */}

@@ -33,10 +33,11 @@ model Tag {
 
 model WorkLog {
   id               String         @id @default(cuid())
+  title            String         @default("") // Título do atendimento/relatório
   requester        String         // Solicitante
   clientOrOffice   String         // Escritório/Cliente
-  reportedProblem  String         // Problema relatado
-  actionTaken      String         // Ação realizada
+  reportedProblem  String         // Descrição do atendimento (antigo problema relatado)
+  actionTaken      String         @default("") // Ação realizada (integrada na descrição)
   status           String         @default("Realizado") // Realizado, Em andamento, Aguardando reunião, Não foi possível realizar, Solucionado
   technicalAction  Boolean        @default(false) // Ação técnica (envio para equipe de programadores)
   implementation   Boolean        @default(false) // Implementação (sugestão de melhoria)

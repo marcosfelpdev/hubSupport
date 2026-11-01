@@ -36,6 +36,7 @@ export async function processAiReportJob(workLogId: string) {
 
   try {
     const context: WorkLogContext = {
+      title: workLog.title,
       requester: workLog.requester,
       clientOrOffice: workLog.clientOrOffice,
       reportedProblem: workLog.reportedProblem,

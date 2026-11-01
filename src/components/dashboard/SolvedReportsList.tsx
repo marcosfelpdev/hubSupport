@@ -20,6 +20,7 @@ export const SolvedReportsList: React.FC<SolvedReportsListProps> = ({ logs, onSe
 
       const term = searchTerm.toLowerCase();
       return (
+        log.title?.toLowerCase().includes(term) ||
         log.requester?.toLowerCase().includes(term) ||
         log.clientOrOffice?.toLowerCase().includes(term) ||
         log.actionTaken?.toLowerCase().includes(term) ||

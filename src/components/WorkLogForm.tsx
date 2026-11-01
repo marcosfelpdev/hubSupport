@@ -87,15 +87,21 @@ export default function WorkLogForm({
     e.preventDefault();
     setMessage(null);
 
+    if (!selectedTagId) {
+      setMessage({
+        type: "error",
+        text: "Por favor, selecione uma tag de plataforma obrigatória.",
+      });
+      return;
+    }
+
     const form = e.currentTarget;
     const formData = new FormData(form);
 
     formData.set("technicalAction", technicalAction ? "on" : "off");
     formData.set("implementation", implementation ? "on" : "off");
-
-    if (selectedTagId) {
-      formData.set("tagId", selectedTagId);
-    }
+    formData.set("tagId", selectedTagId);
+    formData.set("actionTaken", "");
 
     mediaFiles.forEach((file) => {
       formData.append("media", file);
@@ -303,6 +309,22 @@ export default function WorkLogForm({
       )}
 
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        {/* Título - Primeiro campo de cima para baixo */}
+        <div>
+          <label htmlFor="title">
+            Título <span style={{ color: "#ef4444" }}>*</span>
+          </label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            className="input-dark"
+            placeholder="Ex: Erro ao sincronizar API de faturamento"
+            required
+            disabled={isPending}
+          />
+        </div>
+
         {/* Solicitante */}
         <div>
           <label htmlFor="requester">
@@ -377,45 +399,29 @@ export default function WorkLogForm({
           </div>
         </div>
 
-        {/* Problema relatado */}
+        {/* Descrição (antigo Problema relatado; ação realizada agora integrada) */}
         <div>
           <label htmlFor="reportedProblem">
-            Problema relatado <span style={{ color: "#ef4444" }}>*</span>
+            Descrição <span style={{ color: "#ef4444" }}>*</span>
           </label>
           <textarea
             id="reportedProblem"
             name="reportedProblem"
             className="input-dark"
-            placeholder="Descreva a solicitação ou incidente relatado..."
-            rows={3}
+            placeholder="Descreva a solicitação, incidente e ações tomadas..."
+            rows={4}
             required
             disabled={isPending}
             style={{ resize: "vertical", lineHeight: 1.5 }}
           />
         </div>
 
-        {/* Ação realizada */}
-        <div>
-          <label htmlFor="actionTaken">
-            Ação realizada <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <textarea
-            id="actionTaken"
-            name="actionTaken"
-            className="input-dark"
-            placeholder="Descreva o que foi feito para resolver ou dar encaminhamento..."
-            rows={3}
-            required
-            disabled={isPending}
-            style={{ resize: "vertical", lineHeight: 1.5 }}
-          />
-        </div>
-
-        {/* Seleção de Tag Mestre (Contexto / Plataforma) - Acima de Ação Técnica / Implementação */}
+        {/* Seleção de Tag Mestre (Contexto / Plataforma) - OBRIGATÓRIA */}
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.375rem" }}>
             <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "var(--text-secondary)", margin: 0 }}>
-              Tag de Plataforma <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 400 }}>(opcional - 1 tag por atendimento)</span>
+              Tag de Plataforma <span style={{ color: "#ef4444" }}>*</span>{" "}
+              <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 400 }}>(obrigatório - selecione 1 tag)</span>
             </label>
             {selectedTagId && (
               <button
@@ -435,7 +441,7 @@ export default function WorkLogForm({
               flexWrap: "wrap",
               gap: "0.5rem",
               background: "rgba(15, 23, 42, 0.5)",
-              border: "1px solid var(--border)",
+              border: !selectedTagId && message?.type === "error" ? "1px solid rgba(239, 68, 68, 0.6)" : "1px solid var(--border)",
               borderRadius: "8px",
               padding: "0.75rem 0.875rem",
               minHeight: "48px",

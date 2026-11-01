@@ -213,6 +213,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
       if (searchTerm) {
         const query = searchTerm.toLowerCase();
         const matchesQuery =
+          (log.title && log.title.toLowerCase().includes(query)) ||
           log.requester.toLowerCase().includes(query) ||
           log.clientOrOffice.toLowerCase().includes(query) ||
           log.reportedProblem.toLowerCase().includes(query) ||

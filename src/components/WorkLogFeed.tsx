@@ -3,10 +3,11 @@ import ReportCardMinimized from "@/components/ReportCardMinimized";
 
 export interface WorkLog {
   id: string;
+  title?: string;
   requester: string;
   clientOrOffice: string;
   reportedProblem: string;
-  actionTaken: string;
+  actionTaken?: string;
   status: string;
   technicalAction: boolean;
   implementation: boolean;

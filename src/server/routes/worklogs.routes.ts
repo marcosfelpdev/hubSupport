@@ -216,9 +216,11 @@ router.post(
     try {
       const user = req.user!;
       const {
+        title,
         requester,
         clientOrOffice,
         reportedProblem,
+        description,
         actionTaken,
         status = "Realizado",
         technicalAction,
@@ -226,13 +228,20 @@ router.post(
         tagId,
       } = req.body;
 
+      const finalTitle = (title || "").trim();
+      const finalDescription = (reportedProblem || description || "").trim();
+      const cleanTagId = tagId && typeof tagId === "string" && tagId.trim() !== "" ? tagId.trim() : null;
+
       if (
+        !finalTitle ||
         !requester?.trim() ||
         !clientOrOffice?.trim() ||
-        !reportedProblem?.trim() ||
-        !actionTaken?.trim()
+        !finalDescription ||
+        !cleanTagId
       ) {
-        res.status(400).json({ error: "Por favor, preencha todos os campos obrigatórios." });
+        res.status(400).json({
+          error: "Por favor, preencha todos os campos obrigatórios (título, solicitante, escritório/cliente, descrição e tag).",
+        });
         return;
       }
 
@@ -257,14 +266,13 @@ router.post(
       const isImplementation =
         implementation === "on" || implementation === "true" || implementation === true;
 
-      const cleanTagId = tagId && typeof tagId === "string" && tagId.trim() !== "" ? tagId.trim() : null;
-
       const newLog = await prisma.workLog.create({
         data: {
+          title: finalTitle,
           requester: requester.trim(),
           clientOrOffice: clientOrOffice.trim(),
-          reportedProblem: reportedProblem.trim(),
-          actionTaken: actionTaken.trim(),
+          reportedProblem: finalDescription,
+          actionTaken: (actionTaken || "").trim(),
           status: status.trim(),
           technicalAction: isTechnicalAction,
           implementation: isImplementation,
@@ -314,8 +322,8 @@ router.post(
             data: technicians.map((tech) => ({
               userId: tech.id,
               workLogId: newLog.id,
-              title: `Novo chamado: ${typeLabel}`,
-              message: `${user.name} registrou um atendimento para "${clientOrOffice.trim()}" que requer atuação técnica.`,
+              title: `Novo chamado: ${finalTitle}`,
+              message: `${user.name} registrou o atendimento "${finalTitle}" (${typeLabel}) para "${clientOrOffice.trim()}".`,
               read: false,
             })),
           });
