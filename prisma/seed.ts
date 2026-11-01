@@ -107,6 +107,7 @@ async function main() {
   if (countTechLogs === 0) {
     const log1 = await prisma.workLog.create({
       data: {
+        title: "Falha na sincronização da API de faturamento",
         requester: "Roberta Souza",
         clientOrOffice: "Escritório Central SP",
         reportedProblem: "Falha na sincronização da API de faturamento com o banco de dados principal. Retorno de erro 504 Timeout nas requisições noturnas.",
@@ -122,6 +123,7 @@ async function main() {
 
     const log2 = await prisma.workLog.create({
       data: {
+        title: "Sugestão de automação para exportação de relatórios XLSX",
         requester: "Mariana Costa",
         clientOrOffice: "Filial Curitiba",
         reportedProblem: "Sugestão de automação para exportação de relatórios diários em formato XLSX e envio automático para os gerentes regionais.",

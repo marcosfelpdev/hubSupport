@@ -1,11 +1,13 @@
 import TagBadge from "@/components/TagBadge";
+import ReportCardMinimized from "@/components/ReportCardMinimized";
 
 export interface WorkLog {
   id: string;
+  title?: string;
   requester: string;
   clientOrOffice: string;
   reportedProblem: string;
-  actionTaken: string;
+  actionTaken?: string;
   status: string;
   technicalAction: boolean;
   implementation: boolean;
@@ -238,227 +240,12 @@ export default function WorkLogFeed({
 
       {/* Log entries */}
       <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem" }}>
-        {logs.map((log, index) => {
-          const isOwn = log.userId === currentUserId;
-          const avatarColor = getAvatarColor(log.userId);
-          const statusConfig = getStatusBadgeConfig(log.status);
-
-          return (
-            <div
-              key={log.id}
-              className="card card-hover animate-fade-in"
-              style={{
-                animationDelay: `${index * 0.05}s`,
-                borderColor: isOwn ? "rgba(99,102,241,0.25)" : "var(--border)",
-                position: "relative",
-              }}
-            >
-              {/* Header row: Author + Badges */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "0.875rem",
-                  paddingBottom: "0.75rem",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                }}
-              >
-                {/* Author Info */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
-                  <div
-                    className="avatar"
-                    style={{
-                      background: `linear-gradient(135deg, ${avatarColor}, ${avatarColor}aa)`,
-                      width: "32px",
-                      height: "32px",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    {getInitials(log.user.name)}
-                  </div>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                      <span
-                        style={{
-                          fontSize: "0.85rem",
-                          fontWeight: 600,
-                          color: "var(--text-primary)",
-                        }}
-                      >
-                        {log.user.name}
-                      </span>
-                      {isOwn && (
-                        <span
-                          style={{
-                            fontSize: "0.65rem",
-                            padding: "0.1rem 0.35rem",
-                            borderRadius: "4px",
-                            background: "rgba(99,102,241,0.15)",
-                            color: "#818cf8",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Você
-                        </span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                      Registrado {formatRelative(log.createdAt)} • {formatTime(log.createdAt)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Status Badge & Tag */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                  {log.tag && (
-                    <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
-                  )}
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.35rem",
-                      padding: "0.25rem 0.65rem",
-                      borderRadius: "9999px",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      color: statusConfig.color,
-                      background: statusConfig.bg,
-                      border: `1px solid ${statusConfig.border}`,
-                    }}
-                  >
-                    {statusConfig.icon}
-                    {statusConfig.label}
-                  </span>
-                </div>
-              </div>
-
-              {/* Meta tags: Solicitante & Escritório/Cliente */}
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  marginBottom: "0.875rem",
-                }}
-              >
-                {/* Solicitante */}
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.375rem",
-                    background: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid var(--border)",
-                    padding: "0.2rem 0.6rem",
-                    borderRadius: "6px",
-                    fontSize: "0.78rem",
-                  }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>Solicitante:</span>
-                  <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{log.requester}</span>
-                </div>
-
-                {/* Escritório / Cliente */}
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.375rem",
-                    background: "rgba(99, 102, 241, 0.08)",
-                    border: "1px solid rgba(99, 102, 241, 0.2)",
-                    padding: "0.2rem 0.6rem",
-                    borderRadius: "6px",
-                    fontSize: "0.78rem",
-                  }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                    <line x1="8" y1="21" x2="16" y2="21" />
-                    <line x1="12" y1="17" x2="12" y2="21" />
-                  </svg>
-                  <span style={{ color: "#a5b4fc", fontSize: "0.72rem" }}>Local/Cliente:</span>
-                  <span style={{ color: "#e0e7ff", fontWeight: 600 }}>{log.clientOrOffice}</span>
-                </div>
-              </div>
-
-              {/* Sections: Problema Relatado & Ação Realizada */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
-                {/* Problema relatado */}
-                <div
-                  style={{
-                    background: "rgba(15, 23, 42, 0.5)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "8px",
-                    padding: "0.625rem 0.875rem",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontSize: "0.72rem",
-                      fontWeight: 600,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                      color: "#f87171",
-                      marginBottom: "0.25rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.35rem",
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    Problema relatado
-                  </p>
-                  <p style={{ fontSize: "0.825rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                    {log.reportedProblem}
-                  </p>
-                </div>
-
-                {/* Ação realizada */}
-                <div
-                  style={{
-                    background: "rgba(15, 23, 42, 0.5)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "8px",
-                    padding: "0.625rem 0.875rem",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontSize: "0.72rem",
-                      fontWeight: 600,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                      color: "#34d399",
-                      marginBottom: "0.25rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.35rem",
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Ação realizada
-                  </p>
-                  <p style={{ fontSize: "0.825rem", color: "var(--text-primary)", lineHeight: 1.5 }}>
-                    {log.actionTaken}
-                  </p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {logs.map((log) => (
+          <ReportCardMinimized
+            key={log.id}
+            log={log}
+          />
+        ))}
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import ScreenRecorderButton from "@/components/ScreenRecorderButton";
 import AiReportSection from "@/components/AiReportSection";
 import TagBadge from "@/components/TagBadge";
 import { WorkLog } from "@/components/WorkLogFeed";
+import ReportCardMinimized from "@/components/ReportCardMinimized";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 
 interface DashboardProps {
@@ -342,194 +343,15 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
             </div>
           ) : (
             filteredLogs.map((log) => {
-              const isSelected = log.id === selectedLogId;
-              const avatarColor = getAvatarColor(log.userId);
-              const statusConfig = getStatusBadgeConfig(log.status);
-              const isOwn = log.userId === currentUserId;
-              const hasTechnical = log.technicalAction;
-              const hasImplementation = log.implementation;
-
+              const isSelected = log.id === validSelectedLogId;
               return (
-                <div
+                <ReportCardMinimized
                   key={log.id}
+                  id={`card-daily-${log.id}`}
+                  log={log}
+                  isSelected={isSelected}
                   onClick={() => setSelectedLogId(log.id)}
-                  className="card card-hover animate-fade-in"
-                  style={{
-                    cursor: "pointer",
-                    position: "relative",
-                    borderColor: isSelected ? "rgba(99,102,241,0.6)" : isOwn ? "rgba(99,102,241,0.25)" : "var(--border)",
-                    boxShadow: isSelected ? "0 0 0 1px rgba(99,102,241,0.4)" : "none",
-                    padding: "0.875rem",
-                    zIndex: 1,
-                  }}
-                >
-                  {/* Tipo tags (canto superior direito, sobressaindo do card) */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "1%",
-                      right: "1%",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "4px",
-                      zIndex: 10,
-                    }}
-                  >
-                    {hasTechnical && (
-                      <div
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          background: "#f59e0b",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          border: "1.5px solid #0d1322",
-                        }}
-                      >
-                        <Cog size={9} strokeWidth={1.5} color="white" />
-                      </div>
-                    )}
-                    {hasImplementation && (
-                      <div
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          background: "#3b82f6",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          border: "1.5px solid #0d1322",
-                        }}
-                      >
-                        <Lightbulb size={9} strokeWidth={1.5} color="white" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "0.625rem",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
-                      <div
-                        className="avatar"
-                        style={{
-                          background: `linear-gradient(135deg, ${avatarColor}, ${avatarColor}aa)`,
-                          width: "28px",
-                          height: "28px",
-                          fontSize: "0.7rem",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {getInitials(log.user.name)}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <p
-                          style={{
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                            color: "var(--text-primary)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {log.user.name}
-                        </p>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      {log.tag && <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />}
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.25rem",
-                          padding: "0.2rem 0.5rem",
-                          borderRadius: "9999px",
-                          fontSize: "0.7rem",
-                          fontWeight: 600,
-                          color: statusConfig.color,
-                          background: statusConfig.bg,
-                          border: `1px solid ${statusConfig.border}`,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {statusConfig.label}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "0.75rem",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    <div style={{ minWidth: 0, marginBottom: "0" }}>
-                      <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
-                        Solicitante
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "0.8rem",
-                          color: "var(--text-primary)",
-                          fontWeight: 500,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {log.requester}
-                      </p>
-                    </div>
-                    <div style={{ minWidth: 0, marginBottom: "0" }}>
-                      <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.125rem" }}>
-                        Escritório
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "0.8rem",
-                          color: "#e0e7ff",
-                          fontWeight: 500,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {log.clientOrOffice}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p style={{ fontSize: "0.75rem", color: "#f87171", marginBottom: "0.125rem", fontWeight: 600 }}>
-                      Problema relatado
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "0.78rem",
-                        color: "var(--text-secondary)",
-                        lineHeight: 1.4,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {log.reportedProblem}
-                    </p>
-                  </div>
-                </div>
+                />
               );
             })
           )}
@@ -638,6 +460,26 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
                   </span>
                 </div>
               </div>
+
+              {/* Título do Atendimento (se houver) */}
+              {selectedLog.title && (
+                <div
+                  style={{
+                    background: "rgba(99, 102, 241, 0.08)",
+                    border: "1px solid rgba(99, 102, 241, 0.25)",
+                    borderRadius: "8px",
+                    padding: "0.875rem 1rem",
+                    marginBottom: "1.25rem",
+                  }}
+                >
+                  <p style={{ fontSize: "0.72rem", color: "#a5b4fc", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600, marginBottom: "0.25rem" }}>
+                    Título do Atendimento
+                  </p>
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#ffffff", margin: 0 }}>
+                    {selectedLog.title}
+                  </h3>
+                </div>
+              )}
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1.25rem" }}>
                 <div
@@ -754,43 +596,45 @@ export default function DashboardClient({ logs, currentUserId, employees, onLogC
                       <line x1="12" y1="8" x2="12" y2="12" />
                       <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    Problema relatado
+                    Descrição
                   </p>
                   <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", lineHeight: 1.6, whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
                     {selectedLog.reportedProblem}
                   </p>
                 </div>
 
-                <div
-                  style={{
-                    background: "rgba(15, 23, 42, 0.5)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "8px",
-                    padding: "1rem",
-                  }}
-                >
-                  <p
+                {selectedLog.actionTaken && selectedLog.actionTaken.trim() !== "" ? (
+                  <div
                     style={{
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                      color: "#34d399",
-                      marginBottom: "0.625rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.375rem",
+                      background: "rgba(15, 23, 42, 0.5)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                      padding: "1rem",
                     }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Ação realizada
-                  </p>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-primary)", lineHeight: 1.6, whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
-                    {selectedLog.actionTaken}
-                  </p>
-                </div>
+                    <p
+                      style={{
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                        color: "#34d399",
+                        marginBottom: "0.625rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.375rem",
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Ação realizada
+                    </p>
+                    <p style={{ fontSize: "0.9rem", color: "var(--text-primary)", lineHeight: 1.6, whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
+                      {selectedLog.actionTaken}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : (
