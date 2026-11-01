@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { api, EmployeeItem } from "../services/api";
 import EmployeesManager from "../components/EmployeesManager";
@@ -31,39 +31,28 @@ export default function EmployeesPage() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          padding: "3rem",
-          textAlign: "center",
-          color: "var(--text-muted)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "1rem",
-          minHeight: "50vh",
-        }}
-      >
-        <div className="spinner" style={{ width: "28px", height: "28px" }} />
-        <span>Carregando funcionários...</span>
-      </div>
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full animate-fade-in">
+        <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3 shadow-xs">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+          <span className="text-sm font-medium text-slate-600">Carregando membros da equipe...</span>
+        </div>
+      </main>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: "2rem" }}>
-        <div className="alert alert-error">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full animate-fade-in">
+        <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl p-4 text-sm flex items-center justify-between shadow-2xs">
           <span>{error}</span>
           <button
             onClick={fetchEmployees}
-            className="btn-ghost"
-            style={{ marginLeft: "auto", padding: "0.25rem 0.5rem" }}
+            className="text-xs font-semibold text-rose-700 underline hover:text-rose-900 cursor-pointer"
           >
             Tentar novamente
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
