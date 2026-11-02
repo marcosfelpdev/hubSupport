@@ -100,11 +100,11 @@
 **Files:**
 - Modify: `src/components/ReportCardMinimized.tsx`
 
-- [ ] **Step 1:** Em `src/components/ReportCardMinimized.tsx`:
+- [x] **Step 1:** Em `src/components/ReportCardMinimized.tsx`:
   - Adicionar `assignedTo?: { id: string; name: string; email?: string; role?: string | null } | null` na interface `ReportCardMinimizedLog`.
   - Na linha de metadados inferior (ao lado da data e anexos), renderizar o avatar compacto do responsável com as iniciais do nome, cor de destaque e tooltip "Responsável: [Nome]".
-- [ ] **Step 2:** Validar renderização nas colunas do Kanban.
-- [ ] **Step 3:** Commit: `feat(ui): exibir avatar do responsavel atribuido no card minimizado do kanban`.
+- [x] **Step 2:** Validar renderização nas colunas do Kanban.
+- [x] **Step 3:** Commit: `feat(ui): exibir avatar do responsavel atribuido no card minimizado do kanban`.
 
 ---
 

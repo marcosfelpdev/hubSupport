@@ -19,6 +19,13 @@ export interface ReportCardMinimizedLog {
     name?: string;
     email?: string;
   } | null;
+  assignedToId?: string | null;
+  assignedTo?: {
+    id: string;
+    name: string;
+    email?: string;
+    role?: string | null;
+  } | null;
   tagId?: string | null;
   tag?: {
     id: string;
@@ -158,6 +165,40 @@ function formatDate(date: Date | string | undefined): string {
   }
 }
 
+const AVATAR_BG_COLORS = [
+  "bg-indigo-600",
+  "bg-sky-600",
+  "bg-emerald-600",
+  "bg-violet-600",
+  "bg-rose-600",
+  "bg-amber-600",
+  "bg-teal-600",
+  "bg-blue-600",
+];
+
+function getInitials(name?: string | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getAvatarColorClass(str?: string | null): string {
+  if (!str) return "bg-indigo-600";
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_BG_COLORS[Math.abs(hash) % AVATAR_BG_COLORS.length];
+}
+
+function getFirstName(fullName?: string | null): string {
+  if (!fullName) return "";
+  const parts = fullName.trim().split(/\s+/);
+  return parts[0] || fullName;
+}
+
 export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
   log,
   isSelected = false,
@@ -176,6 +217,11 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
   const statusPill = getStatusPill(log.status);
   const footerConfig = getFooterConfig(log.technicalAction, log.implementation);
   const formattedDate = formatDate(log.createdAt);
+
+  const assignedName = log.assignedTo?.name;
+  const assignedFirstName = React.useMemo(() => getFirstName(assignedName), [assignedName]);
+  const assignedInitials = React.useMemo(() => getInitials(assignedName), [assignedName]);
+  const assignedColorClass = React.useMemo(() => getAvatarColorClass(assignedName), [assignedName]);
 
   const isAiGenerating = Boolean(
     log.aiReport &&
@@ -289,7 +335,7 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
         {/* Linha Divisória Sutil */}
         <div className="w-full border-t border-slate-100 dark:border-slate-800/80 my-1 shrink-0" />
 
-        {/* Linha Inferior: Solicitante, Empresa & Data */}
+        {/* Linha Inferior: Solicitante, Empresa & Metadados (Responsável, Anexos, Data) */}
         <div className="flex items-end justify-between gap-2 min-w-0 shrink-0">
           <div className="flex flex-col gap-0.5 min-w-0 flex-1">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
@@ -306,6 +352,21 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 ml-1">
+            {log.assignedTo && (
+              <div
+                className="inline-flex items-center gap-1 pl-0.5 pr-1.5 py-0.5 rounded-full bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 shadow-2xs select-none shrink-0"
+                title={`Responsável: ${log.assignedTo.name}`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0 shadow-2xs ring-1 ring-white/20 dark:ring-white/10 ${assignedColorClass}`}
+                >
+                  {assignedInitials}
+                </div>
+                <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 max-w-[65px] truncate">
+                  {assignedFirstName}
+                </span>
+              </div>
+            )}
             {mediaCount > 0 && (
               <span
                 className="inline-flex items-center gap-1 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-md px-2 py-0.5 text-[0.7rem] font-medium"
