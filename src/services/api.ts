@@ -218,6 +218,13 @@ export const api = {
     async getDaily(): Promise<WorkLogItem[]> {
       return request<WorkLogItem[]>("/api/worklogs");
     },
+    async getAll(params?: { startDate?: string; endDate?: string }): Promise<WorkLogItem[]> {
+      const query = new URLSearchParams();
+      if (params?.startDate) query.set("startDate", params.startDate);
+      if (params?.endDate) query.set("endDate", params.endDate);
+      const qs = query.toString();
+      return request<WorkLogItem[]>(`/api/worklogs${qs ? `?${qs}` : ""}`);
+    },
     async getRecent(limit = 25): Promise<WorkLogItem[]> {
       return request<WorkLogItem[]>(`/api/worklogs?type=recent&limit=${limit}`);
     },

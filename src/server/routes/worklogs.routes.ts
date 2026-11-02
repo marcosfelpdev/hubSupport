@@ -113,20 +113,37 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
       return;
     }
 
-    // Padrão: atendimentos do dia atual
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+        // Filtro por período de datas ou todos os atendimentos por padrão
+    const startDateParam = req.query.startDate as string | undefined;
+    const endDateParam = req.query.endDate as string | undefined;
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const whereClause: any = {};
+
+    if (startDateParam || endDateParam) {
+      whereClause.createdAt = {};
+      if (startDateParam) {
+        const [y, m, d] = startDateParam.split("-").map(Number);
+        const start = new Date(y, m - 1, d, 0, 0, 0, 0);
+        whereClause.createdAt.gte = start;
+      }
+      if (endDateParam) {
+        const [y, m, d] = endDateParam.split("-").map(Number);
+        const end = new Date(y, m - 1, d, 23, 59, 59, 999);
+        whereClause.createdAt.lte = end;
+      }
+    } else if (type === "daily") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      whereClause.createdAt = {
+        gte: today,
+        lt: tomorrow,
+      };
+    }
 
     const logs = await prisma.workLog.findMany({
-      where: {
-        createdAt: {
-          gte: today,
-          lt: tomorrow,
-        },
-      },
+      where: whereClause,
       include: {
         user: {
           select: { name: true, email: true, role: true },
