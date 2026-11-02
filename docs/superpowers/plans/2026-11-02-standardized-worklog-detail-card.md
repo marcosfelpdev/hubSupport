@@ -75,12 +75,12 @@
 **Files:**
 - Modify: `src/components/TechnicianDashboardClient.tsx`
 
-- [ ] **Step 1:** Atualizar `src/components/TechnicianDashboardClient.tsx`:
+- [x] **Step 1:** Atualizar `src/components/TechnicianDashboardClient.tsx`:
   - Substituir o conteúdo antigo pelo novo `WorkLogDetailContent`.
   - Passar o botão "Marcar como Solucionado" através do prop `footerActions`.
   - Conectar os callbacks de "Visualizar PDF" e "Mídias".
-- [ ] **Step 2:** Executar `npx tsc --noEmit` e verificar tipos.
-- [ ] **Step 3:** Commit: `feat(ui): padronizar card maximizado na tela de atendimento do tecnico`.
+- [x] **Step 2:** Executar `npx tsc --noEmit` e verificar tipos.
+- [x] **Step 3:** Commit: `feat(ui): padronizar card maximizado na tela de atendimento do tecnico`.
 
 ---
 
