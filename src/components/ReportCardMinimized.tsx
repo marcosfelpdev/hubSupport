@@ -140,7 +140,7 @@ function getFooterConfig(technicalAction?: boolean, implementation?: boolean): F
   }
   return {
     label: "Atendimento",
-    badgeClass: "bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-800/80",
+    badgeClass: "bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/80",
   };
 }
 
