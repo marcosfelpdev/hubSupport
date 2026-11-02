@@ -91,6 +91,7 @@ export interface WorkLogDetailData {
 export interface WorkLogDetailContentProps {
   log: WorkLogDetailData;
   onRefresh?: () => void;
+  headerAction?: React.ReactNode;
   footerActions?: React.ReactNode;
   onOpenPdfModal?: (logId: string) => void;
   onOpenMediaModal?: (log: WorkLogItem | WorkLogDetailData) => void;
@@ -179,6 +180,7 @@ export function parseMediaPaths(media?: string | null): string[] {
 export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   log,
   onRefresh,
+  headerAction,
   footerActions,
   onOpenPdfModal,
   onOpenMediaModal,
@@ -316,88 +318,96 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   return (
     <div className="flex flex-col gap-4 text-xs sm:text-sm">
       {/* 1. Header do Chamado */}
-      <div className="flex items-start sm:items-center gap-3.5 pb-4 border-b border-slate-200 dark:border-slate-800">
-        <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
-            isSolved
-              ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80 text-emerald-600 dark:text-emerald-400"
-              : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
-          }`}
-        >
-          {isSolved ? <CheckCircle2 size={20} /> : <FileText size={20} />}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center flex-wrap gap-2 mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug truncate max-w-full">
-              {log.title || log.clientOrOffice}
-            </h3>
-
-            <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-xs ${statusPill.badgeClass}`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusPill.dotClass}`} />
-              <span>{statusPill.label}</span>
-            </span>
-
-            {log.tag && (
-              <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
-            )}
-
-            {log.technicalAction && (
-              <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border border-orange-200/80 dark:border-orange-800 shrink-0">
-                <Cog size={11} />
-                Ação Técnica
-              </span>
-            )}
-
-            {log.implementation && (
-              <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 shrink-0">
-                <Lightbulb size={11} />
-                Implementação
-              </span>
-            )}
+      <div className="flex items-start sm:items-center justify-between gap-3.5 pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+              isSolved
+                ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80 text-emerald-600 dark:text-emerald-400"
+                : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+            }`}
+          >
+            {isSolved ? <CheckCircle2 size={20} /> : <FileText size={20} />}
           </div>
 
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
-            {log.title && (
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center flex-wrap gap-2 mb-1">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug truncate max-w-full">
+                {log.title || log.clientOrOffice}
+              </h3>
+
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-xs ${statusPill.badgeClass}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusPill.dotClass}`} />
+                <span>{statusPill.label}</span>
+              </span>
+
+              {log.tag && (
+                <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
+              )}
+
+              {log.technicalAction && (
+                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border border-orange-200/80 dark:border-orange-800 shrink-0">
+                  <Cog size={11} />
+                  Ação Técnica
+                </span>
+              )}
+
+              {log.implementation && (
+                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-purple-50 dark:purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 shrink-0">
+                  <Lightbulb size={11} />
+                  Implementação
+                </span>
+              )}
+            </div>
+
+            <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
+              {log.title && (
+                <span className="inline-flex items-center gap-1">
+                  <span>Cliente:</span>
+                  <strong className="text-slate-800 dark:text-slate-200 font-semibold">
+                    {log.clientOrOffice}
+                  </strong>
+                  <span className="text-slate-300 dark:text-slate-600 ml-1">•</span>
+                </span>
+              )}
+
               <span className="inline-flex items-center gap-1">
-                <span>Cliente:</span>
+                <span>Solicitante:</span>
                 <strong className="text-slate-800 dark:text-slate-200 font-semibold">
-                  {log.clientOrOffice}
+                  {log.requester}
                 </strong>
                 <span className="text-slate-300 dark:text-slate-600 ml-1">•</span>
               </span>
-            )}
 
-            <span className="inline-flex items-center gap-1">
-              <span>Solicitante:</span>
-              <strong className="text-slate-800 dark:text-slate-200 font-semibold">
-                {log.requester}
-              </strong>
-              <span className="text-slate-300 dark:text-slate-600 ml-1">•</span>
-            </span>
-
-            <span className="inline-flex items-center gap-1">
-              <span>Registrado em:</span>
-              <span className="text-slate-700 dark:text-slate-300 font-medium">
-                {formattedDate}
-              </span>
-            </span>
-
-            {log.tag && (
-              <>
-                <span className="text-slate-300 dark:text-slate-600">•</span>
-                <span className="inline-flex items-center gap-1">
-                  <span>Plataforma:</span>
-                  <strong style={{ color: log.tag.color }} className="font-semibold">
-                    {log.tag.name}
-                  </strong>
+              <span className="inline-flex items-center gap-1">
+                <span>Registrado em:</span>
+                <span className="text-slate-700 dark:text-slate-300 font-medium">
+                  {formattedDate}
                 </span>
-              </>
-            )}
+              </span>
+
+              {log.tag && (
+                <>
+                  <span className="text-slate-300 dark:text-slate-600">•</span>
+                  <span className="inline-flex items-center gap-1">
+                    <span>Plataforma:</span>
+                    <strong style={{ color: log.tag.color }} className="font-semibold">
+                      {log.tag.name}
+                    </strong>
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
+
+        {headerAction && (
+          <div className="shrink-0 flex items-center self-start sm:self-center">
+            {headerAction}
+          </div>
+        )}
       </div>
 
       {/* 2. Grid de 2 Colunas Lado a Lado: Descrição & Solução */}

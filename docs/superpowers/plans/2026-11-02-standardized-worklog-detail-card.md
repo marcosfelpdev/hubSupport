@@ -89,9 +89,9 @@
 **Files:**
 - Modify: `src/components/dashboard/ReportDetailsModal.tsx`
 
-- [ ] **Step 1:** Ajustar `ReportDetailsModal.tsx` para compartilhar as mesmas definições ou renderizar `WorkLogDetailContent`, garantindo 100% de consistência visual e manutenibilidade unificada.
-- [ ] **Step 2:** Executar `npx vite build`.
-- [ ] **Step 3:** Commit: `refactor(ui): unificar apresentacao visual do modal do kanban com o novo componente padrao`.
+- [x] **Step 1:** Ajustar `ReportDetailsModal.tsx` para compartilhar as mesmas definições ou renderizar `WorkLogDetailContent`, garantindo 100% de consistência visual e manutenibilidade unificada.
+- [x] **Step 2:** Executar `npx vite build`.
+- [x] **Step 3:** Commit: `refactor(ui): unificar apresentacao visual do modal do kanban com o novo componente padrao`.
 
 ---
 
