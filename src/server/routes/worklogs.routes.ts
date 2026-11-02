@@ -525,4 +525,60 @@ router.get(
   }
 );
 
+// POST /api/worklogs/:id/generate-ai-report
+router.post(
+  "/:id/generate-ai-report",
+  authenticateToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+
+      const workLog = await prisma.workLog.findUnique({
+        where: { id },
+        include: { aiReport: true },
+      });
+
+      if (!workLog) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      if (workLog.aiReport && workLog.aiReport.status === "processing") {
+        res.status(400).json({
+          error: "O relatório já está sendo processado no momento. Por favor, aguarde alguns instantes.",
+        });
+        return;
+      }
+
+      // Cria ou atualiza registro de AiReport para pending
+      await prisma.aiReport.upsert({
+        where: { workLogId: id },
+        create: {
+          workLogId: id,
+          status: "pending",
+          startedAt: new Date(),
+          errorMessage: null,
+        },
+        update: {
+          status: "pending",
+          startedAt: new Date(),
+          errorMessage: null,
+        },
+      });
+
+      // Dispara job assíncrono em segundo plano
+      setImmediate(() => {
+        processAiReportJob(id).catch((err) => {
+          console.error(`[WorkLog] Erro no job de geração de relatório para ${id}:`, err);
+        });
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao disparar geração de relatório de IA:", error);
+      res.status(500).json({ error: "Erro ao iniciar processamento de IA." });
+    }
+  }
+);
+
 export default router;

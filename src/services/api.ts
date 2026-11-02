@@ -259,6 +259,11 @@ export const api = {
         method: "POST",
       });
     },
+    async generateAiReport(id: string): Promise<{ success: boolean }> {
+      return request<{ success: boolean }>(`/api/worklogs/${id}/generate-ai-report`, {
+        method: "POST",
+      });
+    },
     async getAiStatus(id: string): Promise<WorkLogItem["aiReport"]> {
       return request<WorkLogItem["aiReport"]>(`/api/worklogs/${id}/ai-status`);
     },
