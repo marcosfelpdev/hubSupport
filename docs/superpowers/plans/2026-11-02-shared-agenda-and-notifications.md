@@ -96,7 +96,7 @@
 - Modify: `src/components/dashboard/BasicAgenda.tsx`
 - Modify: `src/pages/DashboardOverviewPage.tsx`
 
-- [ ] **Step 1:** Update `src/components/dashboard/BasicAgenda.tsx`:
+- [x] **Step 1:** Update `src/components/dashboard/BasicAgenda.tsx`:
   - Replace `localStorage` loading with API calls to `api.agenda.getAll()`.
   - Fetch active employees using `api.employees.getAll()`.
   - Update the "Novo Compromisso" form line (conforme imagem do usuário):
@@ -107,8 +107,8 @@
     - Checkbox to toggle `completed` sending `api.agenda.toggleCompleted(id, !completed)`.
     - Delete button calling `api.agenda.delete(id)`.
   - Apply CloudNexus styling for both Light mode and Dark mode.
-- [ ] **Step 2:** In `src/pages/DashboardOverviewPage.tsx`, pass necessary context or ensure `BasicAgenda` mounts and renders cleanly in the 3rd column of the dashboard.
-- [ ] **Step 3:** Run `npx vite build` and commit: `feat(ui): adicionar seletor de funcionario no formulario da agenda e sincronizacao global`.
+- [x] **Step 2:** In `src/pages/DashboardOverviewPage.tsx`, pass necessary context or ensure `BasicAgenda` mounts and renders cleanly in the 3rd column of the dashboard.
+- [x] **Step 3:** Run `npx vite build` and commit: `feat(ui): adicionar seletor de funcionario no formulario da agenda e sincronizacao global`.
 
 ---
 
@@ -125,3 +125,4 @@
   - Non-technician users see the notification bell in the topbar.
   - Meeting scheduled in 15 minutes sends notification exclusively to the assigned employee, with sound tone.
 - [ ] **Step 4:** Mark all plan steps as completed and report findings.
+

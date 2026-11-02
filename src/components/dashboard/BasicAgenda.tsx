@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -8,47 +8,14 @@ import {
   Check,
   Trash2,
   AlertCircle,
+  User,
+  RotateCw,
 } from "lucide-react";
+import { api, AgendaEventItem, EmployeeItem } from "../../services/api";
 
-export interface AgendaEvent {
-  id: string;
-  date: string; // YYYY-MM-DD
-  time: string; // HH:mm
-  title: string;
-  category: "Reunião" | "Atendimento" | "Técnico" | "Lembrete";
-  completed: boolean;
-}
+export type AgendaEvent = AgendaEventItem;
 
-const STORAGE_KEY = "hubsupport_agenda_events_v1";
-
-const initialSampleEvents: AgendaEvent[] = [
-  {
-    id: "evt-1",
-    date: new Date().toISOString().split("T")[0],
-    time: "09:30",
-    title: "Alinhamento com equipe de suporte e triagem",
-    category: "Reunião",
-    completed: true,
-  },
-  {
-    id: "evt-2",
-    date: new Date().toISOString().split("T")[0],
-    time: "14:00",
-    title: "Validação de chamado técnico #402 (Filial Curitiba)",
-    category: "Técnico",
-    completed: false,
-  },
-  {
-    id: "evt-3",
-    date: new Date().toISOString().split("T")[0],
-    time: "16:30",
-    title: "Reunião de feedback de usabilidade com cliente",
-    category: "Reunião",
-    completed: false,
-  },
-];
-
-const categoryBadgeConfig: Record<AgendaEvent["category"], { badgeClass: string }> = {
+const categoryBadgeConfig: Record<string, { badgeClass: string }> = {
   Reunião: {
     badgeClass: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
   },
@@ -65,42 +32,72 @@ const categoryBadgeConfig: Record<AgendaEvent["category"], { badgeClass: string 
 
 const weekDays = ["D", "S", "T", "Q", "Q", "S", "S"];
 
+const formatDateYMD = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
 export const BasicAgenda: React.FC = () => {
   const today = useMemo(() => new Date(), []);
+  const todayStr = useMemo(() => formatDateYMD(today), [today]);
+
   const [currentMonth, setCurrentMonth] = useState<Date>(
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
-  const [selectedDate, setSelectedDate] = useState<string>(
-    today.toISOString().split("T")[0]
-  );
-  const [events, setEvents] = useState<AgendaEvent[]>(() => {
-    if (typeof window === "undefined") return initialSampleEvents;
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch {
-      // fallback
-    }
-    return initialSampleEvents;
-  });
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr);
+  const [events, setEvents] = useState<AgendaEventItem[]>([]);
+  const [employees, setEmployees] = useState<EmployeeItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
+  // Form State
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newTime, setNewTime] = useState("10:00");
-  const [newCategory, setNewCategory] = useState<AgendaEvent["category"]>("Reunião");
+  const [newCategory, setNewCategory] = useState<string>("Reunião");
+  const [newEmployeeId, setNewEmployeeId] = useState<string>("");
 
-  // Salvar no localStorage sempre que houver mudanças
-  useEffect(() => {
+  // Buscar eventos da agenda compartilhada
+  const fetchAgenda = useCallback(async (silent = false) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-    } catch {
-      // ignore
+      if (!silent) setLoading(true);
+      else setIsRefreshing(true);
+      const data = await api.agenda.getAll();
+      setEvents(data);
+    } catch (err) {
+      console.error("[BasicAgenda] Erro ao carregar eventos da agenda:", err);
+    } finally {
+      if (!silent) setLoading(false);
+      setIsRefreshing(false);
     }
-  }, [events]);
+  }, []);
 
-  // Funções do calendário
+  // Buscar colaboradores ativos para o seletor
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const data = await api.employees.getAll();
+      setEmployees(data.filter((emp) => emp.active !== false));
+    } catch (err) {
+      console.error("[BasicAgenda] Erro ao carregar colaboradores:", err);
+    }
+  }, []);
+
+  // Carga inicial e sincronização periódica (polling a cada 20s)
+  useEffect(() => {
+    fetchAgenda();
+    fetchEmployees();
+
+    const intervalId = setInterval(() => {
+      fetchAgenda(true);
+    }, 20000);
+
+    return () => clearInterval(intervalId);
+  }, [fetchAgenda, fetchEmployees]);
+
+  // Funções de navegação do calendário
   const nextMonth = () => {
     setCurrentMonth(
       new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
@@ -116,7 +113,7 @@ export const BasicAgenda: React.FC = () => {
   const goToToday = () => {
     const now = new Date();
     setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1));
-    setSelectedDate(now.toISOString().split("T")[0]);
+    setSelectedDate(formatDateYMD(now));
   };
 
   // Gerar dias do mês
@@ -135,7 +132,7 @@ export const BasicAgenda: React.FC = () => {
       const dayNum = prevMonthLastDay - i;
       const prevDate = new Date(year, month - 1, dayNum);
       days.push({
-        dateStr: prevDate.toISOString().split("T")[0],
+        dateStr: formatDateYMD(prevDate),
         dayNum,
         isCurrentMonth: false,
       });
@@ -145,7 +142,7 @@ export const BasicAgenda: React.FC = () => {
     for (let i = 1; i <= lastDayOfMonth; i++) {
       const curDate = new Date(year, month, i);
       days.push({
-        dateStr: curDate.toISOString().split("T")[0],
+        dateStr: formatDateYMD(curDate),
         dayNum: i,
         isCurrentMonth: true,
       });
@@ -157,7 +154,7 @@ export const BasicAgenda: React.FC = () => {
       for (let i = 1; i <= remainingDays; i++) {
         const nextDate = new Date(year, month + 1, i);
         days.push({
-          dateStr: nextDate.toISOString().split("T")[0],
+          dateStr: formatDateYMD(nextDate),
           dayNum: i,
           isCurrentMonth: false,
         });
@@ -181,32 +178,72 @@ export const BasicAgenda: React.FC = () => {
     return set;
   }, [events]);
 
-  const handleAddEvent = (e: React.FormEvent) => {
+  // Criar novo compromisso na API REST
+  const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || isSaving) return;
 
-    const newEvent: AgendaEvent = {
-      id: `evt-${Date.now()}`,
-      date: selectedDate,
-      time: newTime || "09:00",
-      title: newTitle.trim(),
-      category: newCategory,
-      completed: false,
-    };
+    try {
+      setIsSaving(true);
+      const res = await api.agenda.create({
+        title: newTitle.trim(),
+        date: selectedDate,
+        time: newTime || "10:00",
+        category: newCategory,
+        employeeId: newEmployeeId || null,
+      });
 
-    setEvents((prev) => [...prev, newEvent]);
-    setNewTitle("");
-    setShowAddForm(false);
+      if (res?.event) {
+        setEvents((prev) => {
+          const exists = prev.some((item) => item.id === res.event.id);
+          if (exists) return prev;
+          return [...prev, res.event];
+        });
+      } else {
+        await fetchAgenda(true);
+      }
+
+      setNewTitle("");
+      setNewEmployeeId("");
+      setShowAddForm(false);
+    } catch (err) {
+      console.error("[BasicAgenda] Erro ao salvar compromisso:", err);
+      alert("Não foi possível salvar o compromisso na agenda. Tente novamente.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleToggleComplete = (id: string) => {
+  // Alternar status de conclusão
+  const handleToggleComplete = async (id: string, currentCompleted: boolean) => {
+    // Atualização otimista imediata na UI
     setEvents((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, completed: !e.completed } : e))
+      prev.map((e) => (e.id === id ? { ...e, completed: !currentCompleted } : e))
     );
+
+    try {
+      await api.agenda.update(id, { completed: !currentCompleted });
+    } catch (err) {
+      console.error("[BasicAgenda] Erro ao alternar status do evento:", err);
+      // Reverter caso falhe
+      setEvents((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, completed: currentCompleted } : e))
+      );
+    }
   };
 
-  const handleDeleteEvent = (id: string) => {
+  // Excluir compromisso
+  const handleDeleteEvent = async (id: string) => {
+    const previousEvents = events;
     setEvents((prev) => prev.filter((e) => e.id !== id));
+
+    try {
+      await api.agenda.delete(id);
+    } catch (err) {
+      console.error("[BasicAgenda] Erro ao excluir compromisso:", err);
+      // Reverter caso falhe
+      setEvents(previousEvents);
+    }
   };
 
   const monthName = currentMonth.toLocaleDateString("pt-BR", {
@@ -215,7 +252,9 @@ export const BasicAgenda: React.FC = () => {
   });
 
   const selectedDateFormatted = useMemo(() => {
-    const [y, m, d] = selectedDate.split("-").map(Number);
+    const parts = selectedDate.split("-").map(Number);
+    if (parts.length !== 3) return selectedDate;
+    const [y, m, d] = parts;
     const dateObj = new Date(y, m - 1, d);
     return dateObj.toLocaleDateString("pt-BR", {
       weekday: "short",
@@ -223,8 +262,6 @@ export const BasicAgenda: React.FC = () => {
       month: "short",
     });
   }, [selectedDate]);
-
-  const todayStr = today.toISOString().split("T")[0];
 
   return (
     <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs flex flex-col h-full min-h-[580px]">
@@ -240,14 +277,19 @@ export const BasicAgenda: React.FC = () => {
                 Agenda de Atendimentos
               </h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Agenda funcional básica da equipe
+                Calendário compartilhado da equipe
               </p>
             </div>
           </div>
 
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 uppercase tracking-wider shrink-0">
-            Básica
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {isRefreshing && (
+              <RotateCw size={12} className="animate-spin text-sky-600 dark:text-sky-400" />
+            )}
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 uppercase tracking-wider">
+              Compartilhada
+            </span>
+          </div>
         </div>
 
         {/* Navegação do Mês */}
@@ -359,7 +401,7 @@ export const BasicAgenda: React.FC = () => {
           </button>
         </div>
 
-        {/* Formulário Rápido de Adição */}
+        {/* Formulário Rápido de Adição com Seletor de Funcionário */}
         {showAddForm && (
           <form
             onSubmit={handleAddEvent}
@@ -375,18 +417,18 @@ export const BasicAgenda: React.FC = () => {
               className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors"
             />
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <input
                 type="time"
                 value={newTime}
                 onChange={(e) => setNewTime(e.target.value)}
-                className="w-24 px-2 py-1 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none"
+                className="w-20 px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none shrink-0"
               />
 
               <select
                 value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value as AgendaEvent["category"])}
-                className="flex-1 px-2 py-1 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="flex-1 min-w-[90px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
               >
                 <option value="Reunião">Reunião</option>
                 <option value="Atendimento">Atendimento</option>
@@ -394,11 +436,27 @@ export const BasicAgenda: React.FC = () => {
                 <option value="Lembrete">Lembrete</option>
               </select>
 
+              {/* NOVO Dropdown de Funcionário */}
+              <select
+                value={newEmployeeId}
+                onChange={(e) => setNewEmployeeId(e.target.value)}
+                className="flex-1 min-w-[125px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
+              >
+                <option value="">Selecionar Funcionário</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.name}
+                  </option>
+                ))}
+              </select>
+
               <button
                 type="submit"
-                className="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-2xs transition-colors cursor-pointer"
+                disabled={isSaving}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-2xs transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center justify-center gap-1"
               >
-                Salvar
+                {isSaving && <RotateCw size={11} className="animate-spin" />}
+                {isSaving ? "Salvar..." : "Salvar"}
               </button>
             </div>
           </form>
@@ -406,7 +464,12 @@ export const BasicAgenda: React.FC = () => {
 
         {/* Lista de Eventos do Dia */}
         <div className="flex flex-col gap-2 flex-1">
-          {selectedDayEvents.length === 0 ? (
+          {loading && events.length === 0 ? (
+            <div className="py-12 px-4 text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center justify-center gap-2">
+              <RotateCw size={18} className="animate-spin text-slate-400 dark:text-slate-500" />
+              <span>Carregando agenda compartilhada...</span>
+            </div>
+          ) : selectedDayEvents.length === 0 ? (
             <div className="py-8 px-4 text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center justify-center gap-1.5">
               <CalendarIcon size={24} className="opacity-40 text-slate-400 dark:text-slate-500" />
               <span>Nenhum compromisso agendado para este dia.</span>
@@ -432,7 +495,7 @@ export const BasicAgenda: React.FC = () => {
                 >
                   {/* Checkbox */}
                   <button
-                    onClick={() => handleToggleComplete(evt.id)}
+                    onClick={() => handleToggleComplete(evt.id, evt.completed)}
                     className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer mt-0.5 shrink-0 transition-colors ${
                       evt.completed
                         ? "bg-emerald-600 border-emerald-600 text-white"
@@ -445,7 +508,7 @@ export const BasicAgenda: React.FC = () => {
 
                   {/* Informações */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                       <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 inline-flex items-center gap-1">
                         <Clock size={10} className="text-slate-400 dark:text-slate-500" /> {evt.time}
                       </span>
@@ -454,6 +517,15 @@ export const BasicAgenda: React.FC = () => {
                       >
                         {evt.category}
                       </span>
+                      {evt.employee && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0"
+                          title={`Responsável: ${evt.employee.name}`}
+                        >
+                          <User size={10} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                          <span className="truncate max-w-[110px]">{evt.employee.name}</span>
+                        </span>
+                      )}
                     </div>
 
                     <span
@@ -470,7 +542,7 @@ export const BasicAgenda: React.FC = () => {
                   {/* Botão Deletar */}
                   <button
                     onClick={() => handleDeleteEvent(evt.id)}
-                    className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer rounded"
+                    className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer rounded shrink-0"
                     title="Excluir compromisso"
                   >
                     <Trash2 size={13} />
@@ -483,9 +555,19 @@ export const BasicAgenda: React.FC = () => {
       </div>
 
       {/* Footer Info */}
-      <div className="p-3 bg-slate-50 dark:bg-[#0b0f19] border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-        <AlertCircle size={13} className="text-sky-600 dark:text-sky-400 shrink-0" />
-        <span>Módulo de agenda em fase básica; novas integrações serão implementadas em breve.</span>
+      <div className="p-3 bg-slate-50 dark:bg-[#0b0f19] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1.5 truncate">
+          <AlertCircle size={13} className="text-sky-600 dark:text-sky-400 shrink-0" />
+          <span className="truncate">Sincronizada em tempo real com a equipe</span>
+        </div>
+        <button
+          onClick={() => fetchAgenda(true)}
+          disabled={isRefreshing}
+          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer rounded shrink-0"
+          title="Atualizar agenda agora"
+        >
+          <RotateCw size={12} className={isRefreshing ? "animate-spin text-sky-600 dark:text-sky-400" : ""} />
+        </button>
       </div>
     </div>
   );
