@@ -352,7 +352,7 @@ export default function DashboardClient({
       {/* Grid de Conteúdo Principal */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Coluna da Esquerda: Feed de Cards */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 max-h-[calc(100vh-270px)] overflow-y-auto pr-1">
+        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 max-h-[calc(100vh-270px)] overflow-y-auto p-1 pr-1.5">
           {filteredLogs.length === 0 ? (
             <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 border-dashed rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center justify-center gap-2">
               <Clock size={28} className="opacity-40 text-slate-400 dark:text-slate-500" />

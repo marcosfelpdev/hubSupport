@@ -364,7 +364,7 @@ export default function TechnicianDashboardClient({
       {/* Grid Principal: Cards minimizados ao lado (esquerda) e Card expandido ao lado (direita) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-h-[calc(100vh-280px)]">
         {/* Coluna Esquerda: Cards minimizados */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 max-h-[calc(100vh-270px)] overflow-y-auto pr-1">
+        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 max-h-[calc(100vh-270px)] overflow-y-auto p-1 pr-1.5">
           {filteredLogs.length === 0 ? (
             <div className="bg-white dark:bg-[#111726] border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center py-12 px-4 shadow-xs">
               <div className="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto mb-3 shadow-2xs">
