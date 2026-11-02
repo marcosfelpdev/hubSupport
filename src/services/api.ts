@@ -167,10 +167,21 @@ async function request<T>(
     }
   }
 
-  const data = await response.json();
+  let data: any = {};
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(data.error || "Ocorreu um erro ao processar a requisição.");
+    if (response.status === 502 || response.status === 503 || response.status === 504) {
+      throw new Error("O servidor backend está offline ou reiniciando. Verifique a conexão.");
+    }
+    throw new Error(data?.error || `Erro na requisição (${response.status}): ${response.statusText || "Falha na comunicação"}`);
   }
 
   return data as T;
