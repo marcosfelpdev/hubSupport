@@ -318,6 +318,12 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
 }) => {
   const { user: currentUser } = useAuth();
 
+  const currentUserRole = currentUser?.role?.toUpperCase();
+  const canAssign =
+    currentUserRole === "ADMIN" ||
+    currentUserRole === "MANAGER" ||
+    currentUserRole === "TECHNICIAN";
+
   // Estado local do relatório de IA para suportar polling e geração sob demanda
   const [currentAiReport, setCurrentAiReport] = useState(log.aiReport ?? null);
   const [isGenerating, startGeneratingTransition] = useTransition();
@@ -362,6 +368,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
 
   // Carrega lista de funcionários para o dropdown de atribuição
   useEffect(() => {
+    if (!canAssign) return;
     let isMounted = true;
     const fetchEmployees = async () => {
       try {
@@ -386,7 +393,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [canAssign]);
 
   // Fecha o dropdown de atribuição ao clicar fora ou apertar Escape
   useEffect(() => {
@@ -882,7 +889,8 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
           </div>
 
           {/* Lado Direito: Ações (Assumir Tarefa, Dropdown Atribuir/Alterar, Desatribuir) */}
-          <div className="flex items-center gap-2 flex-wrap self-start sm:self-center shrink-0">
+          {canAssign && (
+            <div className="flex items-center gap-2 flex-wrap self-start sm:self-center shrink-0">
             {/* Botão de 1 clique: Assumir Tarefa quando não atribuído ou atribuído a outro */}
             {(!currentAssignee || (currentUser && currentAssignee.id !== currentUser.id)) && currentUser && (
               <button
@@ -1055,6 +1063,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
               </button>
             )}
           </div>
+          )}
         </div>
 
         {/* Feedback de erro ao atribuir */}
