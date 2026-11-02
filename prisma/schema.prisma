@@ -23,6 +23,7 @@ model User {
   assignedEvents AgendaEvent[] @relation("AssignedAgendaEvents")
   createdEvents  AgendaEvent[] @relation("CreatedAgendaEvents")
   statusChanges  WorkLogStatusHistory[]
+  assignedWorkLogs WorkLog[] @relation("AssignedWorkLogs")
 }
 
 model Tag {
@@ -53,6 +54,8 @@ model WorkLog {
   notifications    Notification[]
   aiReport         AiReport?
   statusHistory    WorkLogStatusHistory[]
+  assignedToId     String?
+  assignedTo       User?                  @relation("AssignedWorkLogs", fields: [assignedToId], references: [id], onDelete: SetNull)
 }
 
 model Notification {
