@@ -415,3 +415,199 @@ ${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.p
     }
   }
 }
+
+
+/**
+ * Analisa atendimentos registrados manualmente via formulário (sem gravação de tela),
+ * incluindo quaisquer mídias/imagens anexadas, e gera o relatório estruturado formal.
+ */
+export async function analyzeFormWithGemini(
+  context: WorkLogContext,
+  mediaUrls?: string[]
+): Promise<StructuredReportData> {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+
+  if (!apiKey) {
+    throw new Error(
+      "A chave GEMINI_API_KEY não está configurada no ambiente. Configure-a no arquivo .env."
+    );
+  }
+
+  // 1. Sanitização dos dados do contexto do atendimento
+  const safeContext = {
+    title: context.title?.trim() || "",
+    requester: context.requester?.trim() || "Não informado",
+    clientOrOffice: context.clientOrOffice?.trim() || "Não informado",
+    reportedProblem: context.reportedProblem?.trim() || "Não informado",
+    actionTaken: context.actionTaken?.trim() || "",
+    status: context.status?.trim() || "Pendente",
+    technicalAction: !!context.technicalAction,
+    implementation: !!context.implementation,
+    platform: context.platform?.trim() || "",
+    authorName: context.authorName?.trim() || "Técnico do suporte",
+    createdAt: context.createdAt
+      ? new Date(context.createdAt).toLocaleString("pt-BR")
+      : "Data não informada",
+  };
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  // 2. Carrega imagens anexadas (se houver) de public/uploads
+  const imageParts: Array<{ inlineData: { mimeType: string; data: string } }> = [];
+
+  if (mediaUrls && Array.isArray(mediaUrls)) {
+    for (const rawUrl of mediaUrls) {
+      try {
+        const cleanPath = rawUrl.startsWith("/") ? rawUrl.slice(1) : rawUrl;
+        const fullPath = path.join(process.cwd(), "public", cleanPath.replace(/^public\//, ""));
+        
+        const ext = path.extname(fullPath).toLowerCase();
+        let mime = "";
+        if (ext === ".png") mime = "image/png";
+        else if (ext === ".jpg" || ext === ".jpeg") mime = "image/jpeg";
+        else if (ext === ".webp") mime = "image/webp";
+
+        if (mime) {
+          const fileBuffer = await fs.readFile(fullPath);
+          if (fileBuffer && fileBuffer.length > 0) {
+            imageParts.push({
+              inlineData: {
+                mimeType: mime,
+                data: fileBuffer.toString("base64"),
+              },
+            });
+            console.log(`[Gemini] Imagem anexada incluída na análise: ${path.basename(fullPath)} (${(fileBuffer.length / 1024).toFixed(1)} KB)`);
+          }
+        }
+      } catch (err) {
+        console.warn(`[Gemini] Aviso: não foi possível carregar mídia "${rawUrl}":`, err);
+      }
+    }
+  }
+
+  // 3. Montagem do prompt executivo
+  const prompt = `
+Você é um assistente sênior especialista em suporte técnico corporativo e documentação executiva de atendimentos e chamados de TI.
+Analise detalhadamente as informações registradas pelo atendimento técnico fornecidas abaixo${imageParts.length > 0 ? " juntamente com as imagens e prints de tela em anexo" : ""}.
+
+Gere um relatório executivo técnico e formal, estritamente no formato JSON definido, seguindo o padrão corporativo de relatório da empresa:
+
+### Informações do Atendimento:
+${safeContext.title ? `- Título: ${safeContext.title}` : ""}
+- Solicitante: ${safeContext.requester}
+- Escritório / Cliente: ${safeContext.clientOrOffice}
+- Descrição Detalhada do Problema / Demanda: ${safeContext.reportedProblem}
+${safeContext.actionTaken ? `- Ação Realizada pelo Suporte: ${safeContext.actionTaken}` : ""}
+- Status Atual: ${safeContext.status}
+- Classificação: ${safeContext.technicalAction ? "Ação Técnica (Dev/Infra)" : ""} ${safeContext.implementation ? "Implementação/Sugestão de Melhoria" : ""}
+${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.platform}` : ""}
+- Registrado por: ${safeContext.authorName}
+- Data de Registro: ${safeContext.createdAt}
+${imageParts.length > 0 ? `- Mídias anexadas: Foram anexadas ${imageParts.length} imagem(ns)/prints comprovando e detalhando a situação descrita.` : ""}
+
+### Diretrizes de Preenchimento dos Campos:
+1. **Título e Subtítulo**: Formais, claros e corporativos (ex: "Relatório de Atendimento Técnico e Diagnóstico", "Solicitação referente a ${safeContext.clientOrOffice}").
+2. **Resumo Executivo (executiveSummary)**: Parágrafo formal e bem redigido sintetizando a solicitação, a relevância para o cliente e a intervenção técnica realizada ou necessária.
+3. **Propostas e Ações Recomendadas (proposals)**: Liste de 1 a 3 itens de melhoria técnica, correção ou procedimento preventivo aplicável, com título numerado, descrição clara, categoria (ex: "BUG / CORREÇÃO", "OPERAÇÃO", "UX", "INTEGRAÇÃO") e prioridade ("Alta", "Média", "Baixa").
+4. **Detalhamento Técnico (detailingParagraphs)**: 2 ou mais parágrafos detalhados aprofundando o diagnóstico, impacto na rotina do cliente/escritório e justificativa técnica da solução.
+5. **Encaminhamentos (referrals)**: Próximos passos formais, encaminhamento para equipe técnica ou acompanhamento pós-atendimento.
+6. **Transcrição / Registro de Contato (transcript)**: Como este atendimento foi documentado via formulário estruturado, crie um registro formal com os pontos de contato entre o solicitante e o suporte (ex: speaker: "${safeContext.requester}", role: "Solicitante", timestamp: "00:00", text: "${safeContext.reportedProblem}").
+`;
+
+  // 4. Chamada resiliente para os modelos candidatos
+  let lastError: unknown;
+  let responseText: string | undefined;
+
+  const contents = [...imageParts, prompt];
+
+  for (const model of CANDIDATE_MODELS) {
+    console.log(`[Gemini] Tentando gerar relatório estruturado de formulário com o modelo: ${model}...`);
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: REPORT_SCHEMA,
+            temperature: 0.2,
+          },
+        });
+
+        responseText = response.text;
+        if (responseText && responseText.trim().length > 0) {
+          break;
+        }
+      } catch (err: unknown) {
+        lastError = err;
+        const status = (err as { status?: number })?.status;
+        console.warn(`[Gemini] Tentativa ${attempt} com modelo ${model} falhou:`, err);
+
+        if (status === 429 || status === 503) {
+          const delay = Math.pow(2, attempt) * 1000;
+          console.log(`[Gemini] Aguardando ${delay}ms antes da próxima tentativa...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        } else {
+          break;
+        }
+      }
+    }
+
+    if (responseText) {
+      break;
+    }
+  }
+
+  if (!responseText) {
+    throw lastError || new Error("Não foi possível obter resposta dos modelos do Google Gemini.");
+  }
+
+  console.log("[Gemini] Resposta estruturada de formulário recebida com sucesso!");
+  const parsedData = JSON.parse(responseText) as Partial<StructuredReportData>;
+  const todayFormatted = new Date().toLocaleDateString("pt-BR");
+
+  return {
+    title: parsedData.title || safeContext.title || "Relatório de Atendimento Técnico e Diagnóstico",
+    subtitle: parsedData.subtitle || `Atendimento para ${safeContext.clientOrOffice}`,
+    date: parsedData.date || todayFormatted,
+    department: parsedData.department || safeContext.clientOrOffice,
+    participants: parsedData.participants || `${safeContext.requester} (Solicitante), ${safeContext.authorName} (Suporte)`,
+    platformAnalyzed: parsedData.platformAnalyzed || safeContext.platform || "Sistema Corporativo",
+    executiveSummary: parsedData.executiveSummary || safeContext.reportedProblem,
+    proposals: Array.isArray(parsedData.proposals) && parsedData.proposals.length > 0
+      ? parsedData.proposals
+      : [
+          {
+            item: "1. Tratamento da Demanda",
+            description: safeContext.actionTaken || safeContext.reportedProblem,
+            category: safeContext.technicalAction ? "AÇÃO TÉCNICA" : "OPERAÇÃO",
+            priority: "Alta",
+          },
+        ],
+    detailingTopic: parsedData.detailingTopic || "Detalhamento e Justificativa da Solicitação",
+    detailingParagraphs: Array.isArray(parsedData.detailingParagraphs) && parsedData.detailingParagraphs.length > 0
+      ? parsedData.detailingParagraphs
+      : [safeContext.reportedProblem, safeContext.actionTaken].filter(Boolean),
+    referrals: parsedData.referrals || `Demanda registrada no atendimento pelo suporte (${safeContext.authorName}) e encaminhada para acompanhamento.`,
+    transcript: Array.isArray(parsedData.transcript) && parsedData.transcript.length > 0
+      ? parsedData.transcript
+      : [
+          {
+            speaker: safeContext.requester,
+            role: "Solicitante",
+            timestamp: "00:00",
+            text: safeContext.reportedProblem,
+          },
+          ...(safeContext.actionTaken
+            ? [
+                {
+                  speaker: safeContext.authorName,
+                  role: "Suporte",
+                  timestamp: "00:01",
+                  text: safeContext.actionTaken,
+                },
+              ]
+            : []),
+        ],
+  };
+}

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { analyzeRecordingWithGemini, WorkLogContext } from "./gemini";
+import { analyzeRecordingWithGemini, analyzeFormWithGemini, WorkLogContext } from "./gemini";
 import { generateReportPdf } from "./pdf-generator";
 
 export async function processAiReportJob(workLogId: string) {
@@ -19,20 +19,27 @@ export async function processAiReportJob(workLogId: string) {
     return;
   }
 
-  if (!workLog.aiReport || !workLog.aiReport.videoPath) {
-    console.error(`[ReportProcessor] AiReport ou videoPath não encontrado para WorkLog: ${workLogId}`);
-    return;
+  // Se ainda não existir registro AiReport, cria com status 'processing'
+  if (!workLog.aiReport) {
+    await prisma.aiReport.create({
+      data: {
+        workLogId,
+        status: "processing",
+        startedAt: new Date(),
+        errorMessage: null,
+      },
+    });
+  } else {
+    // Atualiza status para 'processing'
+    await prisma.aiReport.update({
+      where: { workLogId },
+      data: {
+        status: "processing",
+        startedAt: new Date(),
+        errorMessage: null,
+      },
+    });
   }
-
-  // Atualiza status para 'processing'
-  await prisma.aiReport.update({
-    where: { workLogId },
-    data: {
-      status: "processing",
-      startedAt: new Date(),
-      errorMessage: null,
-    },
-  });
 
   try {
     const context: WorkLogContext = {
@@ -49,15 +56,35 @@ export async function processAiReportJob(workLogId: string) {
       createdAt: workLog.createdAt,
     };
 
-    // 1. Análise multimodal com Gemini AI
-    console.log(`[ReportProcessor] Enviando para Gemini AI...`);
-    const structuredData = await analyzeRecordingWithGemini(
-      workLog.aiReport.videoPath,
-      context
-    );
+    let structuredData;
+
+    // Se houver gravação de tela, usa análise com vídeo
+    if (workLog.aiReport?.videoPath) {
+      console.log(`[ReportProcessor] Enviando vídeo para Gemini AI...`);
+      structuredData = await analyzeRecordingWithGemini(
+        workLog.aiReport.videoPath,
+        context
+      );
+    } else {
+      // Atendimento criado sem vídeo (análise das informações + imagens anexadas)
+      console.log(`[ReportProcessor] Enviando dados do formulário e mídias para Gemini AI...`);
+      let mediaUrls: string[] = [];
+      try {
+        if (workLog.media) {
+          const parsed = JSON.parse(workLog.media);
+          if (Array.isArray(parsed)) {
+            mediaUrls = parsed;
+          }
+        }
+      } catch {
+        mediaUrls = [];
+      }
+
+      structuredData = await analyzeFormWithGemini(context, mediaUrls);
+    }
 
     // 2. Geração do PDF profissional
-    console.log(`[ReportProcessor] Gerando arquivo PDF...`);
+    console.log(`[ReportProcessor] Gerando arquivo PDF vetorial...`);
     const pdfPath = await generateReportPdf({
       workLogId,
       data: structuredData,
