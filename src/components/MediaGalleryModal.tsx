@@ -69,20 +69,20 @@ export default function MediaGalleryModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 animate-fade-in"
+      className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="relative max-w-4xl w-full max-h-[92vh] flex flex-col bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden"
+        className="relative max-w-4xl w-full max-h-[92vh] flex flex-col bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header da Galeria */}
-        <div className="w-full flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="w-full flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Mídias Anexadas
             </span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-700 shadow-2xs">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 shadow-2xs">
               {currentIndex + 1} de {mediaUrls.length}
             </span>
           </div>
@@ -93,7 +93,7 @@ export default function MediaGalleryModal({
               target="_blank"
               rel="noopener noreferrer"
               download
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition-colors cursor-pointer"
               title="Baixar arquivo original"
             >
               <Download size={14} />
@@ -101,7 +101,7 @@ export default function MediaGalleryModal({
             </a>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Fechar (Esc)"
             >
               <X size={18} />
@@ -117,14 +117,14 @@ export default function MediaGalleryModal({
               onClick={handlePrev}
               disabled={!canGoPrev}
               aria-label="Mídia anterior"
-              className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs p-2.5 rounded-full disabled:opacity-20 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 active:scale-95"
+              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs p-2.5 rounded-full disabled:opacity-20 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 active:scale-95"
               title={canGoPrev ? "Mídia anterior (Seta esquerda)" : "Primeira mídia"}
             >
               <ChevronLeft size={24} />
             </button>
           )}
 
-          <div className="flex-1 h-full min-h-[260px] flex items-center justify-center rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs p-2 sm:p-4 overflow-hidden relative">
+          <div className="flex-1 h-full min-h-[260px] flex items-center justify-center rounded-2xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 shadow-2xs p-2 sm:p-4 overflow-hidden relative">
             {isImage(activeUrl) ? (
               <img
                 src={activeUrl}
@@ -140,15 +140,15 @@ export default function MediaGalleryModal({
               />
             ) : (
               <div className="p-6 text-center flex flex-col items-center gap-2">
-                <FileText size={44} className="text-slate-400 mx-auto mb-1" />
-                <p className="text-sm font-semibold text-slate-800">Arquivo anexado</p>
-                <p className="text-xs text-slate-500 break-all max-w-xs">{activeUrl}</p>
+                <FileText size={44} className="text-slate-400 dark:text-slate-500 mx-auto mb-1" />
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Arquivo anexado</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 break-all max-w-xs">{activeUrl}</p>
                 <a
                   href={activeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   download
-                  className="mt-2 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-xs transition-colors"
+                  className="mt-2 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold text-xs shadow-xs transition-colors"
                 >
                   <Download size={14} />
                   <span>Baixar Arquivo</span>
@@ -163,7 +163,7 @@ export default function MediaGalleryModal({
               onClick={handleNext}
               disabled={!canGoNext}
               aria-label="Próxima mídia"
-              className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs p-2.5 rounded-full disabled:opacity-20 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 active:scale-95"
+              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs p-2.5 rounded-full disabled:opacity-20 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 active:scale-95"
               title={canGoNext ? "Próxima mídia (Seta direita)" : "Última mídia"}
             >
               <ChevronRight size={24} />
@@ -181,29 +181,29 @@ export default function MediaGalleryModal({
                   key={idx}
                   type="button"
                   onClick={() => setCurrentIndex(idx)}
-                  className={`w-14 h-14 rounded-xl overflow-hidden border transition-all shrink-0 cursor-pointer relative bg-white ${
+                  className={`w-14 h-14 rounded-xl overflow-hidden border transition-all shrink-0 cursor-pointer relative bg-white dark:bg-[#0b0f19] ${
                     isSelected
-                      ? "ring-2 ring-slate-900 border-slate-900 shadow-md scale-105 opacity-100"
-                      : "border-slate-200 opacity-60 hover:opacity-100 hover:border-slate-400"
+                      ? "ring-2 ring-slate-900 dark:ring-white border-slate-900 dark:border-white shadow-md scale-105 opacity-100"
+                      : "border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100 hover:border-slate-400 dark:hover:border-slate-600"
                   }`}
                   title={`Ir para mídia ${idx + 1}`}
                 >
                   {isImage(url) ? (
                     <img src={url} alt="" className="w-full h-full object-cover" />
                   ) : isVideo(url) ? (
-                    <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-600">
+                    <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
                       <Video size={16} />
                     </div>
                   ) : (
-                    <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-600">
+                    <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
                       <FileText size={16} />
                     </div>
                   )}
                   <span
                     className={`absolute bottom-0.5 right-1 text-[9px] font-bold px-1 rounded ${
                       isSelected
-                        ? "bg-slate-900 text-white"
-                        : "bg-white/90 text-slate-700 border border-slate-200"
+                        ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                        : "bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                     }`}
                   >
                     {idx + 1}

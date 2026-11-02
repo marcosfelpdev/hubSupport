@@ -42,31 +42,31 @@ const ROLE_METADATA: Record<
     label: "Administrador",
     description: "Acesso total, gestão de membros, tags e configurações.",
     dotColor: "bg-amber-500",
-    badgeClasses: "bg-amber-50 text-amber-700 border-amber-200/80",
+    badgeClasses: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60",
   },
   SUPPORT: {
     label: "Suporte",
     description: "Atendimento nível 1, abertura e registro de chamados.",
     dotColor: "bg-sky-500",
-    badgeClasses: "bg-sky-50 text-sky-700 border-sky-200/80",
+    badgeClasses: "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/60",
   },
   TECHNICIAN: {
     label: "Técnico",
     description: "Atendimento técnico e resolução de filas no Kanban.",
     dotColor: "bg-purple-500",
-    badgeClasses: "bg-purple-50 text-purple-700 border-purple-200/80",
+    badgeClasses: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60",
   },
   MANAGER: {
     label: "Gestor",
     description: "Acompanhamento de relatórios executivos e auditorias.",
     dotColor: "bg-indigo-500",
-    badgeClasses: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
+    badgeClasses: "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60",
   },
   USER: {
     label: "Colaborador",
     description: "Acesso padrão para consulta e acompanhamento de tarefas.",
     dotColor: "bg-slate-500",
-    badgeClasses: "bg-slate-50 text-slate-700 border-slate-200",
+    badgeClasses: "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
   },
 };
 
@@ -214,10 +214,10 @@ export default function EmployeesManager({
       {/* Top Header */}
       <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Membros da Equipe
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Gerencie os colaboradores da equipe e seus respectivos níveis de permissão.
           </p>
         </div>
@@ -232,7 +232,7 @@ export default function EmployeesManager({
               setCreateRole("SUPPORT");
               setIsCreateOpen(true);
             }}
-            className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
+            className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Cadastrar Funcionário</span>
@@ -242,37 +242,37 @@ export default function EmployeesManager({
 
       {/* Global Alerts */}
       {actionSuccess && (
-        <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3.5 text-xs sm:text-sm font-medium flex items-center gap-2.5 animate-fade-in shadow-2xs">
-          <Check className="w-4 h-4 shrink-0 text-emerald-600" />
+        <div className="mb-6 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 rounded-xl p-3.5 text-xs sm:text-sm font-medium flex items-center gap-2.5 animate-fade-in shadow-2xs">
+          <Check className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{actionSuccess}</span>
         </div>
       )}
 
       {/* Search and Summary bar */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 sm:px-6 mb-6 flex items-center justify-between flex-wrap gap-4">
+      <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs p-4 sm:px-6 mb-6 flex items-center justify-between flex-wrap gap-4">
         {/* Search */}
         <div className="relative w-full sm:w-80">
           <input
             type="text"
-            className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
+            className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
             placeholder="Buscar por nome, e-mail ou cargo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
         {/* Badges / Metrics */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap text-xs">
-          <span className="text-slate-500 font-medium">
-            Total: <strong className="text-slate-900 font-semibold">{employees.length}</strong>
+          <span className="text-slate-500 dark:text-slate-400 font-medium">
+            Total: <strong className="text-slate-900 dark:text-white font-semibold">{employees.length}</strong>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             {employees.filter((e) => e.active).length} Ativos
           </span>
           {employees.some((e) => !e.active) && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
               <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
               {employees.filter((e) => !e.active).length} Inativos
             </span>
@@ -281,16 +281,16 @@ export default function EmployeesManager({
       </div>
 
       {/* Lista / Tabela de Funcionários — Modelo idêntico à imagem de referência */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">
         {filteredEmployees.length === 0 ? (
           <div className="text-center py-16 px-4">
-            <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mx-auto mb-3 shadow-2xs">
+            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500 mx-auto mb-3 shadow-2xs">
               <Users className="w-6 h-6" />
             </div>
-            <h3 className="text-sm font-bold text-slate-900 mb-1">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
               Nenhum colaborador encontrado
             </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               Verifique os termos de busca ou cadastre um novo funcionário na equipe.
             </p>
           </div>
@@ -298,7 +298,7 @@ export default function EmployeesManager({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-[11px] font-semibold uppercase tracking-wider">
+                <tr className="bg-slate-50/80 dark:bg-[#0b0f19]/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-[11px] font-semibold uppercase tracking-wider">
                   <th className="px-6 py-3.5">Funcionário</th>
                   <th className="px-6 py-3.5">Cargo</th>
                   <th className="px-6 py-3.5">Status</th>
@@ -306,40 +306,40 @@ export default function EmployeesManager({
                   <th className="px-6 py-3.5 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredEmployees.map((emp) => {
                   const isMe = emp.id === currentUser.id || emp.email === currentUser.email;
                   const roleMeta = ROLE_METADATA[emp.role] || {
                     label: getRoleLabel(emp.role),
                     dotColor: "bg-slate-500",
-                    badgeClasses: "bg-slate-50 text-slate-700 border-slate-200",
+                    badgeClasses: "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
                   };
 
                   return (
                     <tr
                       key={emp.id}
-                      className={`hover:bg-slate-50/70 transition-colors ${
-                        !emp.active ? "opacity-60 bg-slate-50/40" : ""
+                      className={`hover:bg-slate-50/70 dark:hover:bg-[#161f33]/50 transition-colors ${
+                        !emp.active ? "opacity-60 bg-slate-50/40 dark:bg-[#0b0f19]/40" : ""
                       }`}
                     >
                       {/* 1. Avatar & Nome / Email */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                          <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                             {getInitials(emp.name)}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-xs sm:text-sm font-semibold text-slate-900 truncate">
+                              <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
                                 {emp.name}
                               </span>
                               {isMe && (
-                                <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                                <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                   você
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-slate-500 truncate mt-0.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                               {emp.email}
                             </p>
                           </div>
@@ -359,12 +359,12 @@ export default function EmployeesManager({
                       {/* 3. Status (Bolinha + Ativo / Inativo) */}
                       <td className="px-6 py-4">
                         {emp.active ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                             <span>Ativo</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
                             <span>Inativo</span>
                           </span>
@@ -373,7 +373,7 @@ export default function EmployeesManager({
 
                       {/* 4. Data de Cadastro */}
                       <td className="px-6 py-4">
-                        <span className="text-xs text-slate-500 font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                           {formatDate(emp.createdAt)}
                         </span>
                       </td>
@@ -390,7 +390,7 @@ export default function EmployeesManager({
                                 setEditingEmployee(emp);
                                 setEditRole(emp.role);
                               }}
-                              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors cursor-pointer"
+                              className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-colors cursor-pointer"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
@@ -403,14 +403,14 @@ export default function EmployeesManager({
                                   setActionError(null);
                                   setDeletingEmployee(emp);
                                 }}
-                                className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                                className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 p-1.5 rounded-lg transition-colors cursor-pointer"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             )}
                           </div>
                         ) : (
-                          <span className="text-slate-300 text-xs">—</span>
+                          <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>
                         )}
                       </td>
                     </tr>
@@ -425,34 +425,34 @@ export default function EmployeesManager({
       {/* ================= MODAL: CRIAR FUNCIONÁRIO (Estilo Invite Members do Vídeo) ================= */}
       {isCreateOpen && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
+          className="fixed inset-0 bg-slate-900/40 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isPending && setIsCreateOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 max-w-md w-full animate-scale-in flex flex-col gap-5"
+            className="bg-white dark:bg-[#111726] rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 max-w-md w-full animate-scale-in flex flex-col gap-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                   Cadastrar Funcionário
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Preencha os dados e escolha o nível de acesso na plataforma.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => !isPending && setIsCreateOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors cursor-pointer"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {actionError && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-3 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs rounded-xl p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
                 <span>{actionError}</span>
               </div>
             )}
@@ -462,7 +462,7 @@ export default function EmployeesManager({
               <div>
                 <label
                   htmlFor="create-name"
-                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
                 >
                   Nome Completo <span className="text-rose-500">*</span>
                 </label>
@@ -470,7 +470,7 @@ export default function EmployeesManager({
                   id="create-name"
                   name="name"
                   type="text"
-                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="Ex: Amanda Silva"
                   required
                   disabled={isPending}
@@ -481,7 +481,7 @@ export default function EmployeesManager({
               <div>
                 <label
                   htmlFor="create-email"
-                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
                 >
                   E-mail de Acesso <span className="text-rose-500">*</span>
                 </label>
@@ -489,7 +489,7 @@ export default function EmployeesManager({
                   id="create-email"
                   name="email"
                   type="email"
-                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="exemplo@hubsupport.com"
                   required
                   disabled={isPending}
@@ -500,7 +500,7 @@ export default function EmployeesManager({
               <div>
                 <label
                   htmlFor="create-password"
-                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
                 >
                   Senha Inicial <span className="text-rose-500">*</span>
                 </label>
@@ -508,7 +508,7 @@ export default function EmployeesManager({
                   id="create-password"
                   name="password"
                   type="password"
-                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="Mínimo 6 caracteres"
                   required
                   disabled={isPending}
@@ -517,7 +517,7 @@ export default function EmployeesManager({
 
               {/* Seleção de Cargo em Cartões Clean (vídeo 00:10 - 00:12) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                   Cargo e Nível de Acesso <span className="text-rose-500">*</span>
                 </label>
                 <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
@@ -532,8 +532,8 @@ export default function EmployeesManager({
                         onClick={() => setCreateRole(opt.value)}
                         className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer flex items-center justify-between ${
                           isSelected
-                            ? "bg-slate-50 border-slate-900 ring-1 ring-slate-900 shadow-xs"
-                            : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60"
+                            ? "bg-slate-50 dark:bg-[#161f33] border-slate-900 dark:border-white ring-1 ring-slate-900 dark:ring-white shadow-xs"
+                            : "bg-white dark:bg-[#0b0f19] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-[#161f33]/60"
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
@@ -541,10 +541,10 @@ export default function EmployeesManager({
                             className={`w-2 h-2 rounded-full shrink-0 ${meta?.dotColor || "bg-slate-400"}`}
                           />
                           <div>
-                            <span className="font-bold text-slate-900 block leading-tight">
+                            <span className="font-bold text-slate-900 dark:text-white block leading-tight">
                               {opt.label}
                             </span>
-                            <span className="text-[11px] text-slate-500 block leading-tight mt-0.5">
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 block leading-tight mt-0.5">
                               {meta?.description}
                             </span>
                           </div>
@@ -553,8 +553,8 @@ export default function EmployeesManager({
                         <div
                           className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-2 ${
                             isSelected
-                              ? "bg-slate-900 border-slate-900 text-white"
-                              : "border-slate-300 bg-white"
+                              ? "bg-slate-900 dark:bg-white border-slate-900 dark:border-white text-white dark:text-slate-900"
+                              : "border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0b0f19]"
                           }`}
                         >
                           {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -566,11 +566,11 @@ export default function EmployeesManager({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
                   disabled={isPending}
                 >
                   Cancelar
@@ -578,7 +578,7 @@ export default function EmployeesManager({
                 <button
                   id="btn-confirm-create-employee"
                   type="submit"
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
+                  className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
                   disabled={isPending}
                 >
                   {isPending ? (
@@ -600,34 +600,34 @@ export default function EmployeesManager({
       {/* ================= MODAL: EDITAR FUNCIONÁRIO ================= */}
       {editingEmployee && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
+          className="fixed inset-0 bg-slate-900/40 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isPending && setEditingEmployee(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 max-w-md w-full animate-scale-in flex flex-col gap-5"
+            className="bg-white dark:bg-[#111726] rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 max-w-md w-full animate-scale-in flex flex-col gap-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                   Editar Funcionário
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Atualize as permissões ou status da conta.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => !isPending && setEditingEmployee(null)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors cursor-pointer"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {actionError && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-3 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs rounded-xl p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
                 <span>{actionError}</span>
               </div>
             )}
@@ -637,7 +637,7 @@ export default function EmployeesManager({
               <div>
                 <label
                   htmlFor="edit-name"
-                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
                 >
                   Nome Completo <span className="text-rose-500">*</span>
                 </label>
@@ -645,7 +645,7 @@ export default function EmployeesManager({
                   id="edit-name"
                   name="name"
                   type="text"
-                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   defaultValue={editingEmployee.name}
                   required
                   disabled={isPending}
@@ -655,15 +655,15 @@ export default function EmployeesManager({
               {/* Email (read-only) */}
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label htmlFor="edit-email" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  <label htmlFor="edit-email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     E-mail
                   </label>
-                  <span className="text-[11px] text-slate-400">Não editável</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">Não editável</span>
                 </div>
                 <input
                   id="edit-email"
                   type="email"
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-500 rounded-xl px-3.5 py-2.5 text-sm cursor-not-allowed outline-none"
+                  className="w-full bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 rounded-xl px-3.5 py-2.5 text-sm cursor-not-allowed outline-none"
                   value={editingEmployee.email}
                   disabled
                 />
@@ -673,15 +673,15 @@ export default function EmployeesManager({
               <div>
                 <label
                   htmlFor="edit-password"
-                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
                 >
-                  Nova Senha <span className="text-slate-400 lowercase font-normal">(opcional)</span>
+                  Nova Senha <span className="text-slate-400 dark:text-slate-500 lowercase font-normal">(opcional)</span>
                 </label>
                 <input
                   id="edit-password"
                   name="password"
                   type="password"
-                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="Deixe em branco para manter a atual"
                   disabled={isPending}
                 />
@@ -689,7 +689,7 @@ export default function EmployeesManager({
 
               {/* Cargo Selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                   Cargo
                 </label>
                 <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1">
@@ -704,21 +704,21 @@ export default function EmployeesManager({
                         onClick={() => setEditRole(opt.value)}
                         className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer flex items-center justify-between ${
                           isSelected
-                            ? "bg-slate-50 border-slate-900 ring-1 ring-slate-900 shadow-xs"
-                            : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60"
+                            ? "bg-slate-50 dark:bg-[#161f33] border-slate-900 dark:border-white ring-1 ring-slate-900 dark:ring-white shadow-xs"
+                            : "bg-white dark:bg-[#0b0f19] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-[#161f33]/60"
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
                           <span
                             className={`w-2 h-2 rounded-full shrink-0 ${meta?.dotColor || "bg-slate-400"}`}
                           />
-                          <span className="font-bold text-slate-900">{opt.label}</span>
+                          <span className="font-bold text-slate-900 dark:text-white">{opt.label}</span>
                         </div>
                         <div
                           className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                             isSelected
-                              ? "bg-slate-900 border-slate-900 text-white"
-                              : "border-slate-300 bg-white"
+                              ? "bg-slate-900 dark:bg-white border-slate-900 dark:border-white text-white dark:text-slate-900"
+                              : "border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0b0f19]"
                           }`}
                         >
                           {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -733,14 +733,14 @@ export default function EmployeesManager({
               <div>
                 <label
                   htmlFor="edit-active"
-                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
                 >
                   Status de Acesso
                 </label>
                 <select
                   id="edit-active"
                   name="active"
-                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
                   defaultValue={editingEmployee.active ? "true" : "false"}
                   disabled={isPending}
                 >
@@ -750,11 +750,11 @@ export default function EmployeesManager({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setEditingEmployee(null)}
-                  className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
                   disabled={isPending}
                 >
                   Cancelar
@@ -762,7 +762,7 @@ export default function EmployeesManager({
                 <button
                   id="btn-confirm-edit-employee"
                   type="submit"
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
+                  className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
                   disabled={isPending}
                 >
                   {isPending ? (
@@ -784,44 +784,44 @@ export default function EmployeesManager({
       {/* ================= MODAL: EXCLUIR FUNCIONÁRIO ================= */}
       {deletingEmployee && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
+          className="fixed inset-0 bg-slate-900/40 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isPending && setDeletingEmployee(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 max-w-md w-full animate-scale-in flex flex-col gap-4"
+            className="bg-white dark:bg-[#111726] rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 max-w-md w-full animate-scale-in flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 text-rose-600">
-              <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0">
-                <Trash2 className="w-5 h-5 text-rose-600" />
+            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+              <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-800/60 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-600 dark:text-rose-400" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
                   Excluir Funcionário?
                 </h2>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Esta ação não poderá ser revertida.
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Tem certeza que deseja excluir <strong>{deletingEmployee.name}</strong> ({deletingEmployee.email})?
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Tem certeza que deseja excluir <strong className="text-slate-900 dark:text-white">{deletingEmployee.name}</strong> ({deletingEmployee.email})?
               Esta ação removerá o acesso do usuário ao sistema.
             </p>
 
             {actionError && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-3 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs rounded-xl p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
                 <span>{actionError}</span>
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-3 mt-1 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-3 mt-1 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setDeletingEmployee(null)}
-                className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
                 disabled={isPending}
               >
                 Cancelar

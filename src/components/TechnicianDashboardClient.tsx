@@ -95,7 +95,7 @@ function getStatusPillConfig(status: string) {
   ) {
     return {
       label: "Solucionado",
-      badgeClass: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+      badgeClass: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
       dotClass: "bg-emerald-500",
     };
   }
@@ -103,7 +103,7 @@ function getStatusPillConfig(status: string) {
   if (norm === "em progresso" || norm === "em andamento") {
     return {
       label: "Em andamento",
-      badgeClass: "bg-sky-50 text-sky-700 border border-sky-200",
+      badgeClass: "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800",
       dotClass: "bg-sky-500",
     };
   }
@@ -117,7 +117,7 @@ function getStatusPillConfig(status: string) {
   ) {
     return {
       label: "Aguardando reunião",
-      badgeClass: "bg-amber-50 text-amber-700 border border-amber-200",
+      badgeClass: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800",
       dotClass: "bg-amber-500",
     };
   }
@@ -125,15 +125,15 @@ function getStatusPillConfig(status: string) {
   if (norm === "não foi possível realizar" || norm === "não realizado") {
     return {
       label: "Não foi possível realizar",
-      badgeClass: "bg-rose-50 text-rose-700 border border-rose-200",
+      badgeClass: "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800",
       dotClass: "bg-rose-500",
     };
   }
 
   return {
     label: status || "Registrado",
-    badgeClass: "bg-slate-100 text-slate-700 border border-slate-200",
-    dotClass: "bg-slate-400",
+    badgeClass: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700",
+    dotClass: "bg-slate-400 dark:bg-slate-500",
   };
 }
 
@@ -293,29 +293,29 @@ export default function TechnicianDashboardClient({
   return (
     <div className="w-full">
       {/* Barra de Filtros */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-6 flex flex-wrap gap-3 items-center shadow-xs">
+      <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 mb-6 flex flex-wrap gap-3 items-center shadow-xs">
         <input
           type="text"
-          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1"
           placeholder="Pesquisar por solicitante"
           value={filters.requester}
           onChange={(e) => setFilters({ ...filters, requester: e.target.value })}
         />
         <input
           type="text"
-          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[220px] flex-1"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[220px] flex-1"
           placeholder="Pesquisar por escritório/cliente"
           value={filters.clientOrOffice}
           onChange={(e) => setFilters({ ...filters, clientOrOffice: e.target.value })}
         />
         <input
           type="date"
-          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[180px] flex-1"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[180px] flex-1 [color-scheme:light] dark:[color-scheme:dark]"
           value={filters.date}
           onChange={(e) => setFilters({ ...filters, date: e.target.value })}
         />
         <select
-          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.status}
           onChange={(e) => setFilters({ ...filters, status: e.target.value })}
         >
@@ -327,7 +327,7 @@ export default function TechnicianDashboardClient({
           ))}
         </select>
         <select
-          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.tag}
           onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
         >
@@ -339,7 +339,7 @@ export default function TechnicianDashboardClient({
           ))}
         </select>
         <select
-          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.type}
           onChange={(e) => setFilters({ ...filters, type: e.target.value })}
         >
@@ -348,7 +348,7 @@ export default function TechnicianDashboardClient({
           <option value="implementation">Implementação</option>
         </select>
         <select
-          className="bg-white border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 outline-none focus:border-slate-900 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.employee}
           onChange={(e) => setFilters({ ...filters, employee: e.target.value })}
         >
@@ -366,11 +366,11 @@ export default function TechnicianDashboardClient({
         {/* Coluna Esquerda: Cards minimizados */}
         <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 max-h-[calc(100vh-270px)] overflow-y-auto pr-1">
           {filteredLogs.length === 0 ? (
-            <div className="bg-white border border-dashed border-slate-200 rounded-2xl text-center py-12 px-4 shadow-xs">
-              <div className="w-10 h-10 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+            <div className="bg-white dark:bg-[#111726] border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center py-12 px-4 shadow-xs">
+              <div className="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto mb-3 shadow-2xs">
                 <Cog size={20} />
               </div>
-              <p className="text-slate-500 text-xs font-medium">
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
                 Nenhum chamado técnico encontrado
               </p>
             </div>
@@ -391,7 +391,7 @@ export default function TechnicianDashboardClient({
         </div>
 
         {/* Coluna Central / Direita: Card expandido */}
-        <div className="lg:col-span-7 xl:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 shadow-xs min-h-[calc(100vh-270px)] max-h-[calc(100vh-270px)] overflow-y-auto relative">
+        <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs min-h-[calc(100vh-270px)] max-h-[calc(100vh-270px)] overflow-y-auto relative">
           {selectedLog ? (
             <div className="flex flex-col gap-5 animate-fade-in">
               {/* Alerta de Feedback de Ação */}
@@ -399,21 +399,21 @@ export default function TechnicianDashboardClient({
                 <div
                   className={`p-3.5 rounded-xl border text-xs font-semibold flex items-center gap-2 shadow-2xs animate-fade-in ${
                     actionFeedback.type === "success"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-rose-50 text-rose-700 border-rose-200"
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                      : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900"
                   }`}
                 >
                   {actionFeedback.type === "success" ? (
-                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : (
-                    <AlertCircle size={16} className="text-rose-600 shrink-0" />
+                    <AlertCircle size={16} className="text-rose-600 dark:text-rose-400 shrink-0" />
                   )}
                   <span>{actionFeedback.text}</span>
                 </div>
               )}
 
               {/* Topo do card expandido */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-3">
                 <div className="flex items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-2xs"
@@ -423,10 +423,10 @@ export default function TechnicianDashboardClient({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-slate-900 leading-tight">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
                         {selectedLog.user.name}
                       </p>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                         {selectedLog.user.role === "ADMIN"
                           ? "Administrador"
                           : selectedLog.user.role === "SUPPORT"
@@ -436,7 +436,7 @@ export default function TechnicianDashboardClient({
                               : "Colaborador"}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       Registrado em {formatDate(selectedLog.createdAt)} às{" "}
                       {new Date(selectedLog.createdAt).toLocaleTimeString("pt-BR", {
                         hour: "2-digit",
@@ -456,7 +456,7 @@ export default function TechnicianDashboardClient({
                   {selectedLog.technicalAction && (
                     <div
                       title="Ação Técnica"
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold shadow-2xs"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-semibold shadow-2xs"
                     >
                       <Cog size={12} />
                       <span>Ação Técnica</span>
@@ -465,7 +465,7 @@ export default function TechnicianDashboardClient({
                   {selectedLog.implementation && (
                     <div
                       title="Implementação"
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-xs font-semibold shadow-2xs"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-semibold shadow-2xs"
                     >
                       <Lightbulb size={12} />
                       <span>Implementação</span>
@@ -485,11 +485,11 @@ export default function TechnicianDashboardClient({
 
               {/* Título do Chamado (se houver) */}
               {selectedLog.title && (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                <div className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
                     Título do Atendimento
                   </span>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
                     {selectedLog.title}
                   </h3>
                 </div>
@@ -497,19 +497,19 @@ export default function TechnicianDashboardClient({
 
               {/* Solicitante & Escritório */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
                     Solicitante
                   </span>
-                  <p className="text-xs font-semibold text-slate-800">
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                     {selectedLog.requester || "Não informado"}
                   </p>
                 </div>
-                <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
                     Escritório / Cliente
                   </span>
-                  <p className="text-xs font-semibold text-slate-800">
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                     {selectedLog.clientOrOffice || "Não informado"}
                   </p>
                 </div>
@@ -520,9 +520,9 @@ export default function TechnicianDashboardClient({
                 <div>
                   <button
                     onClick={() => openMediaModal(selectedLog)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors border border-slate-200 cursor-pointer shadow-2xs"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#111726] hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg transition-colors border border-slate-200 dark:border-slate-800 cursor-pointer shadow-2xs"
                   >
-                    <Paperclip size={14} className="text-slate-500" />
+                    <Paperclip size={14} className="text-slate-500 dark:text-slate-400" />
                     <span>Visualizar Mídias ({getMediaPaths(selectedLog).length})</span>
                   </button>
                 </div>
@@ -537,24 +537,24 @@ export default function TechnicianDashboardClient({
               {/* Detalhes do Chamado */}
               <div className="space-y-4">
                 {/* Problema relatado */}
-                <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
-                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600 mb-2">
+                <div className="bg-slate-50/60 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2">
                     <AlertCircle size={14} />
                     <span>Descrição do Problema</span>
                   </div>
-                  <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap break-words">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
                     {selectedLog.reportedProblem || "Nenhuma descrição fornecida."}
                   </p>
                 </div>
 
                 {/* Ação realizada (se houver histórico) */}
                 {selectedLog.actionTaken && selectedLog.actionTaken.trim() !== "" && (
-                  <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
-                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 mb-2">
+                  <div className="bg-slate-50/60 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
                       <CheckCircle2 size={14} />
                       <span>Ação Realizada pelo Autor</span>
                     </div>
-                    <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap break-words">
+                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
                       {selectedLog.actionTaken}
                     </p>
                   </div>
@@ -562,20 +562,20 @@ export default function TechnicianDashboardClient({
               </div>
 
               {/* SEÇÃO DE AÇÃO TÉCNICA: BOTÃO "SOLUCIONADO" */}
-              <div className="border-t border-slate-200 pt-5 mt-2 flex items-center justify-between flex-wrap gap-4">
+              <div className="border-t border-slate-200 dark:border-slate-800 pt-5 mt-2 flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 mb-0.5">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
                     Resolução Técnica
                   </h4>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Quando o chamado for atendido e resolvido, defina-o como solucionado.
                   </p>
                 </div>
 
                 <div>
                   {selectedLog.status === "Solucionado" ? (
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-xs shadow-2xs">
-                      <CheckCircle2 size={16} className="text-emerald-600" />
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-semibold text-xs shadow-2xs">
+                      <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
                       <span>Solucionado</span>
                     </div>
                   ) : (
@@ -583,7 +583,7 @@ export default function TechnicianDashboardClient({
                       id="btn-solucionado"
                       onClick={() => handleMarkSolved(selectedLog.id)}
                       disabled={isPending}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isPending ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -597,7 +597,7 @@ export default function TechnicianDashboardClient({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center py-20 text-slate-400">
+            <div className="flex flex-col items-center justify-center h-full text-center py-20 text-slate-400 dark:text-slate-500">
               <FileText size={36} className="opacity-30 mb-2" />
               <p className="text-xs font-medium">
                 Selecione um chamado ao lado para visualizar os detalhes completos e a opção de solucioná-lo

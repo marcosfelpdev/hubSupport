@@ -2,6 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Sun, Moon } from "lucide-react";
 
 interface User {
   id?: string | null;
@@ -15,6 +17,7 @@ export default function Sidebar({ user }: { user: User }) {
   const [loggingOut, setLoggingOut] = useState(false);
   const { isRecording } = useScreenRecording();
   const { logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -116,7 +119,7 @@ export default function Sidebar({ user }: { user: User }) {
   ];
 
   return (
-    <aside className="w-64 h-screen sticky top-0 bg-[#f8f9fa] border-r border-slate-200 flex flex-col justify-between p-4 z-40 shrink-0">
+    <aside className="w-64 h-screen sticky top-0 bg-[#f8f9fa] dark:bg-[#0b0f19] border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 z-40 shrink-0 transition-colors">
       {/* Top: Logo, Workspace & Navigation */}
       <div className="flex flex-col min-h-0">
         {/* Header da Marca */}
@@ -135,19 +138,19 @@ export default function Sidebar({ user }: { user: User }) {
             </svg>
           </div>
           <div>
-            <h1 className="text-slate-900 font-bold text-base tracking-tight leading-none">HubSupport</h1>
-            <p className="text-xs text-slate-500 font-medium mt-1">Portal da Equipe</p>
+            <h1 className="text-slate-900 dark:text-white font-bold text-base tracking-tight leading-none">HubSupport</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Portal da Equipe</p>
           </div>
         </div>
 
         {/* Card / Pill Seletor de Cliente / Escritório (Vídeo 00:01) */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-xs flex items-center justify-between mt-3 text-xs">
+        <div className="bg-white dark:bg-[#111726] border border-slate-200/90 dark:border-slate-800 rounded-xl p-2.5 shadow-xs flex items-center justify-between mt-3 text-xs">
           <div className="flex items-center gap-2 truncate">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span className="font-medium text-slate-700 truncate">Matriz Principal • SP</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300 truncate">Matriz Principal • SP</span>
           </div>
           <svg
-            className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1"
+            className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0 ml-1"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -169,7 +172,7 @@ export default function Sidebar({ user }: { user: User }) {
         <div className="mt-5 space-y-5 overflow-y-auto">
           {navGroups.map((group) => (
             <div key={group.title}>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-1.5">
+              <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-1.5">
                 {group.title}
               </p>
               <nav className="space-y-1">
@@ -199,19 +202,19 @@ export default function Sidebar({ user }: { user: User }) {
                       }
                       className={`rounded-xl px-3 py-2.5 flex items-center gap-3 transition-all text-sm font-medium ${
                         isBlocked
-                          ? "opacity-40 cursor-not-allowed pointer-events-none text-slate-400"
+                          ? "opacity-40 cursor-not-allowed pointer-events-none text-slate-400 dark:text-slate-500"
                           : isActive
-                          ? "bg-slate-900 text-white font-semibold shadow-xs"
-                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 group"
+                          ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold shadow-xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 group"
                       }`}
                     >
                       <span
                         className={`shrink-0 transition-colors ${
                           isActive
-                            ? "text-white"
+                            ? "text-white dark:text-slate-900"
                             : isBlocked
-                            ? "text-slate-300"
-                            : "text-slate-400 group-hover:text-slate-700"
+                            ? "text-slate-300 dark:text-slate-600"
+                            : "text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-200"
                         }`}
                       >
                         {item.icon}
@@ -239,8 +242,36 @@ export default function Sidebar({ user }: { user: User }) {
       </div>
 
       {/* Rodapé da Sidebar: Usuário logado e Logout */}
-      <div className="pt-3 border-t border-slate-200/80">
-        <div className="bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-xs flex items-center gap-2.5 mb-2">
+      <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800">
+        <div className="bg-slate-100 dark:bg-slate-900/90 p-1 rounded-xl flex items-center justify-between border border-slate-200/80 dark:border-slate-800 mb-2.5 shadow-2xs">
+          <button
+            type="button"
+            id="btn-theme-light"
+            onClick={() => setTheme("light")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              theme === "light"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+            }`}
+          >
+            <Sun className="w-3.5 h-3.5" />
+            <span>Claro</span>
+          </button>
+          <button
+            type="button"
+            id="btn-theme-dark"
+            onClick={() => setTheme("dark")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              theme === "dark"
+                ? "bg-slate-800 text-white shadow-xs"
+                : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+            }`}
+          >
+            <Moon className="w-3.5 h-3.5" />
+            <span>Escuro</span>
+          </button>
+        </div>
+        <div className="bg-white dark:bg-[#111726] border border-slate-200/90 dark:border-slate-800 rounded-xl p-2.5 shadow-xs flex items-center gap-2.5 mb-2">
           <div
             className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-xs ${
               user.role === "ADMIN"
@@ -255,20 +286,20 @@ export default function Sidebar({ user }: { user: User }) {
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900 truncate leading-snug">
+            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate leading-snug">
               {user.name || "Usuário"}
             </p>
             <span
               className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 leading-none mt-0.5 ${
                 user.role === "ADMIN"
-                  ? "bg-amber-50 text-amber-700 border border-amber-200/60"
+                  ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60"
                   : user.role === "MANAGER"
-                  ? "bg-purple-50 text-purple-700 border border-purple-200/60"
+                  ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60"
                   : user.role === "TECHNICIAN"
-                  ? "bg-sky-50 text-sky-700 border border-sky-200/60"
+                  ? "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800/60"
                   : user.role === "SUPPORT"
-                  ? "bg-cyan-50 text-cyan-700 border border-cyan-200/60"
-                  : "bg-slate-100 text-slate-600 border border-slate-200/60"
+                  ? "bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border border-cyan-200/60 dark:border-cyan-800/60"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700"
               }`}
             >
               {user.role === "ADMIN"
@@ -288,7 +319,7 @@ export default function Sidebar({ user }: { user: User }) {
           id="btn-sidebar-logout"
           onClick={handleLogout}
           disabled={loggingOut || isRecording}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 rounded-xl transition-all cursor-pointer border border-transparent hover:border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 rounded-xl transition-all cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
           title={isRecording ? "Finalize a gravação de tela antes de sair da conta" : undefined}
         >
           {loggingOut ? (
@@ -296,7 +327,7 @@ export default function Sidebar({ user }: { user: User }) {
           ) : (
             <>
               <svg
-                className="w-4 h-4 text-slate-500 shrink-0"
+                className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

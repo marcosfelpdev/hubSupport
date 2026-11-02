@@ -31,7 +31,7 @@ const COLUMNS: ColumnDef[] = [
     title: "Backlog",
     dotColor: "bg-indigo-500",
     headerBorder: "border-indigo-500",
-    badgeClass: "bg-white text-slate-700 border border-slate-200",
+    badgeClass: "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700",
     icon: Inbox,
     isDefault: true,
   },
@@ -40,7 +40,7 @@ const COLUMNS: ColumnDef[] = [
     title: "Pendências",
     dotColor: "bg-amber-500",
     headerBorder: "border-amber-500",
-    badgeClass: "bg-white text-slate-700 border border-slate-200",
+    badgeClass: "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700",
     icon: AlertCircle,
   },
   {
@@ -48,7 +48,7 @@ const COLUMNS: ColumnDef[] = [
     title: "Em progresso",
     dotColor: "bg-sky-500",
     headerBorder: "border-sky-500",
-    badgeClass: "bg-white text-slate-700 border border-slate-200",
+    badgeClass: "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700",
     icon: Clock,
   },
   {
@@ -56,7 +56,7 @@ const COLUMNS: ColumnDef[] = [
     title: "Finalizadas",
     dotColor: "bg-emerald-500",
     headerBorder: "border-emerald-500",
-    badgeClass: "bg-white text-slate-700 border border-slate-200",
+    badgeClass: "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700",
     icon: CheckCircle2,
   },
 ];
@@ -342,7 +342,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   return (
     <div className="w-full">
       {/* Barra de Filtros Moderna */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-5 shadow-xs">
+      <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 mb-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Controles de Filtro */}
           <div className="flex flex-wrap items-center gap-3 flex-1">
@@ -350,11 +350,11 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
             <div className="relative min-w-[240px] flex-1 max-w-md">
               <Search
                 size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
               />
               <input
                 type="text"
-                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 pl-9 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all shadow-xs"
+                className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 pl-9 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 transition-all shadow-xs"
                 placeholder="Buscar por solicitante, cliente, plataforma ou problema..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -363,7 +363,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
             {/* Dropdown: Tipo */}
             <select
-              className="bg-white border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all shadow-xs"
+              className="bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 transition-all shadow-xs"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as "" | "technical" | "implementation")}
             >
@@ -374,7 +374,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
             {/* Dropdown: Tag */}
             <select
-              className="bg-white border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all shadow-xs max-w-[170px]"
+              className="bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 transition-all shadow-xs max-w-[170px]"
               value={filterTag}
               onChange={(e) => setFilterTag(e.target.value)}
             >
@@ -388,7 +388,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
             {/* Dropdown: Autor */}
             <select
-              className="bg-white border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all shadow-xs max-w-[180px]"
+              className="bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 transition-all shadow-xs max-w-[180px]"
               value={filterAuthor}
               onChange={(e) => setFilterAuthor(e.target.value)}
             >
@@ -405,7 +405,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/70 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition-colors cursor-pointer"
                 title="Limpar todos os filtros"
               >
                 <X size={14} />
@@ -416,9 +416,9 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
           {/* Chips de filtros rápidos e Totalizador */}
           <div className="flex items-center gap-2 flex-wrap text-xs">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold shadow-xs">
-              <span className="text-slate-500">Total:</span>
-              <strong className="text-slate-900 font-bold">{filteredLogs.length}</strong>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-xs">
+              <span className="text-slate-500 dark:text-slate-400">Total:</span>
+              <strong className="text-slate-900 dark:text-white font-bold">{filteredLogs.length}</strong>
             </div>
 
             <button
@@ -426,12 +426,12 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               onClick={() => setFilterType(filterType === "technical" ? "" : "technical")}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
                 filterType === "technical"
-                  ? "bg-sky-50 text-sky-700 border border-sky-300 ring-1 ring-sky-300"
-                  : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
+                  ? "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800 ring-1 ring-sky-300 dark:ring-sky-800"
+                  : "bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-300"
               }`}
               title="Filtrar por Ação Técnica"
             >
-              <Cog size={13} className={filterType === "technical" ? "text-sky-600" : "text-slate-400"} />
+              <Cog size={13} className={filterType === "technical" ? "text-sky-600 dark:text-sky-400" : "text-slate-400 dark:text-slate-500"} />
               <span>Ação Técnica:</span>
               <strong className="font-bold">{technicalCount}</strong>
             </button>
@@ -441,12 +441,12 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               onClick={() => setFilterType(filterType === "implementation" ? "" : "implementation")}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
                 filterType === "implementation"
-                  ? "bg-purple-50 text-purple-700 border border-purple-300 ring-1 ring-purple-300"
-                  : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
+                  ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800 ring-1 ring-purple-300 dark:ring-purple-800"
+                  : "bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-300"
               }`}
               title="Filtrar por Implementação"
             >
-              <Lightbulb size={13} className={filterType === "implementation" ? "text-purple-600" : "text-slate-400"} />
+              <Lightbulb size={13} className={filterType === "implementation" ? "text-purple-600 dark:text-purple-400" : "text-slate-400 dark:text-slate-500"} />
               <span>Implementação:</span>
               <strong className="font-bold">{implementationCount}</strong>
             </button>
@@ -468,37 +468,37 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               onDragOver={(e) => handleDragOver(col.id, e)}
               onDragLeave={(e) => handleDragLeave(col.id, e)}
               onDrop={(e) => handleDrop(col.id, e)}
-              className={`bg-slate-100/75 border border-slate-200/80 rounded-2xl flex flex-col h-[calc(100vh-270px)] min-h-[500px] max-h-[calc(100vh-270px)] overflow-hidden shadow-xs transition-all duration-200 ${
+              className={`bg-slate-100/75 dark:bg-[#111726]/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl flex flex-col h-[calc(100vh-270px)] min-h-[500px] max-h-[calc(100vh-270px)] overflow-hidden shadow-xs transition-all duration-200 ${
                 isOver
-                  ? "border-2 border-dashed border-sky-400 bg-sky-50/40"
+                  ? "border-2 border-dashed border-sky-400 dark:border-sky-500 bg-sky-50/40 dark:bg-sky-950/30"
                   : ""
               }`}
             >
               {/* Cabeçalho da Coluna */}
-              <div className="flex items-center justify-between p-3.5 pb-3 border-b border-slate-200/80 shrink-0">
+              <div className="flex items-center justify-between p-3.5 pb-3 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-                  <span className="text-sm font-bold text-slate-800">
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
                     {col.title}
                   </span>
                   {col.isDefault && (
                     <span
                       title="Coluna padrão onde novos chamados técnicos e implementações são inseridos"
-                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600"
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                     >
                       Padrão
                     </span>
                   )}
                 </div>
 
-                <span className="bg-white text-slate-700 border border-slate-200 rounded-full px-2 py-0.5 text-xs font-semibold shadow-xs">
+                <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full px-2 py-0.5 text-xs font-semibold shadow-xs">
                   {cardsInCol.length}
                 </span>
               </div>
 
               {/* Slot / Feedback de Dropzone quando arrastando sobre */}
               {isOver && (
-                <div className="mx-3 mt-3 py-2.5 px-3 rounded-xl border border-dashed border-sky-400 bg-sky-100/70 text-sky-800 text-xs font-semibold text-center flex items-center justify-center gap-1.5 shrink-0 animate-pulse">
+                <div className="mx-3 mt-3 py-2.5 px-3 rounded-xl border border-dashed border-sky-400 dark:border-sky-500 bg-sky-100/70 dark:bg-sky-950/50 text-sky-800 dark:text-sky-200 text-xs font-semibold text-center flex items-center justify-center gap-1.5 shrink-0 animate-pulse">
                   <span>Solte para mover para {col.title}</span>
                 </div>
               )}
@@ -510,12 +510,12 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                 className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 min-h-0"
               >
                 {cardsInCol.length === 0 && !isOver ? (
-                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center rounded-xl border border-dashed border-slate-200/90 bg-white/50 my-auto min-h-[160px]">
-                    <EmptyIcon size={26} className="text-slate-400 mb-2 stroke-[1.5]" />
-                    <p className="text-xs font-medium text-slate-600">
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center rounded-xl border border-dashed border-slate-200/90 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 my-auto min-h-[160px]">
+                    <EmptyIcon size={26} className="text-slate-400 dark:text-slate-500 mb-2 stroke-[1.5]" />
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                       Nenhum chamado nesta etapa
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                       {col.id === "backlog" ? "Novos itens aparecerão aqui" : "Arraste um card para cá"}
                     </p>
                   </div>

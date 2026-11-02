@@ -12,12 +12,12 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <ScreenRecordingProvider>
-      <div className="min-h-screen bg-[#f8f9fa] flex">
+      <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#090d16] flex transition-colors">
         {/* Barra lateral à esquerda */}
         <Sidebar user={user} />
 
         {/* Área de conteúdo principal à direita */}
-        <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden bg-[#f8f9fa]">
+        <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden bg-[#f8f9fa] dark:bg-[#090d16] transition-colors">
           <TopBar user={user} />
           <div className="flex-1 overflow-y-auto">
             <Outlet />
