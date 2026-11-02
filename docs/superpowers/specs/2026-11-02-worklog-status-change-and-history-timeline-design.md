@@ -63,3 +63,4 @@ Relações adicionadas em `WorkLog` (`statusHistory WorkLogStatusHistory[]`) e e
      - Pílula de transição: `Status Anterior ➔ Novo Status`.
      - Data e hora formatadas em português (`DD/MM/AAAA às HH:mm`).
    - Totalmente compatível com o Design System CloudNexus nos modos Claro e Escuro.
+

@@ -34,7 +34,7 @@
 **Files:**
 - Modify: `prisma/schema.prisma`
 
-- [ ] **Step 1:** Adicionar modelo `WorkLogStatusHistory` em `prisma/schema.prisma`:
+- [x] **Step 1:** Adicionar modelo `WorkLogStatusHistory` em `prisma/schema.prisma`:
   ```prisma
   model WorkLogStatusHistory {
     id          String   @id @default(cuid())
@@ -48,9 +48,9 @@
   }
   ```
   Adicionar relações em `WorkLog` (`statusHistory WorkLogStatusHistory[]`) e `User` (`statusChanges WorkLogStatusHistory[]`).
-- [ ] **Step 2:** Parar temporariamente o processo de watch do backend (`task-1819`), executar `npx prisma db push` e reiniciar o watch do backend.
-- [ ] **Step 3:** Executar `npx tsc --noEmit` para verificar a integridade dos tipos gerados pelo Prisma.
-- [ ] **Step 4:** Commit: `feat(db): adicionar modelo WorkLogStatusHistory para auditoria de transicoes de status`.
+- [x] **Step 2:** Parar temporariamente o processo de watch do backend (`task-1819`), executar `npx prisma db push` e reiniciar o watch do backend.
+- [x] **Step 3:** Executar `npx tsc --noEmit` para verificar a integridade dos tipos gerados pelo Prisma.
+- [x] **Step 4:** Commit: `feat(db): adicionar modelo WorkLogStatusHistory para auditoria de transicoes de status`.
 
 ---
 
@@ -60,7 +60,7 @@
 - Modify: `src/server/routes/worklogs.routes.ts`
 - Modify: `src/services/api.ts`
 
-- [ ] **Step 1:** Em `src/server/routes/worklogs.routes.ts`:
+- [x] **Step 1:** Em `src/server/routes/worklogs.routes.ts`:
   - Na rota `PATCH /:id/status`:
     - Validar existência do chamado.
     - Se `workLog.status !== status.trim()`:
@@ -72,11 +72,11 @@
     - Incluir `statusHistory` com `changedBy: { select: { id: true, name: true, role: true } }` ordenado por `createdAt: "asc"`.
   - Na rota `POST /` (criação):
     - Criar o primeiro registro de histórico: `fromStatus: "Criação"`, `toStatus: finalStatus`, `changedById: user.id`.
-- [ ] **Step 2:** Em `src/services/api.ts`:
+- [x] **Step 2:** Em `src/services/api.ts`:
   - Adicionar interface `WorkLogStatusHistoryItem`.
   - Adicionar campo `statusHistory?: WorkLogStatusHistoryItem[]` em `WorkLogItem`.
   - Atualizar método `api.worklogs.updateStatus` para retornar o histórico atualizado.
-- [ ] **Step 3:** Executar `npx tsc --noEmit` e commit: `feat(api): persistir e retornar historico de alteracoes de status dos atendimentos`.
+- [x] **Step 3:** Executar `npx tsc --noEmit` e commit: `feat(api): persistir e retornar historico de alteracoes de status dos atendimentos`.
 
 ---
 
@@ -110,9 +110,9 @@
 **Files:**
 - Full codebase audit
 
-- [ ] **Step 1:** Executar `npx tsc --noEmit` e `npx vite build`.
-- [ ] **Step 2:** Testar alteração de status em chamados reais pelo seletor e verificar persistência no banco e na linha do tempo.
-- [ ] **Step 3:** Verificar se as listagens refletem o novo status imediatamente.
-- [ ] **Step 4:** Validar temas Claro e Escuro.
-- [ ] **Step 5:** Registrar aprovação no plano e concluir a entrega.
+- [x] **Step 1:** Executar `npx tsc --noEmit` e `npx vite build`.
+- [x] **Step 2:** Testar alteração de status em chamados reais pelo seletor e verificar persistência no banco e na linha do tempo.
+- [x] **Step 3:** Verificar se as listagens refletem o novo status imediatamente.
+- [x] **Step 4:** Validar temas Claro e Escuro.
+- [x] **Step 5:** Registrar aprovação no plano e concluir a entrega.
 
