@@ -21,6 +21,7 @@ import {
   UserMinus,
   Users,
   Search,
+  UserCheck,
 } from "lucide-react";
 import { WorkLogItem, WorkLogStatusHistoryItem, EmployeeItem, api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -819,13 +820,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
 
       {/* Barra de Atribuição / Responsável Técnico */}
       <div className="relative">
-        <div
-          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:px-4 sm:py-2.5 rounded-xl transition-all duration-200 ${
-            currentAssignee
-              ? "bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-2xs"
-              : "bg-slate-50/50 dark:bg-slate-900/30 border border-dashed border-slate-300 dark:border-slate-800"
-          }`}
-        >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:px-4 sm:py-2.5 rounded-xl bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs transition-all duration-200">
           {/* Lado Esquerdo: Identificação do Responsável ou Estado Vazio */}
           <div className="flex items-center gap-3 min-w-0">
             {currentAssignee ? (
@@ -837,7 +832,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 {getInitials(currentAssignee.name)}
               </div>
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-center shrink-0 shadow-2xs">
                 <UserPlus size={18} />
               </div>
             )}
@@ -888,19 +883,19 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
 
           {/* Lado Direito: Ações (Assumir Tarefa, Dropdown Atribuir/Alterar, Desatribuir) */}
           <div className="flex items-center gap-2 flex-wrap self-start sm:self-center shrink-0">
-            {/* Botão de 1 clique: [✋ Assumir Tarefa] quando não atribuído ou atribuído a outro */}
+            {/* Botão de 1 clique: Assumir Tarefa quando não atribuído ou atribuído a outro */}
             {(!currentAssignee || (currentUser && currentAssignee.id !== currentUser.id)) && currentUser && (
               <button
                 type="button"
                 onClick={() => handleAssign(currentUser.id)}
                 disabled={isAssigning}
                 title="Assumir este atendimento imediatamente com 1 clique"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold shadow-2xs hover:shadow-xs transition-all duration-150 active:scale-95 disabled:opacity-60 disabled:cursor-wait cursor-pointer"
+                className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-xs inline-flex items-center gap-2 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait"
               >
                 {isAssigning ? (
-                  <Loader2 size={13} className="animate-spin text-white shrink-0" />
+                  <Loader2 size={14} className="animate-spin text-white shrink-0" />
                 ) : (
-                  <span className="text-sm leading-none shrink-0" aria-hidden="true">✋</span>
+                  <UserCheck size={14} className="text-indigo-400 dark:text-cyan-400 shrink-0" />
                 )}
                 <span>Assumir Tarefa</span>
               </button>
@@ -915,12 +910,12 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 aria-haspopup="listbox"
                 aria-expanded={assignDropdownOpen}
                 title={currentAssignee ? "Alterar técnico responsável" : "Designar membro da equipe"}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-xs font-medium shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-wait"
+                className="bg-white dark:bg-[#161f33] hover:bg-slate-50 dark:hover:bg-[#1c273e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl shadow-2xs inline-flex items-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait"
               >
-                <Users size={13} className="text-slate-500 shrink-0" />
+                <Users size={14} className="text-slate-500 dark:text-slate-400 shrink-0" />
                 <span>{currentAssignee ? "Alterar" : "Atribuir a..."}</span>
                 <ChevronDown
-                  size={12}
+                  size={13}
                   className={`opacity-60 transition-transform duration-200 shrink-0 ${
                     assignDropdownOpen ? "rotate-180" : ""
                   }`}
@@ -1049,7 +1044,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 onClick={() => handleAssign(null)}
                 disabled={isAssigning}
                 title="Remover atribuição (retornar para a fila geral sem responsável)"
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 text-xs font-medium transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-2.5 py-1.5 rounded-lg border border-transparent hover:border-rose-200 dark:hover:border-rose-900/60 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait inline-flex items-center gap-1.5 active:scale-[0.98]"
               >
                 {isAssigning ? (
                   <Loader2 size={13} className="animate-spin shrink-0" />
