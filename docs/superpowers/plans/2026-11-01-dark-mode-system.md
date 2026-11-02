@@ -58,10 +58,10 @@
 - Modify: `src/components/ReportCardMinimized.tsx`
 - Modify: `src/pages/TechnicianPage.tsx`
 
-- [ ] **Step 1:** Update `TechnicianPage.tsx` header, view switcher, and sync controls with `dark:` classes.
-- [ ] **Step 2:** Update `TechnicianKanbanBoard.tsx` column containers, headers, count pills, and filter bar with `dark:bg-[#111726] dark:border-slate-800 dark:text-slate-100`.
-- [ ] **Step 3:** Update `ReportCardMinimized.tsx` cards with dark surfaces, hover effects, and accessible status dots.
-- [ ] **Step 4:** Run `npx vite build` and commit: `feat(kanban): adaptar painel Kanban e cards técnicos para modo escuro`.
+- [x] **Step 1:** Update `TechnicianPage.tsx` header, view switcher, and sync controls with `dark:` classes.
+- [x] **Step 2:** Update `TechnicianKanbanBoard.tsx` column containers, headers, count pills, and filter bar with `dark:bg-[#111726] dark:border-slate-800 dark:text-slate-100`.
+- [x] **Step 3:** Update `ReportCardMinimized.tsx` cards with dark surfaces, hover effects, and accessible status dots.
+- [x] **Step 4:** Run `npx vite build` and commit: `feat(kanban): adaptar painel Kanban e cards técnicos para modo escuro`.
 
 ---
 
