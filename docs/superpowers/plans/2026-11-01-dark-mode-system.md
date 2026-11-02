@@ -30,11 +30,11 @@
 - Modify: `src/styles/globals.css`
 - Modify: `src/App.tsx`
 
-- [ ] **Step 1:** Create `ThemeContext.tsx` with `"light" | "dark"` state, initialization from `localStorage` (`hubsupport_theme`), helper `toggleTheme()`, and synchronization with `document.documentElement.classList`.
-- [ ] **Step 2:** Update `globals.css` with `@custom-variant dark (&:where(.dark, .dark *));` and `.dark` CSS tokens (`--bg-primary: #090d16`, `--bg-secondary: #111726`, `--bg-card: #111726`, `--border: #1e293b`, `--text-primary: #f8fafc`, `--text-secondary: #cbd5e1`, `--text-muted: #64748b`).
-- [ ] **Step 3:** Wrap application routes with `<ThemeProvider>` in `src/App.tsx`.
-- [ ] **Step 4:** Run `npx vite build` to ensure clean build.
-- [ ] **Step 5:** Commit: `feat(theme): criar ThemeContext e tokens globais CloudNexus Dark`.
+- [x] **Step 1:** Create `ThemeContext.tsx` with `"light" | "dark"` state, initialization from `localStorage` (`hubsupport_theme`), helper `toggleTheme()`, and synchronization with `document.documentElement.classList`.
+- [x] **Step 2:** Update `globals.css` with `@custom-variant dark (&:where(.dark, .dark *));` and `.dark` CSS tokens (`--bg-primary: #090d16`, `--bg-secondary: #111726`, `--bg-card: #111726`, `--border: #1e293b`, `--text-primary: #f8fafc`, `--text-secondary: #cbd5e1`, `--text-muted: #64748b`).
+- [x] **Step 3:** Wrap application routes with `<ThemeProvider>` in `src/App.tsx`.
+- [x] **Step 4:** Run `npx vite build` to ensure clean build.
+- [x] **Step 5:** Commit: `feat(theme): criar ThemeContext e tokens globais CloudNexus Dark`.
 
 ---
 
@@ -44,11 +44,11 @@
 - Modify: `src/layouts/DashboardLayout.tsx`
 - Modify: `src/components/TopBar.tsx`
 
-- [ ] **Step 1:** In `Sidebar.tsx`, add the segmented theme switch `[ ☀️ Claro | 🌙 Escuro ]` in the footer area above user card and logout.
-- [ ] **Step 2:** Adapt `Sidebar.tsx` surfaces, borders, and navigation links with `dark:` variants (`dark:bg-[#0b0f19] dark:border-slate-800 dark:text-slate-200`).
-- [ ] **Step 3:** Adapt `TopBar.tsx` header background, borders, and quick search pill (`dark:bg-[#0b0f19]/80 dark:border-slate-800 dark:text-slate-100`).
-- [ ] **Step 4:** Adapt `DashboardLayout.tsx` main canvas background (`dark:bg-[#090d16]`).
-- [ ] **Step 5:** Run `npx vite build` and commit: `feat(navigation): implementar alternador de tema na Sidebar e casca escura`.
+- [x] **Step 1:** In `Sidebar.tsx`, add the segmented theme switch `[ ☀️ Claro | 🌙 Escuro ]` in the footer area above user card and logout.
+- [x] **Step 2:** Adapt `Sidebar.tsx` surfaces, borders, and navigation links with `dark:` variants (`dark:bg-[#0b0f19] dark:border-slate-800 dark:text-slate-200`).
+- [x] **Step 3:** Adapt `TopBar.tsx` header background, borders, and quick search pill (`dark:bg-[#0b0f19]/80 dark:border-slate-800 dark:text-slate-100`).
+- [x] **Step 4:** Adapt `DashboardLayout.tsx` main canvas background (`dark:bg-[#090d16]`).
+- [x] **Step 5:** Run `npx vite build` and commit: `feat(navigation): implementar alternador de tema na Sidebar e casca escura`.
 
 ---
 
@@ -74,10 +74,10 @@
 - Modify: `src/components/WorkLogFeed.tsx`
 - Modify: `src/components/AiReportSection.tsx`
 
-- [ ] **Step 1:** Update `DashboardOverviewPage.tsx` statistics summary cards, recent list, and agenda with `dark:` classes.
-- [ ] **Step 2:** Update `DashboardClient.tsx` and `TechnicianDashboardClient.tsx` expanded detail panels, info blocks, and problem description boxes.
-- [ ] **Step 3:** Update `WorkLogFeed.tsx` and `AiReportSection.tsx` with CloudNexus dark cards, status badges, and action buttons.
-- [ ] **Step 4:** Run `npx vite build` and commit: `feat(dashboard): adaptar telas de atendimento e relatorios IA para modo escuro`.
+- [x] **Step 1:** Update `DashboardOverviewPage.tsx` statistics summary cards, recent list, and agenda with `dark:` classes.
+- [x] **Step 2:** Update `DashboardClient.tsx` and `TechnicianDashboardClient.tsx` expanded detail panels, info blocks, and problem description boxes.
+- [x] **Step 3:** Update `WorkLogFeed.tsx` and `AiReportSection.tsx` with CloudNexus dark cards, status badges, and action buttons.
+- [x] **Step 4:** Run `npx vite build` and commit: `feat(dashboard): adaptar telas de atendimento e relatorios IA para modo escuro`.
 
 ---
 
@@ -100,10 +100,10 @@
 - Modify: `src/components/EmployeesManager.tsx`
 - Modify: `src/pages/LoginPage.tsx`
 
-- [ ] **Step 1:** Update `SettingsPage.tsx` tag management cards, tabs, and tag creation modals with dark styling.
-- [ ] **Step 2:** Update `EmployeesManager.tsx` table, filter bar, employee modals, and role badges with dark styling.
-- [ ] **Step 3:** Update `LoginPage.tsx` card, inputs, and branding for dark aesthetic.
-- [ ] **Step 4:** Run `npx vite build` and commit: `feat(settings): adaptar configuracoes, funcionarios e login para modo escuro`.
+- [x] **Step 1:** Update `SettingsPage.tsx` tag management cards, tabs, and tag creation modals with dark styling.
+- [x] **Step 2:** Update `EmployeesManager.tsx` table, filter bar, employee modals, and role badges with dark styling.
+- [x] **Step 3:** Update `LoginPage.tsx` card, inputs, and branding for dark aesthetic.
+- [x] **Step 4:** Run `npx vite build` and commit: `feat(settings): adaptar configuracoes, funcionarios e login para modo escuro`.
 
 ---
 
@@ -111,8 +111,8 @@
 **Files:**
 - Verify: Full project via subagent `qa-verifier`
 
-- [ ] **Step 1:** Execute `npx tsc --noEmit` and confirm 0 TypeScript errors.
-- [ ] **Step 2:** Execute `npx vite build` and verify clean production assets.
-- [ ] **Step 3:** Audit theme switching back and forth (Light <-> Dark) to ensure no regressions.
-- [ ] **Step 4:** Final commit and report.
+- [x] **Step 1:** Execute `npx tsc --noEmit` and confirm 0 TypeScript errors.
+- [x] **Step 2:** Execute `npx vite build` and verify clean production assets.
+- [x] **Step 3:** Audit theme switching back and forth (Light <-> Dark) to ensure no regressions.
+- [x] **Step 4:** Final commit and report.
 
