@@ -115,3 +115,4 @@
 - [ ] **Step 2:** Execute `npx vite build` and verify clean production assets.
 - [ ] **Step 3:** Audit theme switching back and forth (Light <-> Dark) to ensure no regressions.
 - [ ] **Step 4:** Final commit and report.
+
