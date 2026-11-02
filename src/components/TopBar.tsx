@@ -39,26 +39,6 @@ export default function TopBar({ user }: { user: User }) {
             Gravação em andamento
           </span>
         )}
-
-        {/* Campo de busca rápida / Seletor de contexto (CloudNexus Quick Search Pill) */}
-        <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-full px-4 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer shadow-2xs group">
-          <svg
-            className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <span className="truncate">Buscar chamados, relatórios...</span>
-          <kbd className="ml-auto font-sans text-[10px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-0.5 text-slate-400 dark:text-slate-400 font-semibold shadow-2xs">
-            ⌘K
-          </kbd>
-        </div>
       </div>
 
       {/* Direita: Notificações e Perfil */}
