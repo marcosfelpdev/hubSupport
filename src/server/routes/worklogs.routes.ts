@@ -11,7 +11,10 @@ const router = Router();
 
 const defaultWorkLogInclude = {
   user: {
-    select: { name: true, email: true, role: true },
+    select: { id: true, name: true, email: true, role: true },
+  },
+  assignedTo: {
+    select: { id: true, name: true, email: true, role: true },
   },
   tag: true,
   aiReport: true,
@@ -403,6 +406,63 @@ router.patch(
     } catch (error) {
       console.error("[WorkLogs] Erro ao solucionar atendimento:", error);
       res.status(500).json({ error: "Erro ao solucionar atendimento." });
+    }
+  }
+);
+
+
+// PATCH /api/worklogs/:id/assign
+router.patch(
+  "/:id/assign",
+  authenticateToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const { assignedToId } = req.body;
+
+      const existing = await prisma.workLog.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      let targetUserId: string | null = null;
+      if (assignedToId && typeof assignedToId === "string" && assignedToId.trim() !== "") {
+        const userExists = await prisma.user.findUnique({
+          where: { id: assignedToId.trim() },
+          select: { id: true, name: true, email: true, role: true },
+        });
+
+        if (!userExists) {
+          res.status(400).json({ error: "Usuário responsável não encontrado." });
+          return;
+        }
+        targetUserId = userExists.id;
+      }
+
+      const updated = await prisma.workLog.update({
+        where: { id },
+        data: {
+          assignedToId: targetUserId,
+        },
+        include: {
+          assignedTo: {
+            select: { id: true, name: true, email: true, role: true },
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        assignedTo: updated.assignedTo,
+        assignedToId: updated.assignedToId,
+      });
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao atribuir responsável:", error);
+      res.status(500).json({ error: "Erro ao atribuir responsável ao atendimento." });
     }
   }
 );

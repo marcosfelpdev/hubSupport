@@ -72,6 +72,13 @@ export interface WorkLogItem {
     role?: string;
   };
   statusHistory?: WorkLogStatusHistoryItem[];
+  assignedToId?: string | null;
+  assignedTo?: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string | null;
+  } | null;
   aiReport?: {
     id: string;
     status: string;
@@ -262,6 +269,18 @@ export const api = {
       return request<{ success: boolean; status: string; error?: string }>(`/api/worklogs/${id}/resolve`, {
         method: "PATCH",
       });
+    },
+    async assign(
+      id: string,
+      assignedToId: string | null
+    ): Promise<{ success: boolean; assignedTo?: { id: string; name: string; email: string; role?: string | null } | null; error?: string }> {
+      return request<{ success: boolean; assignedTo?: { id: string; name: string; email: string; role?: string | null } | null; error?: string }>(
+        `/api/worklogs/${id}/assign`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ assignedToId }),
+        }
+      );
     },
     async updateStatus(id: string, status: string): Promise<{ success: boolean; status: string; history?: WorkLogStatusHistoryItem[]; error?: string }> {
       return request<{ success: boolean; status: string; error?: string }>(`/api/worklogs/${id}/status`, {
