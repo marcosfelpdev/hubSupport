@@ -36,7 +36,7 @@
 - Modify: `src/server/app.ts`
 - Modify: `src/services/api.ts`
 
-- [ ] **Step 1:** Update `prisma/schema.prisma` to include `AgendaEvent` model:
+- [x] **Step 1:** Update `prisma/schema.prisma` to include `AgendaEvent` model:
   ```prisma
   model AgendaEvent {
     id               String    @id @default(cuid())
@@ -55,15 +55,15 @@
   }
   ```
   Add relations `assignedEvents AgendaEvent[] @relation("AssignedAgendaEvents")` and `createdEvents AgendaEvent[] @relation("CreatedAgendaEvents")` to `User`.
-- [ ] **Step 2:** Run `npm run db:push` to synchronize the Prisma schema with SQLite.
-- [ ] **Step 3:** Create `src/server/routes/agenda.routes.ts` with authenticated routes:
+- [x] **Step 2:** Run `npm run db:push` to synchronize the Prisma schema with SQLite.
+- [x] **Step 3:** Create `src/server/routes/agenda.routes.ts` with authenticated routes:
   - `GET /api/agenda`: Returns all events ordered by date and time, including `employee: { select: { id: true, name: true, email: true, role: true } }` and `createdBy: { select: { id: true, name: true } }`.
   - `POST /api/agenda`: Validates `date`, `time`, `title`, `category`, and optional `employeeId`. Creates event with `createdById: req.user.id`.
   - `PATCH /api/agenda/:id`: Allows toggling `completed` or updating event fields.
   - `DELETE /api/agenda/:id`: Deletes event by ID.
-- [ ] **Step 4:** Register `app.use("/api/agenda", agendaRoutes);` in `src/server/app.ts`.
-- [ ] **Step 5:** Add typed methods in `src/services/api.ts` under `api.agenda`: `getAll()`, `create(...)`, `toggleCompleted(...)`, and `delete(...)`.
-- [ ] **Step 6:** Run `npx tsc --noEmit` and commit: `feat(agenda): criar modelo prisma e endpoints da agenda global`.
+- [x] **Step 4:** Register `app.use("/api/agenda", agendaRoutes);` in `src/server/app.ts`.
+- [x] **Step 5:** Add typed methods in `src/services/api.ts` under `api.agenda`: `getAll()`, `create(...)`, `toggleCompleted(...)`, and `delete(...)`.
+- [x] **Step 6:** Run `npx tsc --noEmit` and commit: `feat(agenda): criar modelo prisma e endpoints da agenda global`.
 
 ---
 
@@ -75,7 +75,7 @@
 - Modify: `src/components/TopBar.tsx`
 - Modify: `src/components/NotificationBell.tsx`
 
-- [ ] **Step 1:** Create `src/server/jobs/agendaNotificationJob.ts`:
+- [x] **Step 1:** Create `src/server/jobs/agendaNotificationJob.ts`:
   - Query active events where `completed == false`, `notificationSent == false`, and `employeeId != null`.
   - For each event, compute scheduled Date using `event.date` (YYYY-MM-DD) and `event.time` (HH:mm) in local timezone.
   - Check if time difference `(eventDateTime - now)` is between 0 and 15 minutes (or past up to 5 minutes if server was starting).
@@ -83,10 +83,10 @@
     - `title: "Lembrete de Reunião (em 15 min)"`
     - `message: `Você tem a reunião "${event.title}" agendada para às ${event.time}. Prepare-se!``
   - Mark `event.notificationSent = true`.
-- [ ] **Step 2:** In `src/server/index.ts`, start `startAgendaNotificationJob()` with a 30-second interval (`setInterval`).
-- [ ] **Step 3:** In `src/components/TopBar.tsx`, remove the `isTechnician &&` restriction so that `<NotificationBell />` is rendered for all logged-in users.
-- [ ] **Step 4:** In `src/components/NotificationBell.tsx`, add an icon for meeting notifications (e.g. `Calendar` or `Clock` icon when `notification.title.includes("Reunião")` or workLog is null) and ensure popover styling in both light and dark modes.
-- [ ] **Step 5:** Run `npx vite build` and commit: `feat(notifications): implementar worker de alerta 15min e sino global para todos os usuarios`.
+- [x] **Step 2:** In `src/server/index.ts`, start `startAgendaNotificationJob()` with a 30-second interval (`setInterval`).
+- [x] **Step 3:** In `src/components/TopBar.tsx`, remove the `isTechnician &&` restriction so that `<NotificationBell />` is rendered for all logged-in users.
+- [x] **Step 4:** In `src/components/NotificationBell.tsx`, add an icon for meeting notifications (e.g. `Calendar` or `Clock` icon when `notification.title.includes("Reunião")` or workLog is null) and ensure popover styling in both light and dark modes.
+- [x] **Step 5:** Run `npx vite build` and commit: `feat(notifications): implementar worker de alerta 15min e sino global para todos os usuarios`.
 
 ---
 
@@ -117,12 +117,12 @@
 **Files:**
 - Full repository audit
 
-- [ ] **Step 1:** Run `npx tsc --noEmit` and confirm 0 TypeScript errors.
-- [ ] **Step 2:** Run `npx vite build` and verify clean production build.
-- [ ] **Step 3:** Audit:
+- [x] **Step 1:** Run `npx tsc --noEmit` and confirm 0 TypeScript errors.
+- [x] **Step 2:** Run `npx vite build` and verify clean production build.
+- [x] **Step 3:** Audit:
   - Calendar events created by one user appear for all users.
   - Assigned employee dropdown functions smoothly.
   - Non-technician users see the notification bell in the topbar.
   - Meeting scheduled in 15 minutes sends notification exclusively to the assigned employee, with sound tone.
-- [ ] **Step 4:** Mark all plan steps as completed and report findings.
+- [x] **Step 4:** Mark all plan steps as completed and report findings.
 

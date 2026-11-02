@@ -90,3 +90,4 @@ export function stopAgendaNotificationJob(): void {
     console.log("[Agenda Notification Job] Worker finalizado.");
   }
 }
+
