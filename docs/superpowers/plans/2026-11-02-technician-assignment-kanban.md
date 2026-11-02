@@ -85,13 +85,13 @@
 **Files:**
 - Modify: `src/components/dashboard/WorkLogDetailContent.tsx`
 
-- [ ] **Step 1:** Em `src/components/dashboard/WorkLogDetailContent.tsx`:
+- [x] **Step 1:** Em `src/components/dashboard/WorkLogDetailContent.tsx`:
   - Adicionar bloco "Responsável Técnico" com suporte a:
     - Se `!log.assignedTo`: Botão destacado `[✋ Assumir Tarefa]` que atribui ao usuário atual com 1 clique, e botão/seletor de atribuição a outros membros da equipe.
     - Se `log.assignedTo`: Avatar com iniciais, nome, badge de cargo, indicador `(Você)` se for o próprio usuário, e botão para alterar ou desatribuir.
     - Disparar `api.worklogs.assign(log.id, targetUserId)` com feedback de loading e chamar `onRefresh?.()`.
-- [ ] **Step 2:** Validar funcionamento e consistência nos temas Claro e Escuro.
-- [ ] **Step 3:** Commit: `feat(ui): adicionar controle de responsavel e botao assumir tarefa no card maximizado`.
+- [x] **Step 2:** Validar funcionamento e consistência nos temas Claro e Escuro.
+- [x] **Step 3:** Commit: `feat(ui): adicionar controle de responsavel e botao assumir tarefa no card maximizado`.
 
 ---
 
@@ -118,3 +118,4 @@
 - [ ] **Step 3:** Validar reflexo visual instantâneo no Kanban e nas listagens.
 - [ ] **Step 4:** Validar temas Claro e Escuro.
 - [ ] **Step 5:** Registrar aprovação no plano e concluir a entrega.
+

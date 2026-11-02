@@ -396,6 +396,9 @@ export const api = {
 
   // Gestão de Funcionários
   employees: {
+    async list(): Promise<EmployeeItem[]> {
+      return request<EmployeeItem[]>("/api/employees");
+    },
     async getAll(): Promise<EmployeeItem[]> {
       return request<EmployeeItem[]>("/api/employees");
     },

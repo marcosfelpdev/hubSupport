@@ -17,8 +17,13 @@ import {
   Check,
   History,
   ArrowRight,
+  UserPlus,
+  UserMinus,
+  Users,
+  Search,
 } from "lucide-react";
-import { WorkLogItem, WorkLogStatusHistoryItem, api } from "@/services/api";
+import { WorkLogItem, WorkLogStatusHistoryItem, EmployeeItem, api } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 import TagBadge from "@/components/TagBadge";
 
 export interface StructuredReportData {
@@ -81,6 +86,13 @@ export interface WorkLogDetailData {
     role?: string | null;
   };
   statusHistory?: WorkLogStatusHistoryItem[];
+  assignedToId?: string | null;
+  assignedTo?: {
+    id: string;
+    name: string;
+    email?: string;
+    role?: string | null;
+  } | null;
   aiReport?: {
     id?: string;
     status: string;
@@ -238,6 +250,34 @@ export function getRoleBadge(role?: string | null) {
   }
 }
 
+const AVATAR_BG_COLORS = [
+  "bg-indigo-600 text-white",
+  "bg-sky-600 text-white",
+  "bg-emerald-600 text-white",
+  "bg-violet-600 text-white",
+  "bg-rose-600 text-white",
+  "bg-amber-600 text-white",
+  "bg-teal-600 text-white",
+  "bg-blue-600 text-white",
+];
+
+export function getInitials(name?: string | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+export function getAvatarColorClass(str?: string | null): string {
+  if (!str) return "bg-indigo-600 text-white";
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_BG_COLORS[Math.abs(hash) % AVATAR_BG_COLORS.length];
+}
+
 export function formatTimelineDate(dateStr?: string | Date | null): string {
   if (!dateStr) return "";
   try {
@@ -275,6 +315,8 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   onOpenPdfModal,
   onOpenMediaModal,
 }) => {
+  const { user: currentUser } = useAuth();
+
   // Estado local do relatório de IA para suportar polling e geração sob demanda
   const [currentAiReport, setCurrentAiReport] = useState(log.aiReport ?? null);
   const [isGenerating, startGeneratingTransition] = useTransition();
@@ -292,6 +334,16 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   const [statusError, setStatusError] = useState<string | null>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Estados locais para atribuição de responsável técnico
+  const [currentAssignee, setCurrentAssignee] = useState(log.assignedTo || null);
+  const [employees, setEmployees] = useState<EmployeeItem[]>([]);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState<boolean>(false);
+  const [isAssigning, setIsAssigning] = useState<boolean>(false);
+  const [assignError, setAssignError] = useState<string | null>(null);
+  const [assignDropdownOpen, setAssignDropdownOpen] = useState<boolean>(false);
+  const [employeeSearch, setEmployeeSearch] = useState<string>("");
+  const assignDropdownRef = useRef<HTMLDivElement>(null);
+
   // Sincroniza estado quando o atendimento muda
   useEffect(() => {
     setCurrentAiReport(log.aiReport ?? null);
@@ -301,7 +353,97 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
     setCurrentHistory(log.statusHistory || []);
     setStatusError(null);
     setStatusMenuOpen(false);
-  }, [log.id, log.status, log.statusHistory, log.aiReport]);
+    setCurrentAssignee(log.assignedTo || null);
+    setAssignError(null);
+    setAssignDropdownOpen(false);
+    setEmployeeSearch("");
+  }, [log.id, log.status, log.statusHistory, log.aiReport, log.assignedTo]);
+
+  // Carrega lista de funcionários para o dropdown de atribuição
+  useEffect(() => {
+    let isMounted = true;
+    const fetchEmployees = async () => {
+      try {
+        setIsLoadingEmployees(true);
+        const data = typeof api.employees.list === "function"
+          ? await api.employees.list()
+          : await api.employees.getAll();
+        if (isMounted) {
+          setEmployees(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar colaboradores para atribuição:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingEmployees(false);
+        }
+      }
+    };
+
+    fetchEmployees();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fecha o dropdown de atribuição ao clicar fora ou apertar Escape
+  useEffect(() => {
+    if (!assignDropdownOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        assignDropdownRef.current &&
+        !assignDropdownRef.current.contains(event.target as Node)
+      ) {
+        setAssignDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setAssignDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [assignDropdownOpen]);
+
+  const handleAssign = async (targetUserId: string | null) => {
+    setAssignDropdownOpen(false);
+    setIsAssigning(true);
+    setAssignError(null);
+
+    try {
+      const res = await api.worklogs.assign(log.id, targetUserId);
+      if (res.success) {
+        setCurrentAssignee(res.assignedTo || null);
+        onRefresh?.();
+      } else {
+        setAssignError(res.error || "Não foi possível atualizar o responsável pelo atendimento.");
+      }
+    } catch (err) {
+      console.error("Erro ao atribuir responsável:", err);
+      setAssignError(
+        err instanceof Error ? err.message : "Erro ao atualizar responsável pelo atendimento."
+      );
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const filteredEmployees = useMemo(() => {
+    const q = employeeSearch.toLowerCase().trim();
+    if (!q) return employees;
+    return employees.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        (e.email && e.email.toLowerCase().includes(q)) ||
+        (e.role && e.role.toLowerCase().includes(q))
+    );
+  }, [employees, employeeSearch]);
 
   // Fecha o dropdown ao clicar fora ou apertar Escape
   useEffect(() => {
@@ -671,6 +813,260 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
         {headerAction && (
           <div className="shrink-0 flex items-center self-start sm:self-center">
             {headerAction}
+          </div>
+        )}
+      </div>
+
+      {/* Barra de Atribuição / Responsável Técnico */}
+      <div className="relative">
+        <div
+          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:px-4 sm:py-2.5 rounded-xl transition-all duration-200 ${
+            currentAssignee
+              ? "bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-2xs"
+              : "bg-slate-50/50 dark:bg-slate-900/30 border border-dashed border-slate-300 dark:border-slate-800"
+          }`}
+        >
+          {/* Lado Esquerdo: Identificação do Responsável ou Estado Vazio */}
+          <div className="flex items-center gap-3 min-w-0">
+            {currentAssignee ? (
+              <div
+                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ring-2 ring-white dark:ring-slate-900 shadow-2xs select-none ${getAvatarColorClass(
+                  currentAssignee.name
+                )}`}
+              >
+                {getInitials(currentAssignee.name)}
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center shrink-0">
+                <UserPlus size={18} />
+              </div>
+            )}
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  Responsável Técnico
+                </span>
+                {currentAssignee && currentUser && currentAssignee.id === currentUser.id && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800 text-[10px] font-bold tracking-tight">
+                    Você
+                  </span>
+                )}
+              </div>
+
+              {currentAssignee ? (
+                <div className="flex items-center flex-wrap gap-2">
+                  <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
+                    {currentAssignee.name}
+                  </span>
+
+                  {(() => {
+                    const roleCfg = getRoleBadge(currentAssignee.role);
+                    return (
+                      <span
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${roleCfg.className}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${roleCfg.dotColor}`} />
+                        <span>{roleCfg.label}</span>
+                      </span>
+                    );
+                  })()}
+
+                  {currentAssignee.email && (
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 hidden md:inline truncate">
+                      ({currentAssignee.email})
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Sem responsável atribuído
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Lado Direito: Ações (Assumir Tarefa, Dropdown Atribuir/Alterar, Desatribuir) */}
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-center shrink-0">
+            {/* Botão de 1 clique: [✋ Assumir Tarefa] quando não atribuído ou atribuído a outro */}
+            {(!currentAssignee || (currentUser && currentAssignee.id !== currentUser.id)) && currentUser && (
+              <button
+                type="button"
+                onClick={() => handleAssign(currentUser.id)}
+                disabled={isAssigning}
+                title="Assumir este atendimento imediatamente com 1 clique"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold shadow-2xs hover:shadow-xs transition-all duration-150 active:scale-95 disabled:opacity-60 disabled:cursor-wait cursor-pointer"
+              >
+                {isAssigning ? (
+                  <Loader2 size={13} className="animate-spin text-white shrink-0" />
+                ) : (
+                  <span className="text-sm leading-none shrink-0" aria-hidden="true">✋</span>
+                )}
+                <span>Assumir Tarefa</span>
+              </button>
+            )}
+
+            {/* Dropdown de Atribuição (Atribuir a... / Alterar) */}
+            <div className="relative" ref={assignDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setAssignDropdownOpen((prev) => !prev)}
+                disabled={isAssigning}
+                aria-haspopup="listbox"
+                aria-expanded={assignDropdownOpen}
+                title={currentAssignee ? "Alterar técnico responsável" : "Designar membro da equipe"}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-xs font-medium shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-wait"
+              >
+                <Users size={13} className="text-slate-500 shrink-0" />
+                <span>{currentAssignee ? "Alterar" : "Atribuir a..."}</span>
+                <ChevronDown
+                  size={12}
+                  className={`opacity-60 transition-transform duration-200 shrink-0 ${
+                    assignDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Popover Dropdown */}
+              {assignDropdownOpen && (
+                <div
+                  role="listbox"
+                  className="absolute right-0 mt-1.5 w-72 bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md"
+                >
+                  <div className="px-2 py-1 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-2 mb-1.5">
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Designar Responsável
+                    </span>
+                    {isLoadingEmployees && (
+                      <Loader2 size={12} className="animate-spin text-slate-400" />
+                    )}
+                  </div>
+
+                  {/* Input de filtro */}
+                  {employees.length > 5 && (
+                    <div className="relative mb-2">
+                      <Search
+                        size={13}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+                      <input
+                        type="text"
+                        value={employeeSearch}
+                        onChange={(e) => setEmployeeSearch(e.target.value)}
+                        placeholder="Buscar membro da equipe..."
+                        className="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+
+                  {/* Lista de colaboradores */}
+                  <div className="max-h-60 overflow-y-auto space-y-0.5">
+                    {isLoadingEmployees && employees.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-500">
+                        Carregando equipe...
+                      </div>
+                    ) : filteredEmployees.length === 0 ? (
+                      <div className="p-3 text-center text-xs text-slate-500">
+                        Nenhum colaborador encontrado.
+                      </div>
+                    ) : (
+                      filteredEmployees.map((emp) => {
+                        const isAssigned = currentAssignee?.id === emp.id;
+                        const isSelf = currentUser?.id === emp.id;
+                        const roleCfg = getRoleBadge(emp.role);
+
+                        return (
+                          <button
+                            key={emp.id}
+                            type="button"
+                            role="option"
+                            aria-selected={isAssigned}
+                            onClick={() => handleAssign(emp.id)}
+                            className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors text-left cursor-pointer ${
+                              isAssigned
+                                ? "bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-semibold"
+                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${getAvatarColorClass(
+                                  emp.name
+                                )}`}
+                              >
+                                {getInitials(emp.name)}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="truncate">{emp.name}</span>
+                                  {isSelf && (
+                                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
+                                      (Você)
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate flex items-center gap-1">
+                                  <span>{roleCfg.label}</span>
+                                  {emp.email && <span>• {emp.email}</span>}
+                                </div>
+                              </div>
+                            </div>
+
+                            {isAssigned && (
+                              <Check
+                                size={14}
+                                className="text-indigo-600 dark:text-indigo-400 shrink-0"
+                              />
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Opção de desatribuir se houver responsável */}
+                  {currentAssignee && (
+                    <div className="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                      <button
+                        type="button"
+                        onClick={() => handleAssign(null)}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left cursor-pointer"
+                      >
+                        <UserMinus size={13} className="shrink-0" />
+                        <span>Remover responsável atual</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Botão de Desatribuir direto na barra se já houver responsável */}
+            {currentAssignee && (
+              <button
+                type="button"
+                onClick={() => handleAssign(null)}
+                disabled={isAssigning}
+                title="Remover atribuição (retornar para a fila geral sem responsável)"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 text-xs font-medium transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+              >
+                {isAssigning ? (
+                  <Loader2 size={13} className="animate-spin shrink-0" />
+                ) : (
+                  <UserMinus size={13} className="shrink-0" />
+                )}
+                <span className="hidden sm:inline">Desatribuir</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Feedback de erro ao atribuir */}
+        {assignError && (
+          <div className="mt-2 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl px-3.5 py-2 animate-in fade-in duration-200">
+            <AlertTriangle size={15} className="shrink-0 text-rose-600 dark:text-rose-400" />
+            <span className="font-medium">{assignError}</span>
           </div>
         )}
       </div>
