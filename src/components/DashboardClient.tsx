@@ -21,6 +21,7 @@ import { WorkLog } from "@/components/WorkLogFeed";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
 import MediaGalleryModal from "@/components/MediaGalleryModal";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
+import DateRangePopover, { DateRange } from "./dashboard/DateRangePopover";
 
 interface DashboardProps {
   logs: any[];
@@ -125,6 +126,14 @@ function formatDate(date: Date | string) {
   }
 }
 
+function toLocalDateStr(dateVal: Date | string): string {
+  const d = new Date(dateVal);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getMediaPaths(log: any): string[] {
   try {
     return JSON.parse(log.media || "[]");
@@ -146,7 +155,9 @@ export default function DashboardClient({
   const [filters, setFilters] = useState({
     requester: "",
     clientOrOffice: "",
-    date: "",
+    startDate: "",
+    endDate: "",
+    dateLabel: "",
     status: "",
     employee: "",
     tag: "",
@@ -202,9 +213,10 @@ export default function DashboardClient({
       const matchesClient = filters.clientOrOffice
         ? log.clientOrOffice?.toLowerCase().includes(filters.clientOrOffice.toLowerCase())
         : true;
-      const matchesDate = filters.date
-        ? new Date(log.createdAt).toISOString().split("T")[0] === filters.date
-        : true;
+      const logDateStr = toLocalDateStr(log.createdAt);
+      const matchesDate =
+        (!filters.startDate || logDateStr >= filters.startDate) &&
+        (!filters.endDate || logDateStr <= filters.endDate);
       const matchesStatus = filters.status ? log.status === filters.status : true;
       const matchesEmployee = filters.employee ? log.user?.name === filters.employee : true;
       const matchesTag = filters.tag ? log.tag?.name === filters.tag : true;
@@ -276,12 +288,29 @@ export default function DashboardClient({
           />
         </div>
 
-        <div className="relative flex-1 min-w-[150px]">
-          <input
-            type="date"
-            value={filters.date}
-            onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+        <div className="flex-1 min-w-[160px]">
+          <DateRangePopover
+            value={{
+              startDate: filters.startDate,
+              endDate: filters.endDate,
+              label: filters.dateLabel,
+            }}
+            onChange={(range: DateRange) =>
+              setFilters((prev) => ({
+                ...prev,
+                startDate: range.startDate,
+                endDate: range.endDate,
+                dateLabel: range.label || "",
+              }))
+            }
+            onClear={() =>
+              setFilters((prev) => ({
+                ...prev,
+                startDate: "",
+                endDate: "",
+                dateLabel: "",
+              }))
+            }
           />
         </div>
 
@@ -330,13 +359,21 @@ export default function DashboardClient({
           </select>
         </div>
 
-        {(filters.requester || filters.clientOrOffice || filters.date || filters.status || filters.tag || filters.employee) && (
+        {(filters.requester ||
+          filters.clientOrOffice ||
+          filters.startDate ||
+          filters.endDate ||
+          filters.status ||
+          filters.tag ||
+          filters.employee) && (
           <button
             onClick={() =>
               setFilters({
                 requester: "",
                 clientOrOffice: "",
-                date: "",
+                startDate: "",
+                endDate: "",
+                dateLabel: "",
                 status: "",
                 employee: "",
                 tag: "",

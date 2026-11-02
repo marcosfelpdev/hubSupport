@@ -100,3 +100,4 @@
 - [ ] **Step 4:** Verify that selecting a period (e.g. 15 de outubro a 18 de outubro) filters accurately.
 - [ ] **Step 5:** Verify Light and Dark mode rendering.
 - [ ] **Step 6:** Update plan checkmarks and finalize.
+

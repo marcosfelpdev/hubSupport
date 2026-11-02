@@ -53,3 +53,4 @@ O usuário optou pela **Opção B**:
 - O filtro por data única continua funcionando (selecionando mesmo dia em início e fim ou atalho "Hoje").
 - O filtro por período (ex: de 15 de outubro a 2 de novembro) exibe rigorosamente os chamados compreendidos no intervalo.
 - `npx tsc --noEmit` e `npm run build` aprovados com 0 erros.
+
