@@ -71,7 +71,7 @@ function getStatusPillConfig(status: string) {
   ) {
     return {
       label: "Solucionado",
-      badgeClass: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+      badgeClass: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
       dotClass: "bg-emerald-500",
     };
   }
@@ -79,7 +79,7 @@ function getStatusPillConfig(status: string) {
   if (norm === "em progresso" || norm === "em andamento") {
     return {
       label: "Em progresso",
-      badgeClass: "bg-sky-50 text-sky-700 border border-sky-200",
+      badgeClass: "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800",
       dotClass: "bg-sky-500",
     };
   }
@@ -93,7 +93,7 @@ function getStatusPillConfig(status: string) {
   ) {
     return {
       label: "Aguardando reunião",
-      badgeClass: "bg-amber-50 text-amber-700 border border-amber-200",
+      badgeClass: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800",
       dotClass: "bg-amber-500",
     };
   }
@@ -101,15 +101,15 @@ function getStatusPillConfig(status: string) {
   if (norm === "não foi possível realizar" || norm === "não realizado") {
     return {
       label: "Não realizado",
-      badgeClass: "bg-rose-50 text-rose-700 border border-rose-200",
+      badgeClass: "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800",
       dotClass: "bg-rose-500",
     };
   }
 
   return {
     label: status || "Registrado",
-    badgeClass: "bg-slate-100 text-slate-700 border border-slate-200",
-    dotClass: "bg-slate-400",
+    badgeClass: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700",
+    dotClass: "bg-slate-400 dark:bg-slate-500",
   };
 }
 
@@ -240,7 +240,7 @@ export default function DashboardClient({
             setRecordedVideo(null);
             setIsModalOpen(true);
           }}
-          className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs transition-colors cursor-pointer ${
             isRecording ? "opacity-50 cursor-not-allowed" : ""
           }`}
           title={isRecording ? "Finalize a gravação de tela para abrir o formulário manualmente" : undefined}
@@ -253,26 +253,26 @@ export default function DashboardClient({
       </div>
 
       {/* Barra de Filtros */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-wrap gap-2.5 items-center">
+      <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs flex flex-wrap gap-2.5 items-center">
         <div className="relative flex-1 min-w-[180px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
           <input
             type="text"
             placeholder="Pesquisar por solicitante..."
             value={filters.requester}
             onChange={(e) => setFilters({ ...filters, requester: e.target.value })}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors"
           />
         </div>
 
         <div className="relative flex-1 min-w-[180px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
           <input
             type="text"
             placeholder="Pesquisar por escritório/cliente..."
             value={filters.clientOrOffice}
             onChange={(e) => setFilters({ ...filters, clientOrOffice: e.target.value })}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors"
           />
         </div>
 
@@ -281,7 +281,7 @@ export default function DashboardClient({
             type="date"
             value={filters.date}
             onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-            className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors cursor-pointer"
+            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
           />
         </div>
 
@@ -289,7 +289,7 @@ export default function DashboardClient({
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors cursor-pointer"
+            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer"
           >
             <option value="">Todos os status</option>
             {statusOptions.map((status) => (
@@ -304,7 +304,7 @@ export default function DashboardClient({
           <select
             value={filters.tag}
             onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
-            className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors cursor-pointer"
+            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer"
           >
             <option value="">Todas as plataformas / tags</option>
             {tagOptions.map((name) => (
@@ -319,7 +319,7 @@ export default function DashboardClient({
           <select
             value={filters.employee}
             onChange={(e) => setFilters({ ...filters, employee: e.target.value })}
-            className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors cursor-pointer"
+            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer"
           >
             <option value="">Todos os funcionários</option>
             {employeeOptions.map((name) => (
@@ -342,7 +342,7 @@ export default function DashboardClient({
                 tag: "",
               })
             }
-            className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           >
             Limpar filtros
           </button>
@@ -354,8 +354,8 @@ export default function DashboardClient({
         {/* Coluna da Esquerda: Feed de Cards */}
         <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 max-h-[calc(100vh-270px)] overflow-y-auto pr-1">
           {filteredLogs.length === 0 ? (
-            <div className="bg-white border border-slate-200 border-dashed rounded-2xl p-8 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
-              <Clock size={28} className="opacity-40 text-slate-400" />
+            <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 border-dashed rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center justify-center gap-2">
+              <Clock size={28} className="opacity-40 text-slate-400 dark:text-slate-500" />
               <span>Nenhum atendimento encontrado para os filtros selecionados.</span>
             </div>
           ) : (
@@ -375,11 +375,11 @@ export default function DashboardClient({
         </div>
 
         {/* Coluna da Direita: Detalhe Expandido do Atendimento */}
-        <div className="lg:col-span-7 xl:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 shadow-xs min-h-[calc(100vh-270px)] max-h-[calc(100vh-270px)] overflow-y-auto">
+        <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs min-h-[calc(100vh-270px)] max-h-[calc(100vh-270px)] overflow-y-auto">
           {selectedLog ? (
             <div className="flex flex-col gap-5 animate-fade-in">
               {/* Header do Chamado */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-3">
                 <div className="flex items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-2xs"
@@ -388,10 +388,10 @@ export default function DashboardClient({
                     {getInitials(selectedLog.user?.name || "")}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-900 leading-tight">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
                       {selectedLog.user?.name || "Usuário do sistema"}
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       Registrado em {formatDate(selectedLog.createdAt)} às{" "}
                       {new Date(selectedLog.createdAt).toLocaleTimeString("pt-BR", {
                         hour: "2-digit",
@@ -418,11 +418,11 @@ export default function DashboardClient({
 
               {/* Título do Atendimento (se houver) */}
               {selectedLog.title && (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                <div className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
                     Título do Atendimento
                   </span>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
                     {selectedLog.title}
                   </h3>
                 </div>
@@ -430,27 +430,27 @@ export default function DashboardClient({
 
               {/* Informações Complementares: Solicitante, Escritório, Plataforma */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
                     Solicitante
                   </span>
-                  <p className="text-xs font-semibold text-slate-800">
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                     {selectedLog.requester || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
                     Escritório / Cliente
                   </span>
-                  <p className="text-xs font-semibold text-slate-800">
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                     {selectedLog.clientOrOffice || "Não informado"}
                   </p>
                 </div>
 
                 {selectedLog.tag && (
-                  <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
                       Plataforma
                     </span>
                     <div className="mt-0.5">
@@ -465,9 +465,9 @@ export default function DashboardClient({
                 <div>
                   <button
                     onClick={() => openMediaModal(selectedLog)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors border border-slate-200 cursor-pointer shadow-2xs"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#111726] hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg transition-colors border border-slate-200 dark:border-slate-800 cursor-pointer shadow-2xs"
                   >
-                    <Paperclip size={14} className="text-slate-500" />
+                    <Paperclip size={14} className="text-slate-500 dark:text-slate-400" />
                     <span>Visualizar Mídias ({getMediaPaths(selectedLog).length})</span>
                   </button>
                 </div>
@@ -481,23 +481,23 @@ export default function DashboardClient({
 
               {/* Descrição e Ação Tomada */}
               <div className="space-y-4">
-                <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
-                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600 mb-2">
+                <div className="bg-slate-50/60 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2">
                     <AlertCircle size={14} />
                     <span>Descrição do Problema</span>
                   </div>
-                  <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap break-words">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
                     {selectedLog.reportedProblem || "Nenhuma descrição fornecida."}
                   </p>
                 </div>
 
                 {selectedLog.actionTaken && selectedLog.actionTaken.trim() !== "" && (
-                  <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
-                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 mb-2">
+                  <div className="bg-slate-50/60 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
                       <CheckCircle2 size={14} />
                       <span>Ação Realizada</span>
                     </div>
-                    <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap break-words">
+                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
                       {selectedLog.actionTaken}
                     </p>
                   </div>
@@ -505,7 +505,7 @@ export default function DashboardClient({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center py-20 text-slate-400">
+            <div className="flex flex-col items-center justify-center h-full text-center py-20 text-slate-400 dark:text-slate-500">
               <FileText size={36} className="opacity-30 mb-2" />
               <p className="text-xs">Selecione um atendimento para visualizar os detalhes completos</p>
             </div>
@@ -516,16 +516,16 @@ export default function DashboardClient({
       {/* Modal Formulário de Criação */}
       {isModalOpen && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in"
           onClick={handleCloseModal}
         >
           <div
-            className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative bg-white rounded-2xl shadow-xl border border-slate-200"
+            className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative bg-white dark:bg-[#111726] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={handleCloseModal}
-              className="absolute top-3.5 right-3.5 z-10 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-lg p-1.5 transition-colors cursor-pointer"
+              className="absolute top-3.5 right-3.5 z-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg p-1.5 transition-colors cursor-pointer"
               title="Fechar"
             >
               <X size={16} />
