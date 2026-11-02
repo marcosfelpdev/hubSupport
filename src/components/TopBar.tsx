@@ -10,7 +10,6 @@ interface User {
 
 export default function TopBar({ user }: { user: User }) {
   const { isRecording } = useScreenRecording();
-  const isTechnician = user.role === "TECHNICIAN" || user.role === "ADMIN";
 
   const initials = user.name
     ? user.name
@@ -64,8 +63,8 @@ export default function TopBar({ user }: { user: User }) {
 
       {/* Direita: Notificações e Perfil */}
       <div className="flex items-center gap-3">
-        {/* Notificações para técnicos e admins */}
-        {isTechnician && <NotificationBell />}
+        {/* Notificações do sistema acessível para todos os usuários */}
+        <NotificationBell />
 
         {/* Separador sutil */}
         <div className="h-6 w-px bg-slate-200 dark:bg-slate-800" />
