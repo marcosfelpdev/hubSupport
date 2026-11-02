@@ -10,12 +10,19 @@ export default function TechnicianPage() {
   const [logs, setLogs] = useState<WorkLogItem[]>([]);
   const [employees, setEmployees] = useState<{ name: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"kanban" | "classic">("kanban");
 
-  const fetchTechnicalData = async () => {
+  const fetchTechnicalData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        if (logs.length === 0) {
+          setLoading(true);
+        } else {
+          setIsRefreshing(true);
+        }
+      }
       setError(null);
       const [logsData, employeesData] = await Promise.all([
         api.worklogs.getTechnical(),
@@ -25,9 +32,12 @@ export default function TechnicianPage() {
       setEmployees(employeesData.map((e) => ({ name: e.name })));
     } catch (err) {
       console.error("[TechnicianPage] Erro ao carregar dados técnicos:", err);
-      setError(err instanceof Error ? err.message : "Erro ao carregar atendimentos técnicos.");
+      if (logs.length === 0) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar atendimentos técnicos.");
+      }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -50,10 +60,10 @@ export default function TechnicianPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1.5 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
               Painel de Atendimentos Técnicos
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/30 backdrop-blur-xs shadow-xs">
+            <span className="inline-flex items-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-200 rounded-full px-3 py-1 text-xs font-semibold shadow-xs">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
@@ -61,9 +71,9 @@ export default function TechnicianPage() {
               <span>🔧 Equipe Técnica</span>
             </span>
           </div>
-          <p className="text-sm text-[var(--text-muted)] capitalize flex items-center gap-2">
+          <p className="text-sm text-slate-500 capitalize flex items-center gap-2">
             <span>{today}</span>
-            <span className="text-[var(--border-light)]">&bull;</span>
+            <span className="text-slate-300">&bull;</span>
             <span className="normal-case">Relatórios marcados para ação técnica ou implementação</span>
           </p>
         </div>
@@ -73,24 +83,24 @@ export default function TechnicianPage() {
           {/* Botão de atualização rápida */}
           <button
             type="button"
-            onClick={fetchTechnicalData}
-            disabled={loading}
+            onClick={() => fetchTechnicalData(false)}
+            disabled={loading || isRefreshing}
             title="Atualizar chamados"
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)] border border-[var(--border-light)] hover:border-slate-600 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            <RefreshCw size={14} className={loading ? "animate-spin text-sky-400" : ""} />
-            <span>Atualizar</span>
+            <RefreshCw size={14} className={loading || isRefreshing ? "animate-spin text-slate-400" : "text-slate-500"} />
+            <span>{isRefreshing ? "Sincronizando..." : "Atualizar"}</span>
           </button>
 
-          {/* Toggle Switcher: Kanban vs Lista */}
-          <div className="inline-flex p-1 bg-[var(--bg-secondary)] border border-[var(--border-light)] rounded-xl shadow-inner gap-1">
+          {/* Switcher de visualização: Kanban vs Lista */}
+          <div className="inline-flex p-1 bg-slate-100 border border-slate-200 rounded-xl gap-1">
             <button
               type="button"
               onClick={() => setViewMode("kanban")}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs transition-all duration-200 cursor-pointer ${
                 viewMode === "kanban"
-                  ? "bg-gradient-to-r from-sky-600 to-sky-500 text-white shadow-md shadow-sky-500/25"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)]"
+                  ? "bg-slate-900 text-white shadow-xs font-semibold"
+                  : "text-slate-600 hover:text-slate-900 rounded-lg font-medium hover:bg-slate-200/60"
               }`}
             >
               <Columns3 size={15} />
@@ -99,10 +109,10 @@ export default function TechnicianPage() {
             <button
               type="button"
               onClick={() => setViewMode("classic")}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs transition-all duration-200 cursor-pointer ${
                 viewMode === "classic"
-                  ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/25"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)]"
+                  ? "bg-slate-900 text-white shadow-xs font-semibold"
+                  : "text-slate-600 hover:text-slate-900 rounded-lg font-medium hover:bg-slate-200/60"
               }`}
             >
               <LayoutList size={15} />
@@ -113,27 +123,27 @@ export default function TechnicianPage() {
       </div>
 
       {loading ? (
-        <div className="py-20 px-8 flex flex-col items-center justify-center gap-4 text-center bg-[var(--bg-card)]/50 border border-[var(--border)] rounded-2xl backdrop-blur-xs">
-          <div className="w-10 h-10 border-[3px] border-sky-500/20 border-t-sky-400 rounded-full animate-spin" />
+        <div className="py-20 px-8 flex flex-col items-center justify-center gap-4 text-center bg-white border border-slate-200 rounded-2xl shadow-xs">
+          <div className="w-10 h-10 border-[3px] border-slate-200 border-t-slate-900 rounded-full animate-spin" />
           <div className="flex flex-col items-center gap-1">
-            <p className="text-sm font-medium text-[var(--text-primary)]">
+            <p className="text-sm font-semibold text-slate-900">
               Carregando atendimentos técnicos...
             </p>
-            <p className="text-xs text-[var(--text-muted)]">
+            <p className="text-xs text-slate-500">
               Sincronizando fila técnica e portais de despacho
             </p>
           </div>
         </div>
       ) : error ? (
-        <div className="flex items-center justify-between gap-4 p-4 mb-6 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300">
+        <div className="flex items-center justify-between gap-4 p-4 mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 shadow-xs">
           <div className="flex items-center gap-3">
-            <AlertTriangle size={18} className="text-red-400 shrink-0" />
+            <AlertTriangle size={18} className="text-red-500 shrink-0" />
             <span className="text-sm font-medium">{error}</span>
           </div>
           <button
             type="button"
-            onClick={fetchTechnicalData}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-500/40 transition-colors duration-150 cursor-pointer"
+            onClick={() => fetchTechnicalData(false)}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-red-50 text-red-700 border border-red-200 transition-colors duration-150 cursor-pointer shadow-xs"
           >
             Tentar novamente
           </button>
@@ -143,14 +153,14 @@ export default function TechnicianPage() {
           logs={logs}
           currentUserId={user.id}
           employees={employees}
-          onLogResolved={fetchTechnicalData}
+          onLogResolved={() => fetchTechnicalData(true)}
         />
       ) : (
         <TechnicianDashboardClient
           logs={logs}
           currentUserId={user.id}
           employees={employees}
-          onLogResolved={fetchTechnicalData}
+          onLogResolved={() => fetchTechnicalData(true)}
         />
       )}
     </main>

@@ -8,9 +8,7 @@ import { BasicAgenda } from "../components/dashboard/BasicAgenda";
 import { ReportDetailsModal } from "../components/dashboard/ReportDetailsModal";
 import {
   Layers,
-  CheckCircle2,
   Clock,
-  Calendar,
   Plus,
   RotateCw,
   TrendingUp,
@@ -89,94 +87,32 @@ export default function DashboardOverviewPage() {
   if (!user) return null;
 
   return (
-    <main
-      className="animate-fade-in"
-      style={{
-        maxWidth: "1600px",
-        padding: "2rem 2.5rem",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.75rem",
-      }}
-    >
+    <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col gap-6 animate-fade-in">
       {/* Header com Saudação e Ações Rápidas */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "1rem",
-        }}
-      >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1
-            style={{
-              fontSize: "1.65rem",
-              fontWeight: 800,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.02em",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             Dashboard
           </h1>
-          <p
-            style={{
-              color: "var(--text-muted)",
-              fontSize: "0.875rem",
-              textTransform: "capitalize",
-              marginTop: "0.2rem",
-            }}
-          >
-            {todayFormatted} • Bem-vindo(a), <strong style={{ color: "#e2e8f0" }}>{user.name}</strong>
+          <p className="text-sm text-slate-500 capitalize mt-1">
+            {todayFormatted} • Bem-vindo(a), <span className="font-semibold text-slate-700">{user.name}</span>
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <div className="flex items-center gap-3">
           <button
             onClick={fetchDashboard}
             disabled={loading}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.4rem",
-              padding: "0.55rem 0.85rem",
-              fontSize: "0.825rem",
-              fontWeight: 600,
-              backgroundColor: "rgba(15, 23, 42, 0.8)",
-              border: "1px solid var(--border)",
-              borderRadius: "0.5rem",
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-xs transition-colors cursor-pointer disabled:opacity-60"
             title="Atualizar dados do dashboard"
           >
-            <RotateCw size={14} className={loading ? "animate-spin" : ""} />
+            <RotateCw size={14} className={loading ? "animate-spin text-slate-500" : "text-slate-500"} />
             <span>Atualizar</span>
           </button>
 
           <Link
             to="/dashboard/atendimentos"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.4rem",
-              padding: "0.55rem 1rem",
-              fontSize: "0.825rem",
-              fontWeight: 600,
-              backgroundColor: "#6366f1",
-              border: "none",
-              borderRadius: "0.5rem",
-              color: "#ffffff",
-              textDecoration: "none",
-              boxShadow: "0 4px 14px rgba(99, 102, 241, 0.35)",
-              transition: "all 0.15s ease",
-            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-colors"
           >
             <Plus size={15} />
             <span>Novo Atendimento</span>
@@ -185,165 +121,75 @@ export default function DashboardOverviewPage() {
       </div>
 
       {/* KPI Cards / Métricas de Resumo */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "1rem",
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: Total Registrado */}
-        <div
-          style={{
-            backgroundColor: "var(--bg-card)",
-            border: "1px solid var(--border)",
-            borderRadius: "0.75rem",
-            padding: "1.1rem 1.25rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
           <div>
-            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" }}>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
               Total de Atendimentos
             </span>
-            <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "0.2rem" }}>
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
               {data.stats.total}
             </div>
-            <span style={{ fontSize: "0.72rem", color: "#818cf8" }}>
+            <span className="text-xs font-medium text-indigo-600 mt-0.5 block">
               Cadastrados no sistema
             </span>
           </div>
-          <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "10px",
-              backgroundColor: "rgba(99, 102, 241, 0.15)",
-              color: "#818cf8",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100/80 text-indigo-600 flex items-center justify-center shrink-0">
             <Layers size={20} />
           </div>
         </div>
 
         {/* KPI 2: Solucionados Técnico */}
-        <div
-          style={{
-            backgroundColor: "var(--bg-card)",
-            border: "1px solid rgba(16, 185, 129, 0.25)",
-            borderRadius: "0.75rem",
-            padding: "1.1rem 1.25rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
           <div>
-            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#34d399", textTransform: "uppercase" }}>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
               Solucionados (Técnico)
             </span>
-            <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "0.2rem" }}>
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
               {data.stats.solved}
             </div>
-            <span style={{ fontSize: "0.72rem", color: "#34d399" }}>
+            <span className="text-xs font-medium text-emerald-600 mt-0.5 block">
               Finalizados com êxito
             </span>
           </div>
-          <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "10px",
-              backgroundColor: "rgba(16, 185, 129, 0.15)",
-              color: "#34d399",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0">
             <FileCheck2 size={20} />
           </div>
         </div>
 
         {/* KPI 3: Em Andamento / Pendentes */}
-        <div
-          style={{
-            backgroundColor: "var(--bg-card)",
-            border: "1px solid var(--border)",
-            borderRadius: "0.75rem",
-            padding: "1.1rem 1.25rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
           <div>
-            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" }}>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
               Em Andamento
             </span>
-            <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "0.2rem" }}>
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
               {data.stats.inProgress}
             </div>
-            <span style={{ fontSize: "0.72rem", color: "#60a5fa" }}>
+            <span className="text-xs font-medium text-sky-600 mt-0.5 block">
               Aguardando conclusão
             </span>
           </div>
-          <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "10px",
-              backgroundColor: "rgba(59, 130, 246, 0.15)",
-              color: "#60a5fa",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <div className="w-11 h-11 rounded-xl bg-sky-50 border border-sky-100/80 text-sky-600 flex items-center justify-center shrink-0">
             <Clock size={20} />
           </div>
         </div>
 
         {/* KPI 4: Registros de Hoje */}
-        <div
-          style={{
-            backgroundColor: "var(--bg-card)",
-            border: "1px solid var(--border)",
-            borderRadius: "0.75rem",
-            padding: "1.1rem 1.25rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
           <div>
-            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" }}>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
               Atendimentos de Hoje
             </span>
-            <div style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "0.2rem" }}>
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
               {data.stats.today}
             </div>
-            <span style={{ fontSize: "0.72rem", color: "#fbbf24" }}>
+            <span className="text-xs font-medium text-amber-600 mt-0.5 block">
               Criados no plantão atual
             </span>
           </div>
-          <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "10px",
-              backgroundColor: "rgba(245, 158, 11, 0.15)",
-              color: "#fbbf24",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100/80 text-amber-600 flex items-center justify-center shrink-0">
             <TrendingUp size={20} />
           </div>
         </div>
@@ -351,49 +197,30 @@ export default function DashboardOverviewPage() {
 
       {/* Tratamento de Erro */}
       {error && (
-        <div className="alert alert-error" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <AlertCircle size={18} />
-          <span>{error}</span>
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl p-4 flex items-center justify-between text-sm shadow-xs">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={18} className="text-rose-600 shrink-0" />
+            <span>{error}</span>
+          </div>
           <button
             onClick={fetchDashboard}
-            className="btn-ghost"
-            style={{ marginLeft: "auto", padding: "0.25rem 0.5rem" }}
+            className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline px-2 py-1 rounded transition-colors"
           >
             Tentar novamente
           </button>
         </div>
       )}
 
-      {/* Grid Principal com os 3 Campos Solicitados */}
+      {/* Grid Principal com os 3 Painéis */}
       {loading ? (
-        <div
-          style={{
-            padding: "5rem 2rem",
-            textAlign: "center",
-            color: "var(--text-muted)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "1rem",
-            backgroundColor: "var(--bg-card)",
-            borderRadius: "1rem",
-            border: "1px solid var(--border)",
-          }}
-        >
-          <div className="spinner" style={{ width: "32px", height: "32px" }} />
-          <span style={{ fontSize: "0.9rem" }}>Carregando dados do dashboard...</span>
+        <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3 shadow-xs">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+          <span className="text-sm font-medium text-slate-600">Carregando dados do dashboard...</span>
         </div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: "1.25rem",
-            alignItems: "stretch",
-          }}
-        >
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           {/* Campo 1: Lista vertical com os últimos atendimentos registrados */}
-          <div style={{ minWidth: 0, height: "calc(100vh - 270px)", minHeight: "620px", maxHeight: "800px" }}>
+          <div className="min-w-0 h-[calc(100vh-280px)] min-h-[620px] max-h-[820px]">
             <RecentWorkLogsList
               logs={data.recentLogs}
               onSelectLog={(log) => setSelectedLog(log)}
@@ -401,7 +228,7 @@ export default function DashboardOverviewPage() {
           </div>
 
           {/* Campo 2: Lista vertical com os últimos relatórios marcados como Solucionado */}
-          <div style={{ minWidth: 0, height: "calc(100vh - 270px)", minHeight: "620px", maxHeight: "800px" }}>
+          <div className="min-w-0 h-[calc(100vh-280px)] min-h-[620px] max-h-[820px]">
             <SolvedReportsList
               logs={data.solvedLogs}
               onSelectReport={(log) => setSelectedLog(log)}
@@ -409,7 +236,7 @@ export default function DashboardOverviewPage() {
           </div>
 
           {/* Campo 3: Agenda funcional básica */}
-          <div style={{ minWidth: 0, height: "calc(100vh - 270px)", minHeight: "620px", maxHeight: "800px" }}>
+          <div className="min-w-0 h-[calc(100vh-280px)] min-h-[620px] max-h-[820px]">
             <BasicAgenda />
           </div>
         </div>

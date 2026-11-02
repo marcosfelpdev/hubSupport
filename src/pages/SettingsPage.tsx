@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { TagItem, api } from "@/services/api";
-import TagBadge, { hexToRgba } from "@/components/TagBadge";
+import TagBadge from "@/components/TagBadge";
 import {
-  Settings,
   Tag as TagIcon,
   Plus,
   Pencil,
   Trash2,
   Check,
   AlertCircle,
-  Sparkles,
-  Layers,
   HelpCircle,
+  Layers,
+  X,
 } from "lucide-react";
 
 const PRESET_COLORS = [
@@ -137,81 +137,27 @@ export default function SettingsPage() {
   }
 
   return (
-    <main
-      className="animate-fade-in"
-      style={{
-        maxWidth: "1400px",
-        margin: "0 auto",
-        padding: "2rem 2.5rem",
-        width: "100%",
-      }}
-    >
-      {/* Header da Página */}
-      <header style={{ marginBottom: "2rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(129, 140, 248, 0.1))",
-              border: "1px solid rgba(99, 102, 241, 0.3)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#818cf8",
-            }}
-          >
-            <Settings size={22} />
-          </div>
-          <div>
-            <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
-              Configurações
-            </h1>
-            <p style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
-              Personalize o formato dos formulários, tags de contexto e preferências operacionais.
-            </p>
-          </div>
+    <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full animate-fade-in">
+      {/* Header da Página (conforme vídeo Team & Workspace Settings) */}
+      <header className="mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Configurações
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Personalize o formato dos formulários, tags de contexto e preferências operacionais.
+          </p>
         </div>
 
         {/* Tab Navigation */}
-        <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            borderBottom: "1px solid var(--border)",
-            marginTop: "1.5rem",
-          }}
-        >
+        <div className="flex gap-2 border-b border-slate-200 mt-6">
           <button
             type="button"
-            className="btn-ghost"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              padding: "0.75rem 1.25rem",
-              borderBottom: activeTab === "form_format" ? "2px solid #6366f1" : "2px solid transparent",
-              borderRadius: "0",
-              color: activeTab === "form_format" ? "#ffffff" : "var(--text-secondary)",
-              fontWeight: activeTab === "form_format" ? 600 : 500,
-              fontSize: "0.875rem",
-              backgroundColor: "transparent",
-            }}
+            className="flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 border-slate-900 text-slate-900 -mb-px transition-colors"
           >
-            <Layers size={16} color={activeTab === "form_format" ? "#818cf8" : "currentColor"} />
-            Formato de Formulário
-            <span
-              style={{
-                fontSize: "0.7rem",
-                padding: "0.15rem 0.5rem",
-                borderRadius: "9999px",
-                backgroundColor: "rgba(99, 102, 241, 0.15)",
-                color: "#818cf8",
-                border: "1px solid rgba(99, 102, 241, 0.3)",
-                marginLeft: "0.25rem",
-              }}
-            >
+            <Layers className="w-4 h-4 text-slate-700" />
+            <span>Formato de Formulário</span>
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 ml-1">
               Tags Mestre
             </span>
           </button>
@@ -220,111 +166,51 @@ export default function SettingsPage() {
 
       {/* Alertas */}
       {successMessage && (
-        <div
-          className="alert alert-success animate-fade-in"
-          style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
-        >
-          <Check size={18} />
-          {successMessage}
+        <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3.5 text-xs sm:text-sm font-medium flex items-center gap-2.5 animate-fade-in shadow-2xs">
+          <Check className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>{successMessage}</span>
         </div>
       )}
 
       {error && (
-        <div
-          className="alert alert-error animate-fade-in"
-          style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
-        >
-          <AlertCircle size={18} />
-          {error}
+        <div className="mb-6 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl p-3.5 text-xs sm:text-sm font-medium flex items-center gap-2.5 animate-fade-in shadow-2xs">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{error}</span>
         </div>
       )}
 
       {/* Conteúdo da Aba: Formato de Formulário (Tags Mestre) */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
+      <div className="flex flex-col gap-6">
         {/* Banner explicativo de contexto */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%)",
-            border: "1px solid var(--border)",
-            borderRadius: "0.75rem",
-            padding: "1.25rem 1.5rem",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "1rem",
-            boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
-          }}
-        >
-          <div
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "8px",
-              backgroundColor: "rgba(99, 102, 241, 0.15)",
-              border: "1px solid rgba(99, 102, 241, 0.3)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#818cf8",
-              flexShrink: 0,
-              marginTop: "2px",
-            }}
-          >
-            <HelpCircle size={20} />
+        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-2xs">
+          <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 shrink-0 shadow-2xs mt-0.5">
+            <HelpCircle className="w-5 h-5 text-slate-600" />
           </div>
-          <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: "0.25rem" }}>
+          <div className="flex-1">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight mb-1">
               Tags Mestre para Contextualização de Plataformas
             </h3>
-            <p style={{ fontSize: "0.825rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+            <p className="text-xs text-slate-600 leading-relaxed">
               O sistema de tags adiciona contexto imediato aos atendimentos quando o atendente oferece suporte a mais de uma plataforma ou sistema.
-              Cada chamado aceita <strong>apenas uma tag pai</strong> por vez, garantindo organização clara e identificação instantânea da plataforma tratada.
+              Cada chamado aceita <strong className="text-slate-900 font-semibold">apenas uma tag de plataforma</strong> por vez, garantindo organização clara e identificação instantânea da plataforma tratada.
             </p>
           </div>
         </div>
 
         {/* Gerenciamento das Tags */}
-        <div
-          className="card"
-          style={{
-            padding: "1.5rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.25rem",
-          }}
-        >
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
           {/* Top Bar da Seção de Tags */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "1rem",
-              borderBottom: "1px solid var(--border)",
-              paddingBottom: "1rem",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
-              <div
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "8px",
-                  background: "rgba(99, 102, 241, 0.12)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#818cf8",
-                }}
-              >
-                <TagIcon size={16} />
+          <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0 shadow-2xs">
+                <TagIcon className="w-4 h-4 text-slate-600" />
               </div>
               <div>
-                <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
                   Tags Cadastradas
                 </h2>
-                <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: 0 }}>
-                  {tags.length} {tags.length === 1 ? "tag configurada" : "tags configuradas"} no sistema
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {tags.length} {tags.length === 1 ? "tag configurada" : "tags configuradas"} no workspace
                 </p>
               </div>
             </div>
@@ -332,162 +218,91 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={handleOpenCreate}
-              className="btn btn-primary"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                fontSize: "0.85rem",
-                padding: "0.55rem 1rem",
-              }}
+              className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
             >
-              <Plus size={16} />
-              Nova Tag de Plataforma
+              <Plus className="w-3.5 h-3.5" />
+              <span>Nova Tag</span>
             </button>
           </div>
 
           {/* Estado de Carregamento */}
           {isLoading && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3rem", gap: "0.75rem" }}>
-              <div className="spinner" style={{ width: "28px", height: "28px" }} />
-              <span style={{ fontSize: "0.825rem", color: "var(--text-muted)" }}>Carregando tags...</span>
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-500">
+              <div className="w-7 h-7 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+              <span className="text-xs font-medium text-slate-600">Carregando tags...</span>
             </div>
           )}
 
           {/* Lista Vazia */}
           {!isLoading && tags.length === 0 && (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "3.5rem 1.5rem",
-                border: "1px dashed var(--border)",
-                borderRadius: "8px",
-                background: "rgba(15, 23, 42, 0.3)",
-              }}
-            >
-              <div
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "50%",
-                  background: "rgba(99, 102, 241, 0.1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#818cf8",
-                  margin: "0 auto 1rem",
-                }}
-              >
-                <TagIcon size={24} />
+            <div className="text-center py-16 px-4">
+              <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 mx-auto mb-3 shadow-2xs">
+                <TagIcon className="w-6 h-6 text-slate-400" />
               </div>
-              <p style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.25rem" }}>
+              <h3 className="text-sm font-bold text-slate-900 mb-1">
                 Nenhuma tag cadastrada ainda
-              </p>
-              <p style={{ fontSize: "0.825rem", color: "var(--text-muted)", maxWidth: "420px", margin: "0 auto 1.25rem" }}>
+              </h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4 leading-relaxed">
                 Crie tags para representar as plataformas ou sistemas aos quais sua equipe presta suporte (ex: Plataforma Web, Sistema ERP, App Mobile).
               </p>
               <button
                 type="button"
                 onClick={handleOpenCreate}
-                className="btn btn-primary"
-                style={{ fontSize: "0.85rem", padding: "0.5rem 1rem" }}
+                className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
               >
-                <Plus size={15} style={{ marginRight: "0.35rem" }} />
-                Cadastrar Primeira Tag
+                <Plus className="w-3.5 h-3.5" />
+                <span>Cadastrar Primeira Tag</span>
               </button>
             </div>
           )}
 
           {/* Grid / Tabela de Tags Cadastradas */}
           {!isLoading && tags.length > 0 && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-                gap: "1rem",
-              }}
-            >
+            <div className="divide-y divide-slate-100">
               {tags.map((tag) => {
                 const count = tag._count?.workLogs || 0;
                 return (
                   <div
                     key={tag.id}
-                    style={{
-                      backgroundColor: "rgba(15, 23, 42, 0.6)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "8px",
-                      padding: "1rem 1.15rem",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      gap: "0.875rem",
-                      transition: "border-color 0.15s ease",
-                    }}
+                    className="p-4 sm:px-6 flex items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
                   >
-                    {/* Linha Superior: Visual Badge e Ações */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                    {/* Tag badge & Color info */}
+                    <div className="flex items-center gap-4 min-w-0">
                       <TagBadge name={tag.name} color={tag.color} size="lg" />
+                      <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0 border border-slate-200"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <code className="text-[11px] font-mono text-slate-500">{tag.color}</code>
+                      </div>
+                    </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    {/* Meta info & Actions */}
+                    <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+                      <span className="text-xs text-slate-500">
+                        <strong className="text-slate-900 font-semibold">{count}</strong>{" "}
+                        {count === 1 ? "atendimento" : "atendimentos"}
+                      </span>
+
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(tag)}
-                          className="btn-ghost"
+                          className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors cursor-pointer"
                           title="Editar tag"
-                          style={{
-                            padding: "0.35rem",
-                            borderRadius: "6px",
-                            color: "var(--text-muted)",
-                          }}
                         >
-                          <Pencil size={15} />
+                          <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeletingTag(tag)}
-                          className="btn-ghost"
+                          className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer"
                           title="Excluir tag"
-                          style={{
-                            padding: "0.35rem",
-                            borderRadius: "6px",
-                            color: "#f87171",
-                          }}
                         >
-                          <Trash2 size={15} />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                    </div>
-
-                    {/* Linha Inferior: Metadados (Cor e Total de Atendimentos) */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        fontSize: "0.75rem",
-                        color: "var(--text-muted)",
-                        borderTop: "1px solid rgba(255, 255, 255, 0.05)",
-                        paddingTop: "0.625rem",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                        <span
-                          style={{
-                            width: "10px",
-                            height: "10px",
-                            borderRadius: "50%",
-                            backgroundColor: tag.color,
-                            display: "inline-block",
-                            border: "1px solid rgba(255, 255, 255, 0.2)",
-                          }}
-                        />
-                        <code style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>{tag.color}</code>
-                      </div>
-
-                      <span>
-                        <strong style={{ color: "var(--text-primary)" }}>{count}</strong>{" "}
-                        {count === 1 ? "atendimento" : "atendimentos"}
-                      </span>
                     </div>
                   </div>
                 );
@@ -498,66 +313,54 @@ export default function SettingsPage() {
       </div>
 
       {/* Modal de Criação / Edição de Tag */}
-      {isModalOpen && (
+      {isModalOpen && typeof document !== "undefined" && createPortal(
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(6px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            padding: "1rem",
-          }}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isSubmitting && setIsModalOpen(false)}
         >
           <div
-            style={{
-              backgroundColor: "var(--bg-card)",
-              border: "1px solid var(--border-light)",
-              borderRadius: "0.875rem",
-              width: "100%",
-              maxWidth: "500px",
-              padding: "1.75rem",
-              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "1.25rem",
-            }}
+            className="bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 sm:p-7 max-w-lg w-full flex flex-col gap-5 animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div>
-              <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.25rem" }}>
-                {editingTag ? "Editar Tag de Plataforma" : "Nova Tag de Plataforma"}
-              </h3>
-              <p style={{ fontSize: "0.825rem", color: "var(--text-muted)" }}>
-                Defina o nome da plataforma e a cor de destaque que será exibida no formulário e relatórios.
-              </p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-bold tracking-tight text-slate-900">
+                  {editingTag ? "Editar Tag de Plataforma" : "Nova Tag de Plataforma"}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Defina o nome da plataforma e a cor de destaque para categorização nos atendimentos.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => !isSubmitting && setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             {modalError && (
-              <div
-                className="alert alert-error"
-                style={{ fontSize: "0.825rem", padding: "0.625rem 0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
-              >
-                <AlertCircle size={16} />
-                {modalError}
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{modalError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSaveTag} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            <form onSubmit={handleSaveTag} className="flex flex-col gap-4">
               {/* Campo Nome da Tag */}
               <div>
-                <label htmlFor="tagName" style={{ display: "block", fontSize: "0.825rem", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
-                  Nome da Tag / Plataforma <span style={{ color: "#ef4444" }}>*</span>
+                <label
+                  htmlFor="tagName"
+                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                >
+                  Nome da Tag / Plataforma <span className="text-rose-500">*</span>
                 </label>
                 <input
                   id="tagName"
                   type="text"
-                  className="input-dark"
+                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none disabled:bg-slate-50"
                   placeholder="Ex: Plataforma Web, Sistema ERP, App Mobile..."
                   value={tagName}
                   onChange={(e) => setTagName(e.target.value)}
@@ -569,12 +372,12 @@ export default function SettingsPage() {
 
               {/* Campo Cor da Tag */}
               <div>
-                <label style={{ display: "block", fontSize: "0.825rem", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                   Cor de Destaque
                 </label>
 
                 {/* Cores pré-definidas */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                <div className="flex flex-wrap gap-2 mb-3">
                   {PRESET_COLORS.map((preset) => {
                     const isSelected = tagColor.toLowerCase() === preset.hex.toLowerCase();
                     return (
@@ -583,108 +386,72 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => setTagColor(preset.hex)}
                         title={preset.label}
-                        style={{
-                          width: "32px",
-                          height: "32px",
-                          borderRadius: "8px",
-                          backgroundColor: preset.hex,
-                          border: isSelected ? "2.5px solid #ffffff" : "1px solid rgba(255, 255, 255, 0.2)",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#ffffff",
-                          boxShadow: isSelected ? `0 0 10px ${preset.hex}` : "none",
-                          transition: "all 0.15s ease",
-                        }}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white transition-all cursor-pointer ${
+                          isSelected
+                            ? "ring-2 ring-slate-900 ring-offset-2 scale-110 shadow-xs"
+                            : "hover:scale-105 border border-black/10 shadow-2xs"
+                        }`}
+                        style={{ backgroundColor: preset.hex }}
                       >
-                        {isSelected && <Check size={16} strokeWidth={3} />}
+                        {isSelected && <Check className="w-4 h-4 stroke-[3]" />}
                       </button>
                     );
                   })}
                 </div>
 
                 {/* Seletor Customizado */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <div className="flex items-center gap-3">
                   <input
                     type="color"
                     value={tagColor}
                     onChange={(e) => setTagColor(e.target.value)}
-                    style={{
-                      width: "42px",
-                      height: "36px",
-                      borderRadius: "6px",
-                      border: "1px solid var(--border)",
-                      backgroundColor: "transparent",
-                      cursor: "pointer",
-                      padding: "2px",
-                    }}
+                    className="w-10 h-9 rounded-lg border border-slate-200 bg-white cursor-pointer p-0.5"
                   />
                   <input
                     type="text"
-                    className="input-dark"
                     value={tagColor}
                     onChange={(e) => setTagColor(e.target.value)}
                     placeholder="#3b82f6"
-                    style={{ maxWidth: "120px", textTransform: "uppercase", fontSize: "0.825rem" }}
+                    className="w-28 bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3 py-2 text-xs uppercase font-mono shadow-xs outline-none"
                   />
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                    Cor personalizada em hexadecimal
+                  <span className="text-[11px] text-slate-400">
+                    Hexadecimal personalizado
                   </span>
                 </div>
               </div>
 
               {/* Pré-visualização da Tag */}
-              <div
-                style={{
-                  backgroundColor: "rgba(15, 23, 42, 0.7)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                  padding: "0.875rem 1rem",
-                }}
-              >
-                <span
-                  style={{
-                    display: "block",
-                    fontSize: "0.72rem",
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    color: "var(--text-muted)",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  Pré-visualização no Formulário:
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex flex-col gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  Prévia da Tag:
                 </span>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <div className="flex items-center gap-3">
                   <TagBadge name={tagName.trim() || "Nome da Tag"} color={tagColor} size="lg" />
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                    (Texto com padding colorido, conforme padrão visual)
+                  <span className="text-[11px] text-slate-400">
+                    Exibição com dot colorido e badge translúcido
                   </span>
                 </div>
               </div>
 
               {/* Botões do Modal */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+              <div className="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   disabled={isSubmitting}
-                  className="btn btn-secondary"
-                  style={{ fontSize: "0.85rem", padding: "0.55rem 1rem" }}
+                  className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2.5 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn btn-primary"
-                  style={{ fontSize: "0.85rem", padding: "0.55rem 1.25rem", display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl px-5 py-2.5 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="spinner" style={{ width: "14px", height: "14px" }} />
-                      Salvando...
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Salvando...</span>
                     </>
                   ) : editingTag ? (
                     "Atualizar Tag"
@@ -695,86 +462,51 @@ export default function SettingsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal de Confirmação de Exclusão */}
-      {deletingTag && (
+      {deletingTag && typeof document !== "undefined" && createPortal(
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(6px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            padding: "1rem",
-          }}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
           onClick={() => !isDeleting && setDeletingTag(null)}
         >
           <div
-            style={{
-              backgroundColor: "var(--bg-card)",
-              border: "1px solid var(--border-light)",
-              borderRadius: "0.875rem",
-              width: "100%",
-              maxWidth: "460px",
-              padding: "1.75rem",
-              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "1rem",
-            }}
+            className="bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 max-w-md w-full flex flex-col gap-4 animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "#f87171" }}>
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  background: "rgba(239, 68, 68, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Trash2 size={18} />
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-600" />
               </div>
-              <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-                Remover Tag de Plataforma
-              </h3>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Remover Tag de Plataforma
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Esta ação não pode ser desfeita.
+                </p>
+              </div>
             </div>
 
-            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-              Deseja realmente excluir a tag <strong>{deletingTag.name}</strong>?
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Deseja realmente excluir a tag <strong className="text-slate-900">{deletingTag.name}</strong>?
             </p>
 
             {deletingTag._count && deletingTag._count.workLogs > 0 ? (
-              <p
-                style={{
-                  fontSize: "0.8rem",
-                  color: "#fbbf24",
-                  background: "rgba(245, 158, 11, 0.1)",
-                  padding: "0.625rem 0.875rem",
-                  borderRadius: "6px",
-                  border: "1px solid rgba(245, 158, 11, 0.25)",
-                }}
-              >
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 leading-snug">
                 ⚠️ Esta tag está atualmente vinculada a <strong>{deletingTag._count.workLogs}</strong> atendimento(s).
                 Ao remover, os formulários existentes permanecerão salvos, apenas com o campo de tag desvinculado.
-              </p>
+              </div>
             ) : null}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "0.5rem" }}>
+            <div className="flex items-center justify-end gap-3 mt-1 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setDeletingTag(null)}
                 disabled={isDeleting}
-                className="btn btn-secondary"
-                style={{ fontSize: "0.85rem" }}
+                className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -782,20 +514,12 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="btn"
-                style={{
-                  fontSize: "0.85rem",
-                  backgroundColor: "#ef4444",
-                  color: "#ffffff",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
               >
                 {isDeleting ? (
                   <>
-                    <div className="spinner" style={{ width: "14px", height: "14px" }} />
-                    Excluindo...
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Excluindo...</span>
                   </>
                 ) : (
                   "Confirmar Exclusão"
@@ -803,9 +527,9 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </main>
   );
 }
-

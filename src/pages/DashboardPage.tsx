@@ -10,9 +10,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent && logs.length === 0) {
+        setLoading(true);
+      }
       setError(null);
       const [logsData, employeesData] = await Promise.all([
         api.worklogs.getDaily(),
@@ -22,7 +24,9 @@ export default function DashboardPage() {
       setEmployees(employeesData.map((e) => ({ name: e.name })));
     } catch (err) {
       console.error("[DashboardPage] Erro ao carregar dados:", err);
-      setError(err instanceof Error ? err.message : "Erro ao carregar dados do dashboard.");
+      if (logs.length === 0) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar dados do dashboard.");
+      }
     } finally {
       setLoading(false);
     }
@@ -42,53 +46,28 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <main
-      className="animate-fade-in"
-      style={{
-        maxWidth: "1600px",
-        padding: "2rem 2.5rem",
-        width: "100%",
-      }}
-    >
+    <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full animate-fade-in">
       {/* Page title */}
-      <div style={{ marginBottom: "2rem" }}>
-        <h1
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            marginBottom: "0.25rem",
-          }}
-        >
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Dashboard de Atendimentos
         </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", textTransform: "capitalize" }}>
+        <p className="text-sm text-slate-500 capitalize mt-1">
           {today}
         </p>
       </div>
 
       {loading ? (
-        <div
-          style={{
-            padding: "3rem",
-            textAlign: "center",
-            color: "var(--text-muted)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "1rem",
-          }}
-        >
-          <div className="spinner" style={{ width: "28px", height: "28px" }} />
-          <span>Carregando atendimentos do dia...</span>
+        <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3 shadow-xs">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+          <span className="text-sm font-medium text-slate-600">Carregando atendimentos do dia...</span>
         </div>
       ) : error ? (
-        <div className="alert alert-error" style={{ marginBottom: "1.5rem" }}>
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl p-4 flex items-center justify-between text-sm shadow-xs mb-6">
           <span>{error}</span>
           <button
-            onClick={fetchDashboardData}
-            className="btn-ghost"
-            style={{ marginLeft: "auto", padding: "0.25rem 0.5rem" }}
+            onClick={() => fetchDashboardData(false)}
+            className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline px-2 py-1 rounded transition-colors"
           >
             Tentar novamente
           </button>
@@ -98,7 +77,7 @@ export default function DashboardPage() {
           logs={logs}
           currentUserId={user.id}
           employees={employees}
-          onLogCreated={fetchDashboardData}
+          onLogCreated={() => fetchDashboardData(true)}
         />
       )}
     </main>

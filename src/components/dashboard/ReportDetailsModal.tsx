@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   CheckCircle2,
@@ -6,17 +7,13 @@ import {
   Sparkles,
   FileText,
   Video,
-  ListFilter,
   MessageSquareText,
   Eye,
   ArrowLeft,
   Loader2,
-  Maximize2,
   Paperclip,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
-  Image as ImageIcon,
 } from "lucide-react";
 import { WorkLogItem, api } from "@/services/api";
 import TagBadge from "@/components/TagBadge";
@@ -49,6 +46,76 @@ interface StructuredReportData {
     timestamp?: string;
     text: string;
   }>;
+}
+
+interface StatusPillConfig {
+  label: string;
+  badgeClass: string;
+  dotClass: string;
+}
+
+function getStatusPill(status: string): StatusPillConfig {
+  const norm = (status || "").toLowerCase().trim();
+
+  if (
+    norm === "solucionado" ||
+    norm === "finalizadas" ||
+    norm === "finalizado" ||
+    norm === "concluído" ||
+    norm === "concluido" ||
+    norm === "realizado" ||
+    norm === "já realizado"
+  ) {
+    return {
+      label: "Solucionado",
+      badgeClass: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+      dotClass: "bg-emerald-500",
+    };
+  }
+
+  if (norm === "em progresso" || norm === "em andamento") {
+    return {
+      label: "Em progresso",
+      badgeClass: "bg-sky-50 text-sky-700 border border-sky-200",
+      dotClass: "bg-sky-500",
+    };
+  }
+
+  if (
+    norm === "pendências" ||
+    norm === "pendencias" ||
+    norm === "pendente" ||
+    norm === "aguardando reunião" ||
+    norm === "aguardando reuniao"
+  ) {
+    return {
+      label: "Pendência",
+      badgeClass: "bg-amber-50 text-amber-700 border border-amber-200",
+      dotClass: "bg-amber-500",
+    };
+  }
+
+  if (norm === "não foi possível realizar" || norm === "não realizado") {
+    return {
+      label: "Não realizado",
+      badgeClass: "bg-rose-50 text-rose-700 border border-rose-200",
+      dotClass: "bg-rose-500",
+    };
+  }
+
+  if (norm === "backlog") {
+    return {
+      label: "Backlog",
+      badgeClass: "bg-indigo-50 text-indigo-700 border border-indigo-200",
+      dotClass: "bg-indigo-500",
+    };
+  }
+
+  return {
+    label: status || "Registrado",
+    badgeClass: "bg-slate-100 text-slate-700 border border-slate-200",
+    dotClass: "bg-slate-400",
+  };
 }
 
 function isImage(url: string) {
@@ -141,6 +208,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
     log.status?.toLowerCase() === "concluído" ||
     log.status?.toLowerCase() === "concluido";
 
+  const statusPill = getStatusPill(log.status);
   const hasPdf = !!log.aiReport?.pdfPath;
   const hasVideo = !!log.aiReport?.videoPath;
 
@@ -152,13 +220,13 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
     minute: "2-digit",
   });
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-fade-in"
+      className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-fade-in"
       onClick={onClose}
     >
       <div
-        className={`bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl w-full flex flex-col shadow-2xl shadow-black/90 overflow-hidden transition-all duration-300 ease-out relative ${
+        className={`bg-white border border-slate-200 rounded-2xl w-full flex flex-col shadow-2xl shadow-slate-900/15 overflow-hidden transition-all duration-300 relative ${
           viewingPdf || viewingMedia
             ? "max-w-[96vw] xl:max-w-6xl h-[92vh] max-h-[92vh]"
             : "max-w-3xl max-h-[90vh]"
@@ -169,23 +237,23 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
           /* ============================================================
              1. Visualizador de PDF estilo Gemini (com toolbar e botão Exportar)
              ============================================================ */
-          <div className="flex flex-col h-full w-full overflow-hidden bg-[#0a0e17]">
-            {/* Barra Superior estilo Gemini / Google Docs */}
-            <div className="px-5 py-3.5 border-b border-slate-800 bg-[#111726] flex items-center justify-between gap-4 shrink-0 shadow-sm">
+          <div className="flex flex-col h-full w-full overflow-hidden bg-white">
+            {/* Barra Superior estilo Gemini / CloudNexus */}
+            <div className="px-6 py-3.5 border-b border-slate-200 bg-white flex items-center justify-between gap-4 shrink-0 shadow-xs">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 shrink-0">
                   <FileText size={16} />
                 </div>
                 <div className="min-w-0">
                   <h4
-                    className="text-sm font-bold text-slate-100 truncate"
+                    className="text-sm font-bold text-slate-900 truncate"
                     title={structured?.title || log.title || `Relatório Técnico - ${log.clientOrOffice}`}
                   >
                     {structured?.title || log.title || `Relatório Técnico - ${log.clientOrOffice}`}
                   </h4>
-                  <p className="text-[11px] text-slate-400 truncate">
+                  <p className="text-[11px] text-slate-500 truncate">
                     {log.clientOrOffice} • Registrado em {formattedDate}
-                    {log.tag && <span className="ml-1 text-slate-500">• {log.tag.name}</span>}
+                    {log.tag && <span className="ml-1 text-slate-400">• {log.tag.name}</span>}
                   </p>
                 </div>
               </div>
@@ -198,7 +266,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                   target="_blank"
                   rel="noopener noreferrer"
                   download
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 active:scale-95 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-xs active:scale-95 transition-all"
                   title="Baixar arquivo PDF original"
                 >
                   <Download size={13} />
@@ -209,7 +277,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                 <button
                   type="button"
                   onClick={() => setViewingPdf(false)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:text-white transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs transition-all cursor-pointer"
                   title="Voltar para a visão detalhada do chamado"
                 >
                   <ArrowLeft size={13} />
@@ -220,7 +288,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors ml-1 cursor-pointer"
                   title="Fechar visualizador"
                 >
                   <X size={18} />
@@ -229,11 +297,11 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
             </div>
 
             {/* Canvas de Exibição do Documento PDF */}
-            <div className="flex-1 w-full h-full relative bg-[#070a10] p-2 sm:p-4 overflow-hidden flex items-center justify-center">
+            <div className="flex-1 w-full h-full relative bg-slate-100 p-3 sm:p-5 overflow-hidden flex items-center justify-center">
               {pdfLoading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#070a10]/85 z-10 backdrop-blur-xs text-slate-300">
-                  <Loader2 size={32} className="text-indigo-400 animate-spin" />
-                  <span className="text-xs font-medium text-slate-400">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-100/90 z-10 backdrop-blur-xs text-slate-600">
+                  <Loader2 size={32} className="text-slate-900 animate-spin" />
+                  <span className="text-xs font-medium text-slate-600">
                     Carregando relatório PDF oficial...
                   </span>
                 </div>
@@ -241,7 +309,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
 
               <iframe
                 src={api.worklogs.getViewReportUrl(log.id)}
-                className="w-full h-full rounded-xl border border-slate-800/80 shadow-2xl bg-white"
+                className="w-full h-full border border-slate-200 rounded-xl shadow-md bg-white"
                 title={log.title || "Relatório PDF"}
                 onLoad={() => setPdfLoading(false)}
               />
@@ -251,18 +319,18 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
           /* ============================================================
              2. Visualizador de Mídias Anexadas (Galeria com navegação)
              ============================================================ */
-          <div className="flex flex-col h-full w-full overflow-hidden bg-[#0a0e17]">
+          <div className="flex flex-col h-full w-full overflow-hidden bg-white">
             {/* Topbar da Galeria */}
-            <div className="px-5 py-3.5 border-b border-slate-800 bg-[#111726] flex items-center justify-between gap-4 shrink-0 shadow-sm">
+            <div className="px-6 py-3.5 border-b border-slate-200 bg-white flex items-center justify-between gap-4 shrink-0 shadow-xs">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
                   <Paperclip size={16} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-sm font-bold text-slate-100 truncate">
+                  <h4 className="text-sm font-bold text-slate-900 truncate">
                     Mídias Anexadas ({mediaCurrentIndex + 1} de {mediaPaths.length})
                   </h4>
-                  <p className="text-[11px] text-slate-400 truncate">
+                  <p className="text-[11px] text-slate-500 truncate">
                     {log.clientOrOffice} • Solicitante: {log.requester}
                   </p>
                 </div>
@@ -276,7 +344,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                   target="_blank"
                   rel="noopener noreferrer"
                   download
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/30 active:scale-95 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-xs active:scale-95 transition-all"
                   title="Baixar arquivo original"
                 >
                   <Download size={13} />
@@ -287,7 +355,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                 <button
                   type="button"
                   onClick={() => setViewingMedia(false)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:text-white transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs transition-all cursor-pointer"
                   title="Voltar para a visão detalhada do chamado"
                 >
                   <ArrowLeft size={13} />
@@ -298,7 +366,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors ml-1 cursor-pointer"
                   title="Fechar"
                 >
                   <X size={18} />
@@ -306,8 +374,8 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
               </div>
             </div>
 
-            {/* Conteúdo Central da Galeria (Seguindo a imagem de referência) */}
-            <div className="flex-1 w-full bg-[#070a10] p-4 sm:p-6 flex flex-col items-center justify-between min-h-0 overflow-hidden">
+            {/* Conteúdo Central da Galeria */}
+            <div className="flex-1 w-full bg-slate-100 p-4 sm:p-6 flex flex-col items-center justify-between min-h-0 overflow-hidden">
               {/* Palco Central: Seta Esquerda + Card Central + Seta Direita */}
               <div className="w-full flex-1 min-h-0 flex items-center justify-center gap-3 sm:gap-6">
                 {/* Seta Esquerda (Sem loop) */}
@@ -317,11 +385,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                     onClick={handlePrevMedia}
                     disabled={!canGoPrev}
                     aria-label="Mídia anterior"
-                    className={`p-3 rounded-full transition-all duration-200 shrink-0 ${
-                      canGoPrev
-                        ? "bg-slate-900/90 text-slate-100 hover:bg-slate-800 hover:text-white hover:scale-110 active:scale-95 border border-slate-700/80 shadow-xl cursor-pointer"
-                        : "opacity-20 text-slate-600 border border-slate-800/40 cursor-not-allowed pointer-events-none"
-                    }`}
+                    className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-md p-3 rounded-full disabled:opacity-20 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
                     title={canGoPrev ? "Mídia anterior (Seta esquerda)" : "Primeira mídia"}
                   >
                     <ChevronLeft size={28} />
@@ -329,7 +393,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                 )}
 
                 {/* Quadro Central da Mídia */}
-                <div className="flex-1 max-w-4xl h-full flex items-center justify-center min-h-0 rounded-2xl bg-black/40 border border-slate-800/80 shadow-2xl p-2 sm:p-4 overflow-hidden relative">
+                <div className="flex-1 max-w-4xl h-full flex items-center justify-center min-h-0 rounded-2xl bg-white border border-slate-200 shadow-md p-2 sm:p-4 overflow-hidden relative">
                   {isImage(mediaPaths[mediaCurrentIndex]) ? (
                     <img
                       src={mediaPaths[mediaCurrentIndex]}
@@ -344,16 +408,16 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                       className="max-h-full max-w-full rounded-xl"
                     />
                   ) : (
-                    <div className="p-8 bg-slate-900/80 border border-slate-800 rounded-2xl text-center max-w-md shadow-xl flex flex-col items-center gap-3">
-                      <FileText size={42} className="text-sky-400" />
-                      <p className="text-sm font-semibold text-slate-200">Arquivo Anexado</p>
-                      <p className="text-xs text-slate-400 break-all">{mediaPaths[mediaCurrentIndex]}</p>
+                    <div className="p-8 bg-slate-50 border border-slate-200 rounded-2xl text-center max-w-md shadow-xs flex flex-col items-center gap-3">
+                      <FileText size={42} className="text-slate-600" />
+                      <p className="text-sm font-semibold text-slate-900">Arquivo Anexado</p>
+                      <p className="text-xs text-slate-500 break-all">{mediaPaths[mediaCurrentIndex]}</p>
                       <a
                         href={mediaPaths[mediaCurrentIndex]}
                         target="_blank"
                         rel="noopener noreferrer"
                         download
-                        className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-md transition-all"
+                        className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all"
                       >
                         <Download size={14} />
                         <span>Baixar Arquivo</span>
@@ -369,11 +433,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                     onClick={handleNextMedia}
                     disabled={!canGoNext}
                     aria-label="Próxima mídia"
-                    className={`p-3 rounded-full transition-all duration-200 shrink-0 ${
-                      canGoNext
-                        ? "bg-slate-900/90 text-slate-100 hover:bg-slate-800 hover:text-white hover:scale-110 active:scale-95 border border-slate-700/80 shadow-xl cursor-pointer"
-                        : "opacity-20 text-slate-600 border border-slate-800/40 cursor-not-allowed pointer-events-none"
-                    }`}
+                    className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-md p-3 rounded-full disabled:opacity-20 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
                     title={canGoNext ? "Próxima mídia (Seta direita)" : "Última mídia"}
                   >
                     <ChevronRight size={28} />
@@ -381,7 +441,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                 )}
               </div>
 
-              {/* Miniaturas das Mídias Abaixo do Quadro Central (conforme imagem de referência) */}
+              {/* Miniaturas das Mídias Abaixo do Quadro Central */}
               {mediaPaths.length > 1 && (
                 <div className="flex items-center justify-center gap-3 pt-4 pb-1 max-w-full overflow-x-auto shrink-0 px-4">
                   {mediaPaths.map((path, idx) => {
@@ -391,27 +451,29 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                         key={idx}
                         type="button"
                         onClick={() => setMediaCurrentIndex(idx)}
-                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border transition-all duration-200 shrink-0 cursor-pointer relative group ${
+                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border transition-all duration-200 shrink-0 cursor-pointer relative group bg-white ${
                           isSelectedMedia
-                            ? "border-sky-400 ring-2 ring-sky-400/60 shadow-lg shadow-sky-500/20 scale-105 opacity-100"
-                            : "border-slate-800 opacity-40 hover:opacity-90 hover:border-slate-600 hover:scale-100"
+                            ? "ring-2 ring-slate-900 border-slate-900 shadow-md scale-105 opacity-100"
+                            : "border-slate-200 opacity-60 hover:opacity-100 hover:border-slate-400 hover:scale-100"
                         }`}
                         title={`Ir para mídia ${idx + 1}`}
                       >
                         {isImage(path) ? (
                           <img src={path} alt="" className="w-full h-full object-cover" />
                         ) : isVideo(path) ? (
-                          <div className="w-full h-full bg-slate-900 flex items-center justify-center text-indigo-400">
+                          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-600">
                             <Video size={18} />
                           </div>
                         ) : (
-                          <div className="w-full h-full bg-slate-900 flex items-center justify-center text-slate-400">
+                          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-600">
                             <FileText size={18} />
                           </div>
                         )}
                         <span
-                          className={`absolute bottom-0.5 right-1 text-[9px] font-bold px-1 rounded ${
-                            isSelectedMedia ? "bg-sky-500 text-slate-950" : "bg-black/70 text-slate-300"
+                          className={`absolute bottom-0.5 right-1 text-[9px] font-bold px-1 rounded shadow-xs ${
+                            isSelectedMedia
+                              ? "bg-slate-900 text-white"
+                              : "bg-white/90 text-slate-700 border border-slate-200"
                           }`}
                         >
                           {idx + 1}
@@ -429,13 +491,13 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
              ============================================================ */
           <>
             {/* Modal Header */}
-            <div className="px-6 py-4 sm:py-5 border-b border-[var(--border)] bg-[var(--bg-secondary)]/60 flex items-start justify-between gap-4 shrink-0">
+            <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-start justify-between gap-4 shrink-0">
               <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
                     isSolved
-                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
-                      : "bg-indigo-500/15 border-indigo-500/30 text-indigo-400"
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                      : "bg-slate-100 border-slate-200 text-slate-700"
                   }`}
                 >
                   {isSolved ? <CheckCircle2 size={20} /> : <FileText size={20} />}
@@ -443,57 +505,57 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center flex-wrap gap-2 mb-1">
-                    <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-snug truncate max-w-full">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug truncate max-w-full">
                       {log.title || log.clientOrOffice}
                     </h3>
 
-                    {isSolved && (
-                      <span className="inline-flex items-center gap-1 text-[0.68rem] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
-                        <CheckCircle2 size={11} />
-                        Solucionado
-                      </span>
-                    )}
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-xs ${statusPill.badgeClass}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusPill.dotClass}`} />
+                      <span>{statusPill.label}</span>
+                    </span>
 
                     {log.tag && (
                       <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
                     )}
 
                     {log.technicalAction && (
-                      <span className="inline-flex items-center text-[0.65rem] font-medium px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/25 shrink-0">
+                      <span className="inline-flex items-center text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-orange-50 text-orange-800 border border-orange-200/80 shrink-0">
                         Ação Técnica
                       </span>
                     )}
 
                     {log.implementation && (
-                      <span className="inline-flex items-center text-[0.65rem] font-medium px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/25 shrink-0">
+                      <span className="inline-flex items-center text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 border border-purple-200/80 shrink-0">
                         Implementação
                       </span>
                     )}
                   </div>
 
-                  <div className="text-xs text-[var(--text-muted)] flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <div className="text-xs text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1">
                     {log.title && (
                       <span className="inline-flex items-center gap-1">
                         <span>Cliente:</span>
-                        <strong className="text-slate-200 font-semibold">{log.clientOrOffice}</strong>
-                        <span className="text-[var(--text-muted)] ml-1">•</span>
+                        <strong className="text-slate-800 font-semibold">{log.clientOrOffice}</strong>
+                        <span className="text-slate-300 ml-1">•</span>
                       </span>
                     )}
 
                     <span className="inline-flex items-center gap-1">
                       <span>Solicitante:</span>
-                      <strong className="text-slate-200 font-semibold">{log.requester}</strong>
-                      <span className="text-[var(--text-muted)] ml-1">•</span>
+                      <strong className="text-slate-800 font-semibold">{log.requester}</strong>
+                      <span className="text-slate-300 ml-1">•</span>
                     </span>
 
                     <span className="inline-flex items-center gap-1">
                       <span>Registrado em:</span>
-                      <span className="text-slate-300 font-medium">{formattedDate}</span>
+                      <span className="text-slate-700 font-medium">{formattedDate}</span>
                     </span>
 
                     {log.tag && (
                       <>
-                        <span className="text-[var(--text-muted)]">•</span>
+                        <span className="text-slate-300">•</span>
                         <span className="inline-flex items-center gap-1">
                           <span>Plataforma:</span>
                           <strong style={{ color: log.tag.color }} className="font-semibold">
@@ -510,7 +572,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border)] active:scale-95 transition-all duration-150 cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all duration-150 cursor-pointer"
                 title="Fechar (Esc)"
               >
                 <X size={20} />
@@ -518,7 +580,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto flex flex-col gap-4 text-xs sm:text-sm">
+            <div className="p-6 overflow-y-auto flex flex-col gap-4 text-xs sm:text-sm bg-white">
               {/* Seção: Descrição & Solução */}
               <div
                 className={`grid gap-3.5 ${
@@ -528,12 +590,12 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                 }`}
               >
                 {/* Descrição do Problema */}
-                <div className="bg-[var(--bg-secondary)]/50 border border-[var(--border)] rounded-xl p-4 flex flex-col justify-between">
+                <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
                   <div>
-                    <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
                       Descrição do Atendimento
                     </span>
-                    <p className="text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
+                    <p className="text-slate-800 leading-relaxed whitespace-pre-wrap">
                       {log.reportedProblem}
                     </p>
                   </div>
@@ -541,13 +603,13 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
 
                 {/* Solução / Ação Realizada */}
                 {log.actionTaken && log.actionTaken.trim() !== "" && (
-                  <div className="bg-[var(--bg-secondary)]/50 border border-emerald-500/25 rounded-xl p-4 flex flex-col justify-between">
+                  <div className="bg-slate-50/70 border border-emerald-200 rounded-xl p-4 flex flex-col justify-between">
                     <div>
-                      <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
                         <CheckCircle2 size={13} />
                         Solução / Ação Realizada
                       </span>
-                      <p className="text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
+                      <p className="text-slate-800 leading-relaxed whitespace-pre-wrap">
                         {log.actionTaken}
                       </p>
                     </div>
@@ -557,19 +619,19 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
 
               {/* Relatório Estruturado de IA */}
               {structured ? (
-                <div className="bg-[var(--bg-secondary)]/40 border border-indigo-500/25 rounded-xl p-4 sm:p-5 flex flex-col gap-4 shadow-sm">
+                <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col gap-4">
                   {/* Cabeçalho do Card de IA */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-indigo-500/15">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
                         <Sparkles size={15} />
                       </div>
                       <div>
-                        <h4 className="text-sm sm:text-base font-bold text-slate-100">
+                        <h4 className="text-sm sm:text-base font-bold text-slate-900">
                           {structured.title || "Relatório Executivo de IA"}
                         </h4>
                         {structured.subtitle && (
-                          <p className="text-xs text-[var(--text-muted)]">
+                          <p className="text-xs text-slate-500">
                             {structured.subtitle}
                           </p>
                         )}
@@ -584,7 +646,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                           target="_blank"
                           rel="noopener noreferrer"
                           download
-                          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-indigo-300 border border-indigo-500/20 hover:border-indigo-500/40 hover:text-white transition-all duration-150"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs active:scale-98 transition-all duration-150"
                           title="Baixar gravação em vídeo"
                         >
                           <Video size={13} />
@@ -600,7 +662,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                             setMediaCurrentIndex(0);
                             setViewingMedia(true);
                           }}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-sky-400 border border-sky-500/30 hover:border-sky-500/50 shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
                           title="Visualizar mídias e arquivos anexados a este atendimento"
                         >
                           <Paperclip size={13} />
@@ -616,7 +678,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                             setViewingPdf(true);
                             setPdfLoading(true);
                           }}
-                          className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 hover:shadow-indigo-600/50 active:scale-98 transition-all duration-150 cursor-pointer"
+                          className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
                           title="Visualizar o PDF dentro do modal"
                         >
                           <Eye size={14} />
@@ -629,10 +691,10 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                   {/* Resumo Executivo */}
                   {structured.executiveSummary && (
                     <div className="space-y-1.5">
-                      <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
                         Resumo Executivo
                       </span>
-                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                      <p className="text-sm text-slate-700 leading-relaxed">
                         {structured.executiveSummary}
                       </p>
                     </div>
@@ -641,7 +703,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                   {/* Propostas & Melhorias Identificadas */}
                   {structured.proposals && structured.proposals.length > 0 && (
                     <div className="space-y-2.5">
-                      <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
                         Propostas & Melhorias Identificadas
                       </span>
                       <div className="flex flex-col gap-2.5">
@@ -653,27 +715,27 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                           return (
                             <div
                               key={idx}
-                              className="bg-[var(--bg-primary)]/60 border border-[var(--border)] rounded-lg p-3 sm:p-3.5 hover:border-[var(--border-light)] transition-colors"
+                              className="bg-white border border-slate-200 rounded-lg p-3 sm:p-3.5 hover:border-slate-300 transition-colors shadow-xs"
                             >
                               <div className="flex items-center justify-between gap-2 mb-1.5">
-                                <span className="text-xs sm:text-sm font-semibold text-[var(--text-primary)]">
+                                <span className="text-xs sm:text-sm font-semibold text-slate-900">
                                   {prop.item}
                                 </span>
                                 {prop.priority && (
                                   <span
                                     className={`text-[0.68rem] font-semibold px-2 py-0.5 rounded-full border ${
                                       isHighPriority
-                                        ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                                        ? "bg-rose-50 text-rose-700 border-rose-200"
                                         : isMediumPriority
-                                        ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                                        : "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                                        : "bg-blue-50 text-blue-700 border-blue-200"
                                     }`}
                                   >
                                     {prop.priority}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                              <p className="text-xs text-slate-600 leading-relaxed">
                                 {prop.description}
                               </p>
                             </div>
@@ -685,12 +747,12 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
 
                   {/* Detalhamento Técnico */}
                   {structured.detailingTopic && (
-                    <div className="space-y-1.5 border-t border-indigo-500/15 pt-3">
-                      <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block">
+                    <div className="space-y-1.5 border-t border-slate-200 pt-3">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
                         Detalhamento: {structured.detailingTopic}
                       </span>
                       {structured.detailingParagraphs?.map((p, i) => (
-                        <p key={i} className="text-xs text-[var(--text-secondary)] leading-relaxed mb-1">
+                        <p key={i} className="text-xs text-slate-600 leading-relaxed mb-1">
                           {p}
                         </p>
                       ))}
@@ -699,24 +761,24 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
 
                   {/* Transcrição de Áudio se houver */}
                   {structured.transcript && structured.transcript.length > 0 && (
-                    <div className="space-y-2 border-t border-indigo-500/15 pt-3">
-                      <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
-                        <MessageSquareText size={14} className="text-indigo-400" />
+                    <div className="space-y-2 border-t border-slate-200 pt-3">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <MessageSquareText size={14} className="text-indigo-600" />
                         Trechos Relevantes da Transcrição
                       </span>
                       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                         {structured.transcript.map((line, i) => (
                           <div
                             key={i}
-                            className="bg-[var(--bg-primary)]/40 p-2.5 rounded-lg border border-[var(--border)] text-xs flex flex-col gap-1"
+                            className="bg-white p-2.5 rounded-lg border border-slate-200 text-xs flex flex-col gap-1 shadow-xs"
                           >
-                            <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-                              <span className="font-semibold text-slate-300">
+                            <div className="flex items-center justify-between text-[11px] text-slate-500">
+                              <span className="font-semibold text-slate-800">
                                 {line.speaker} {line.role ? `(${line.role})` : ""}
                               </span>
                               {line.timestamp && <span>{line.timestamp}</span>}
                             </div>
-                            <p className="text-[var(--text-secondary)] pl-2 border-l border-[var(--border-light)]">
+                            <p className="text-slate-700 pl-2 border-l-2 border-indigo-200">
                               {line.text}
                             </p>
                           </div>
@@ -729,16 +791,16 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                 /* Banner Fallback quando não há relatório estruturado */
                 <div className="flex flex-col gap-3">
                   {hasPdf && (
-                    <div className="bg-[var(--bg-secondary)]/50 border border-[var(--border)] rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+                    <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 shrink-0">
                           <FileText size={18} />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-[var(--text-primary)]">
+                          <p className="text-sm font-semibold text-slate-900">
                             Relatório PDF disponível
                           </p>
-                          <p className="text-xs text-[var(--text-muted)]">
+                          <p className="text-xs text-slate-500">
                             Relatório oficial gerado para este atendimento
                           </p>
                         </div>
@@ -751,7 +813,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                             target="_blank"
                             rel="noopener noreferrer"
                             download
-                            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-indigo-300 border border-indigo-500/20 hover:border-indigo-500/40 hover:text-white transition-all duration-150"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs transition-all duration-150"
                           >
                             <Video size={13} />
                             <span>Vídeo</span>
@@ -764,7 +826,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                             setViewingPdf(true);
                             setPdfLoading(true);
                           }}
-                          className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 hover:shadow-indigo-600/50 active:scale-98 transition-all duration-150 shrink-0 cursor-pointer"
+                          className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-xs active:scale-98 transition-all duration-150 shrink-0 cursor-pointer"
                         >
                           <Eye size={14} />
                           <span>Visualizar PDF</span>
@@ -774,16 +836,16 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                   )}
 
                   {mediaPaths.length > 0 && (
-                    <div className="bg-[var(--bg-secondary)]/50 border border-sky-500/20 rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+                    <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
                           <Paperclip size={18} />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-[var(--text-primary)]">
+                          <p className="text-sm font-semibold text-slate-900">
                             {mediaPaths.length} mídia(s) anexada(s)
                           </p>
-                          <p className="text-xs text-[var(--text-muted)]">
+                          <p className="text-xs text-slate-500">
                             Imagens, capturas de tela e arquivos anexados
                           </p>
                         </div>
@@ -795,7 +857,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                           setMediaCurrentIndex(0);
                           setViewingMedia(true);
                         }}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-sky-400 border border-sky-500/30 hover:border-sky-500/50 shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
                       >
                         <Paperclip size={13} />
                         <span>Ver Mídias ({mediaPaths.length})</span>
@@ -807,11 +869,11 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-3.5 border-t border-[var(--border)] bg-[var(--bg-secondary)]/60 flex items-center justify-end gap-3 shrink-0">
+            <div className="px-6 py-3.5 border-t border-slate-200 bg-white flex items-center justify-end gap-3 shrink-0">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-[var(--text-primary)] border border-[var(--border)] text-xs sm:text-sm font-medium transition-all duration-150 active:scale-95 cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-semibold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer"
               >
                 Fechar
               </button>
@@ -821,4 +883,6 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
       </div>
     </div>
   );
+
+  return typeof document !== "undefined" ? createPortal(modalContent, document.body) : null;
 };

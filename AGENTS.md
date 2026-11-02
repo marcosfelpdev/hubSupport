@@ -14,3 +14,9 @@ Este projeto utiliza uma arquitetura moderna e desacoplada em **React + TypeScri
 - `npm start`: Inicia o servidor Node.js/Express em modo de produção servindo a API REST e os arquivos estáticos de `dist/`.
 - `npm run seed`: Executa o seed idempotente do banco com usuários e chamados de teste.
 - `npm run db:push`: Sincroniza o schema do Prisma com o SQLite.
+
+## 3. Superpowers & Subagentes Autônomos (`.agents/skills/`)
+Este projeto está equipado com o ecossistema completo de habilidades e fluxos do **Superpowers**:
+- **Design & Planejamento:** `brainstorming` e `writing-plans` para estruturação prévia de features visuais e funcionais.
+- **Execução & Paralelismo:** `subagent-driven-development` e `dispatching-parallel-agents` para delegar frentes de UI e backend a subagentes dedicados (`ui-styler`, `qa-verifier`, `self`).
+- **Engenharia & Rigor:** `test-driven-development`, `systematic-debugging` e `verification-before-completion` (verificação obrigatória com `npx vite build` antes de finalizar qualquer entrega).

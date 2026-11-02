@@ -69,7 +69,7 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
 // PUT /api/tags/:id - Edição de tag existente
 router.put("/:id", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, color } = req.body;
 
     if (!name || typeof name !== "string" || !name.trim()) {
@@ -124,7 +124,7 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response): Promi
 // DELETE /api/tags/:id - Remoção de tag
 router.delete("/:id", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const tag = await prisma.tag.findUnique({
       where: { id },

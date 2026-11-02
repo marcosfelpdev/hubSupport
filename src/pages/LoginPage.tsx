@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { LogIn, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -32,56 +33,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background:
-          "radial-gradient(ellipse at top, rgba(99,102,241,0.12) 0%, #030712 60%)",
-        padding: "1rem",
-      }}
-    >
-      {/* Background mesh */}
+    <div className="min-h-screen bg-[#f8f9fa] flex flex-col justify-center items-center p-4 relative overflow-hidden">
+      {/* Background subtle grid pattern */}
       <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          backgroundImage: `
-            radial-gradient(circle at 20% 50%, rgba(99,102,241,0.08) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(167,139,250,0.06) 0%, transparent 40%),
-            radial-gradient(circle at 60% 80%, rgba(99,102,241,0.05) 0%, transparent 40%)
-          `,
-          pointerEvents: "none",
-        }}
+        className="fixed inset-0 pointer-events-none opacity-40 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px]"
+        aria-hidden="true"
       />
 
-      <div
-        className="animate-fade-in"
-        style={{ width: "100%", maxWidth: "400px", position: "relative" }}
-      >
-        {/* Logo / Header */}
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div
-            style={{
-              width: "56px",
-              height: "56px",
-              borderRadius: "14px",
-              background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 1rem",
-              boxShadow: "0 8px 32px rgba(99,102,241,0.35)",
-            }}
-          >
+      <div className="w-full max-w-md relative z-10 animate-fade-in">
+        {/* Brand Header */}
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xs text-white mx-auto mb-3.5">
             <svg
-              width="28"
-              height="28"
+              className="w-6 h-6"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="white"
+              stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -89,108 +56,98 @@ export default function LoginPage() {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>
-          <h1
-            className="gradient-text"
-            style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: "0.25rem" }}
-          >
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             HubSupport
           </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
+          <p className="text-xs text-slate-500 mt-1">
             Log de Atendimentos — Equipe de Suporte
           </p>
         </div>
 
-        {/* Card */}
-        <div
-          className="glass"
-          style={{
-            borderRadius: "1rem",
-            padding: "2rem",
-            boxShadow:
-              "0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.1)",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "1.125rem",
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              marginBottom: "1.5rem",
-            }}
-          >
-            Entrar no sistema
-          </h2>
+        {/* Central Card */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-7 sm:p-8">
+          <div className="mb-6">
+            <h2 className="text-base font-bold text-slate-900 tracking-tight">
+              Entrar no sistema
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Informe suas credenciais para acessar o painel de atendimento
+            </p>
+          </div>
 
           {error && (
-            <div className="alert alert-error animate-fade-in" style={{ marginBottom: "1rem" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              {error}
+            <div className="mb-5 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-3.5 flex items-center gap-2.5 animate-fade-in shadow-2xs">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label htmlFor="email">E-mail</label>
+              <label
+                htmlFor="email"
+                className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+              >
+                E-mail
+              </label>
               <input
                 id="email"
                 type="email"
-                className="input-dark"
+                className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none disabled:bg-slate-50"
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                disabled={loading}
               />
             </div>
 
             <div>
-              <label htmlFor="password">Senha</label>
+              <label
+                htmlFor="password"
+                className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+              >
+                Senha
+              </label>
               <input
                 id="password"
                 type="password"
-                className="input-dark"
+                className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none disabled:bg-slate-50"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
+                disabled={loading}
               />
             </div>
 
             <button
               id="btn-login"
               type="submit"
-              className="btn-primary"
               disabled={loading}
-              style={{ width: "100%", justifyContent: "center", marginTop: "0.5rem", padding: "0.75rem" }}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl py-3 px-6 text-sm shadow-xs transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer mt-2"
             >
               {loading ? (
                 <>
-                  <div className="spinner" />
-                  Entrando...
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Entrando...</span>
                 </>
               ) : (
                 <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10 17 15 12 10 7" />
-                    <line x1="15" y1="12" x2="3" y2="12" />
-                  </svg>
-                  Entrar
+                  <LogIn className="w-4 h-4" />
+                  <span>Entrar</span>
                 </>
               )}
             </button>
           </form>
 
-          <div className="divider" />
-
-          <p style={{ textAlign: "center", fontSize: "0.8rem", color: "var(--text-muted)" }}>
-            Acesso restrito à equipe de suporte autorizada.
-          </p>
+          <div className="border-t border-slate-100 pt-5 mt-6 text-center">
+            <p className="text-xs text-slate-400">
+              Acesso restrito à equipe de suporte autorizada.
+            </p>
+          </div>
         </div>
       </div>
     </div>

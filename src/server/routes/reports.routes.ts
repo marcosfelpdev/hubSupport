@@ -9,7 +9,7 @@ const router = Router();
 // GET /api/reports/:id/download
 router.get("/:id/download", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const workLog = await prisma.workLog.findUnique({
       where: { id },
@@ -58,7 +58,7 @@ router.get("/:id/download", authenticateToken, async (req: Request, res: Respons
 // GET /api/reports/:id/recording
 router.get("/:id/recording", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const workLog = await prisma.workLog.findUnique({
       where: { id },

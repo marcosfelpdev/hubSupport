@@ -29,34 +29,34 @@ const COLUMNS: ColumnDef[] = [
   {
     id: "backlog",
     title: "Backlog",
-    dotColor: "bg-indigo-400",
+    dotColor: "bg-indigo-500",
     headerBorder: "border-indigo-500",
-    badgeClass: "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30",
+    badgeClass: "bg-white text-slate-700 border border-slate-200",
     icon: Inbox,
     isDefault: true,
   },
   {
     id: "pendencias",
     title: "Pendências",
-    dotColor: "bg-amber-400",
+    dotColor: "bg-amber-500",
     headerBorder: "border-amber-500",
-    badgeClass: "bg-amber-500/15 text-amber-300 border border-amber-500/30",
+    badgeClass: "bg-white text-slate-700 border border-slate-200",
     icon: AlertCircle,
   },
   {
     id: "em_progresso",
     title: "Em progresso",
-    dotColor: "bg-sky-400",
+    dotColor: "bg-sky-500",
     headerBorder: "border-sky-500",
-    badgeClass: "bg-sky-500/15 text-sky-300 border border-sky-500/30",
+    badgeClass: "bg-white text-slate-700 border border-slate-200",
     icon: Clock,
   },
   {
     id: "finalizadas",
     title: "Finalizadas",
-    dotColor: "bg-emerald-400",
+    dotColor: "bg-emerald-500",
     headerBorder: "border-emerald-500",
-    badgeClass: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30",
+    badgeClass: "bg-white text-slate-700 border border-slate-200",
     icon: CheckCircle2,
   },
 ];
@@ -341,8 +341,8 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
   return (
     <div className="w-full">
-      {/* Barra de Filtros Moderna (Task 2) */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-5 shadow-sm">
+      {/* Barra de Filtros Moderna */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Controles de Filtro */}
           <div className="flex flex-wrap items-center gap-3 flex-1">
@@ -350,11 +350,11 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
             <div className="relative min-w-[240px] flex-1 max-w-md">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
               />
               <input
                 type="text"
-                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs rounded-lg pl-9 pr-3 py-2 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-inner"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 pl-9 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all shadow-xs"
                 placeholder="Buscar por solicitante, cliente, plataforma ou problema..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -363,7 +363,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
             {/* Dropdown: Tipo */}
             <select
-              className="bg-[var(--bg-secondary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all"
+              className="bg-white border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all shadow-xs"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as "" | "technical" | "implementation")}
             >
@@ -374,7 +374,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
             {/* Dropdown: Tag */}
             <select
-              className="bg-[var(--bg-secondary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all max-w-[170px]"
+              className="bg-white border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all shadow-xs max-w-[170px]"
               value={filterTag}
               onChange={(e) => setFilterTag(e.target.value)}
             >
@@ -388,7 +388,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
             {/* Dropdown: Autor */}
             <select
-              className="bg-[var(--bg-secondary)] border border-[var(--border-light)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all max-w-[180px]"
+              className="bg-white border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all shadow-xs max-w-[180px]"
               value={filterAuthor}
               onChange={(e) => setFilterAuthor(e.target.value)}
             >
@@ -405,7 +405,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--text-muted)] hover:text-sky-400 hover:bg-white/5 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/70 transition-colors cursor-pointer"
                 title="Limpar todos os filtros"
               >
                 <X size={14} />
@@ -414,27 +414,47 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
             )}
           </div>
 
-          {/* Totalizador Métrico Aprimorado */}
-          <div className="flex items-center gap-2 flex-wrap text-xs text-[var(--text-secondary)]">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] shadow-xs">
-              <span className="text-[var(--text-muted)]">Total:</span>
-              <strong className="text-[var(--text-primary)] font-bold">{filteredLogs.length}</strong>
+          {/* Chips de filtros rápidos e Totalizador */}
+          <div className="flex items-center gap-2 flex-wrap text-xs">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold shadow-xs">
+              <span className="text-slate-500">Total:</span>
+              <strong className="text-slate-900 font-bold">{filteredLogs.length}</strong>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/25 shadow-xs">
-              <Cog size={13} className="text-sky-400" />
+
+            <button
+              type="button"
+              onClick={() => setFilterType(filterType === "technical" ? "" : "technical")}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                filterType === "technical"
+                  ? "bg-sky-50 text-sky-700 border border-sky-300 ring-1 ring-sky-300"
+                  : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
+              }`}
+              title="Filtrar por Ação Técnica"
+            >
+              <Cog size={13} className={filterType === "technical" ? "text-sky-600" : "text-slate-400"} />
               <span>Ação Técnica:</span>
               <strong className="font-bold">{technicalCount}</strong>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/25 shadow-xs">
-              <Lightbulb size={13} className="text-purple-400" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterType(filterType === "implementation" ? "" : "implementation")}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                filterType === "implementation"
+                  ? "bg-purple-50 text-purple-700 border border-purple-300 ring-1 ring-purple-300"
+                  : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
+              }`}
+              title="Filtrar por Implementação"
+            >
+              <Lightbulb size={13} className={filterType === "implementation" ? "text-purple-600" : "text-slate-400"} />
               <span>Implementação:</span>
               <strong className="font-bold">{implementationCount}</strong>
-            </div>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Grid das 4 Colunas do Kanban (Task 3) */}
+      {/* Grid das 4 Colunas do Kanban */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start min-h-[calc(100vh-270px)]">
         {COLUMNS.map((col) => {
           const cardsInCol = columnsData[col.id];
@@ -448,56 +468,54 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               onDragOver={(e) => handleDragOver(col.id, e)}
               onDragLeave={(e) => handleDragLeave(col.id, e)}
               onDrop={(e) => handleDrop(col.id, e)}
-              className={`rounded-2xl p-3.5 flex flex-col h-[calc(100vh-270px)] min-h-[500px] max-h-[calc(100vh-270px)] transition-all duration-200 overflow-hidden ${
+              className={`bg-slate-100/75 border border-slate-200/80 rounded-2xl flex flex-col h-[calc(100vh-270px)] min-h-[500px] max-h-[calc(100vh-270px)] overflow-hidden shadow-xs transition-all duration-200 ${
                 isOver
-                  ? "border-2 border-dashed border-sky-400 bg-sky-500/10 shadow-[0_0_20px_rgba(56,189,248,0.15)]"
-                  : "bg-[var(--bg-secondary)]/50 border border-[var(--border)] hover:border-[var(--border-light)]"
+                  ? "border-2 border-dashed border-sky-400 bg-sky-50/40"
+                  : ""
               }`}
             >
               {/* Cabeçalho da Coluna */}
-              <div className={`flex items-center justify-between pb-3 mb-3 border-b-2 shrink-0 ${col.headerBorder}`}>
+              <div className="flex items-center justify-between p-3.5 pb-3 border-b border-slate-200/80 shrink-0">
                 <div className="flex items-center gap-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${col.dotColor}`} />
-                  <span className="text-sm font-bold text-[var(--text-primary)] tracking-tight">
+                  <span className={`w-2 h-2 rounded-full ${col.dotColor}`} />
+                  <span className="text-sm font-bold text-slate-800">
                     {col.title}
                   </span>
                   {col.isDefault && (
                     <span
                       title="Coluna padrão onde novos chamados técnicos e implementações são inseridos"
-                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/10 text-[var(--text-muted)] border border-white/5"
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600"
                     >
                       Padrão
                     </span>
                   )}
                 </div>
 
-                <span
-                  className={`inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs font-bold ${col.badgeClass}`}
-                >
+                <span className="bg-white text-slate-700 border border-slate-200 rounded-full px-2 py-0.5 text-xs font-semibold shadow-xs">
                   {cardsInCol.length}
                 </span>
               </div>
 
               {/* Slot / Feedback de Dropzone quando arrastando sobre */}
               {isOver && (
-                <div className="py-2.5 px-3 mb-3 rounded-xl border border-dashed border-sky-400 bg-sky-500/15 text-sky-300 text-xs font-semibold text-center animate-pulse flex items-center justify-center gap-1.5 shrink-0">
+                <div className="mx-3 mt-3 py-2.5 px-3 rounded-xl border border-dashed border-sky-400 bg-sky-100/70 text-sky-800 text-xs font-semibold text-center flex items-center justify-center gap-1.5 shrink-0 animate-pulse">
                   <span>Solte para mover para {col.title}</span>
                 </div>
               )}
 
-              {/* Lista rolável de Cards da Coluna */}
+              {/* Área de drop (Cards): manter rolagem independente */}
               <div
                 onDragOver={(e) => handleDragOver(col.id, e)}
                 onDrop={(e) => handleDrop(col.id, e)}
-                className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-1.5"
+                className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 min-h-0"
               >
                 {cardsInCol.length === 0 && !isOver ? (
-                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center rounded-xl border border-dashed border-[var(--border-light)]/40 bg-[var(--bg-card)]/30 my-auto min-h-[160px]">
-                    <EmptyIcon size={26} className="text-[var(--text-muted)]/50 mb-2 stroke-[1.5]" />
-                    <p className="text-xs font-medium text-[var(--text-secondary)]">
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center rounded-xl border border-dashed border-slate-200/90 bg-white/50 my-auto min-h-[160px]">
+                    <EmptyIcon size={26} className="text-slate-400 mb-2 stroke-[1.5]" />
+                    <p className="text-xs font-medium text-slate-600">
                       Nenhum chamado nesta etapa
                     </p>
-                    <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                    <p className="text-[11px] text-slate-400 mt-0.5">
                       {col.id === "backlog" ? "Novos itens aparecerão aqui" : "Arraste um card para cá"}
                     </p>
                   </div>

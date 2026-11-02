@@ -1,6 +1,19 @@
 import { useState, useTransition, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { api, EmployeeItem } from "@/services/api";
 import { ROLE_OPTIONS } from "@/lib/roles";
+import {
+  Users,
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  AlertCircle,
+  Shield,
+  Clock,
+} from "lucide-react";
 
 interface Employee {
   id: string;
@@ -8,7 +21,7 @@ interface Employee {
   email: string;
   role: string;
   active: boolean;
-  createdAt: Date;
+  createdAt: Date | string;
   _count?: {
     workLogs: number;
   };
@@ -21,37 +34,70 @@ interface CurrentUser {
   role?: string | null;
 }
 
-const avatarColors = [
-  "#6366f1",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#06b6d4",
-  "#ec4899",
-  "#14b8a6",
-];
+const ROLE_METADATA: Record<
+  string,
+  { label: string; description: string; dotColor: string; badgeClasses: string }
+> = {
+  ADMIN: {
+    label: "Administrador",
+    description: "Acesso total, gestão de membros, tags e configurações.",
+    dotColor: "bg-amber-500",
+    badgeClasses: "bg-amber-50 text-amber-700 border-amber-200/80",
+  },
+  SUPPORT: {
+    label: "Suporte",
+    description: "Atendimento nível 1, abertura e registro de chamados.",
+    dotColor: "bg-sky-500",
+    badgeClasses: "bg-sky-50 text-sky-700 border-sky-200/80",
+  },
+  TECHNICIAN: {
+    label: "Técnico",
+    description: "Atendimento técnico e resolução de filas no Kanban.",
+    dotColor: "bg-purple-500",
+    badgeClasses: "bg-purple-50 text-purple-700 border-purple-200/80",
+  },
+  MANAGER: {
+    label: "Gestor",
+    description: "Acompanhamento de relatórios executivos e auditorias.",
+    dotColor: "bg-indigo-500",
+    badgeClasses: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
+  },
+  USER: {
+    label: "Colaborador",
+    description: "Acesso padrão para consulta e acompanhamento de tarefas.",
+    dotColor: "bg-slate-500",
+    badgeClasses: "bg-slate-50 text-slate-700 border-slate-200",
+  },
+};
 
 function getRoleLabel(role: string) {
+  const meta = ROLE_METADATA[role];
+  if (meta) return meta.label;
   const opt = ROLE_OPTIONS.find((o) => o.value === role);
   return opt ? opt.label : role;
 }
 
-function getAvatarColor(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
 function getInitials(name: string) {
   return name
-    .split(" ")
+    .trim()
+    .split(/\s+/)
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+function formatDate(dateValue: Date | string) {
+  try {
+    const d = typeof dateValue === "string" ? new Date(dateValue) : dateValue;
+    return d.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "—";
+  }
 }
 
 export default function EmployeesManager({
@@ -75,7 +121,9 @@ export default function EmployeesManager({
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createRole, setCreateRole] = useState("SUPPORT");
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [editRole, setEditRole] = useState("USER");
   const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -105,7 +153,7 @@ export default function EmployeesManager({
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const role = (formData.get("role") as string) || "USER";
+    const role = createRole;
 
     startTransition(async () => {
       try {
@@ -129,8 +177,8 @@ export default function EmployeesManager({
     const formData = new FormData(form);
     const name = formData.get("name") as string;
     const password = formData.get("password") as string;
-    const role = (formData.get("role") as string) || "USER";
-    const active = formData.get("active") === "true" || formData.get("active") === "on";
+    const role = editRole;
+    const active = formData.get("active") === "true";
 
     startTransition(async () => {
       try {
@@ -162,31 +210,15 @@ export default function EmployeesManager({
   }
 
   return (
-    <div className="animate-fade-in" style={{ padding: "2rem 2.5rem" }}>
+    <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full animate-fade-in">
       {/* Top Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "1rem",
-          marginBottom: "2rem",
-        }}
-      >
+      <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
         <div>
-          <h1
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: 700,
-              color: "var(--text-primary)",
-              marginBottom: "0.25rem",
-            }}
-          >
-            Gerenciamento de Funcionários
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Membros da Equipe
           </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
-            Acessos de login e equipe de atendimento do HubSupport
+          <p className="text-sm text-slate-500 mt-1">
+            Gerencie os colaboradores da equipe e seus respectivos níveis de permissão.
           </p>
         </div>
 
@@ -194,370 +226,251 @@ export default function EmployeesManager({
         {isAdmin && (
           <button
             id="btn-open-create-employee"
+            type="button"
             onClick={() => {
               setActionError(null);
+              setCreateRole("SUPPORT");
               setIsCreateOpen(true);
             }}
-            className="btn-primary"
-            style={{ padding: "0.65rem 1.25rem" }}
+            className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Novo Funcionário
+            <Plus className="w-4 h-4" />
+            <span>Cadastrar Funcionário</span>
           </button>
         )}
       </div>
 
       {/* Global Alerts */}
       {actionSuccess && (
-        <div className="alert alert-success animate-fade-in" style={{ marginBottom: "1.5rem" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          {actionSuccess}
+        <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3.5 text-xs sm:text-sm font-medium flex items-center gap-2.5 animate-fade-in shadow-2xs">
+          <Check className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>{actionSuccess}</span>
         </div>
       )}
 
       {/* Search and Summary bar */}
-      <div
-        className="card"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "1rem",
-          marginBottom: "1.5rem",
-          padding: "0.875rem 1.25rem",
-        }}
-      >
-        <div style={{ position: "relative", width: "100%", maxWidth: "360px" }}>
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 sm:px-6 mb-6 flex items-center justify-between flex-wrap gap-4">
+        {/* Search */}
+        <div className="relative w-full sm:w-80">
           <input
             type="text"
-            className="input-dark"
-            placeholder="Buscar por nome ou e-mail..."
+            className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
+            placeholder="Buscar por nome, e-mail ou cargo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ paddingLeft: "2.25rem" }}
           />
-          <div
-            style={{
-              position: "absolute",
-              left: "0.75rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-              pointerEvents: "none",
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </div>
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.85rem" }}>
-          <span style={{ color: "var(--text-muted)" }}>
-            Total: <strong style={{ color: "var(--text-primary)" }}>{employees.length}</strong> funcionários
+        {/* Badges / Metrics */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap text-xs">
+          <span className="text-slate-500 font-medium">
+            Total: <strong className="text-slate-900 font-semibold">{employees.length}</strong>
           </span>
-          <span className="badge badge-success">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             {employees.filter((e) => e.active).length} Ativos
           </span>
           {employees.some((e) => !e.active) && (
-            <span
-              className="badge"
-              style={{
-                backgroundColor: "rgba(239, 68, 68, 0.15)",
-                color: "#f87171",
-                border: "1px solid rgba(239, 68, 68, 0.25)",
-              }}
-            >
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
               {employees.filter((e) => !e.active).length} Inativos
             </span>
           )}
         </div>
       </div>
 
-      {/* Lista de Funcionários — Modelo idêntico à imagem de referência */}
-      <div
-        style={{
-          backgroundColor: "var(--bg-card)",
-          borderRadius: "0.75rem",
-          border: "1px solid var(--border)",
-          overflow: "hidden",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
-        }}
-      >
+      {/* Lista / Tabela de Funcionários — Modelo idêntico à imagem de referência */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
         {filteredEmployees.length === 0 ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
-            Nenhum funcionário encontrado.
+          <div className="text-center py-16 px-4">
+            <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mx-auto mb-3 shadow-2xs">
+              <Users className="w-6 h-6" />
+            </div>
+            <h3 className="text-sm font-bold text-slate-900 mb-1">
+              Nenhum colaborador encontrado
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Verifique os termos de busca ou cadastre um novo funcionário na equipe.
+            </p>
           </div>
         ) : (
-          filteredEmployees.map((emp, index) => {
-            const isMe = emp.id === currentUser.id || emp.email === currentUser.email;
-            const avatarBg = getAvatarColor(emp.id);
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-[11px] font-semibold uppercase tracking-wider">
+                  <th className="px-6 py-3.5">Funcionário</th>
+                  <th className="px-6 py-3.5">Cargo</th>
+                  <th className="px-6 py-3.5">Status</th>
+                  <th className="px-6 py-3.5">Data de Criação</th>
+                  <th className="px-6 py-3.5 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredEmployees.map((emp) => {
+                  const isMe = emp.id === currentUser.id || emp.email === currentUser.email;
+                  const roleMeta = ROLE_METADATA[emp.role] || {
+                    label: getRoleLabel(emp.role),
+                    dotColor: "bg-slate-500",
+                    badgeClasses: "bg-slate-50 text-slate-700 border-slate-200",
+                  };
 
-            return (
-              <div
-                key={emp.id}
-                className="employee-row"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(220px, 1.8fr) minmax(220px, 2fr) minmax(80px, 0.8fr) minmax(130px, 1fr) minmax(100px, 0.8fr) 100px",
-                  alignItems: "center",
-                  padding: "1rem 1.5rem",
-                  borderBottom:
-                    index === filteredEmployees.length - 1
-                      ? "none"
-                      : "1px solid rgba(255, 255, 255, 0.05)",
-                  backgroundColor: !emp.active
-                    ? "rgba(15, 23, 42, 0.4)"
-                    : "transparent",
-                  transition: "background-color 0.15s ease",
-                }}
-              >
-                {/* 1. Avatar & Nome */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.875rem" }}>
-                  <div
-                    className="avatar"
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      background: `linear-gradient(135deg, ${avatarBg}, ${avatarBg}aa)`,
-                      opacity: emp.active ? 1 : 0.5,
-                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-                    }}
-                  >
-                    {getInitials(emp.name)}
-                  </div>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                      <span
-                        style={{
-                          fontSize: "0.9rem",
-                          fontWeight: 600,
-                          color: emp.active ? "var(--text-primary)" : "var(--text-muted)",
-                        }}
-                      >
-                        {emp.name}
-                      </span>
-                      {isMe && (
+                  return (
+                    <tr
+                      key={emp.id}
+                      className={`hover:bg-slate-50/70 transition-colors ${
+                        !emp.active ? "opacity-60 bg-slate-50/40" : ""
+                      }`}
+                    >
+                      {/* 1. Avatar & Nome / Email */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                            {getInitials(emp.name)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs sm:text-sm font-semibold text-slate-900 truncate">
+                                {emp.name}
+                              </span>
+                              {isMe && (
+                                <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                                  você
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 truncate mt-0.5">
+                              {emp.email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* 2. Cargo (Badge em pill com dot) */}
+                      <td className="px-6 py-4">
                         <span
-                          style={{
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            color: "#818cf8",
-                          }}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${roleMeta.badgeClasses}`}
                         >
-                          (você)
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${roleMeta.dotColor}`} />
+                          <span>{roleMeta.label}</span>
                         </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                      </td>
 
-                {/* 2. E-mail */}
-                <div style={{ color: "var(--text-secondary)", fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {emp.email}
-                </div>
+                      {/* 3. Status (Bolinha + Ativo / Inativo) */}
+                      <td className="px-6 py-4">
+                        {emp.active ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <span>Ativo</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                            <span>Inativo</span>
+                          </span>
+                        )}
+                      </td>
 
-                {/* 3. Traço / Telefone (Conforme layout da imagem) */}
-                <div style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
-                  —
-                </div>
+                      {/* 4. Data de Cadastro */}
+                      <td className="px-6 py-4">
+                        <span className="text-xs text-slate-500 font-medium">
+                          {formatDate(emp.createdAt)}
+                        </span>
+                      </td>
 
-                {/* 4. Cargo / Perfil */}
-                <div>
-                  <span
-                    style={{
-                      fontSize: "0.825rem",
-                      fontWeight: 500,
-                      color: emp.role === "ADMIN" ? "#fbbf24" : "#94a3b8",
-                    }}
-                  >
-                    {getRoleLabel(emp.role)}
-                  </span>
-                </div>
+                      {/* 5. Ações */}
+                      <td className="px-6 py-4 text-right">
+                        {isAdmin ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              title="Editar funcionário"
+                              onClick={() => {
+                                setActionError(null);
+                                setEditingEmployee(emp);
+                                setEditRole(emp.role);
+                              }}
+                              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
 
-                {/* 5. Status (Bolinha + Ativo / Inativo) */}
-                <div>
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.45rem",
-                      fontSize: "0.825rem",
-                      fontWeight: 500,
-                      color: emp.active ? "#60a5fa" : "#94a3b8",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor: emp.active ? "#3b82f6" : "#64748b",
-                        boxShadow: emp.active ? "0 0 6px rgba(59, 130, 246, 0.6)" : "none",
-                      }}
-                    />
-                    {emp.active ? "Ativo" : "Inativo"}
-                  </span>
-                </div>
-
-                {/* 6. Ações (Editar e Excluir na lateral direita) */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.5rem" }}>
-                  {isAdmin ? (
-                    <>
-                      {/* Botão Editar */}
-                      <button
-                        title="Editar funcionário"
-                        onClick={() => {
-                          setActionError(null);
-                          setEditingEmployee(emp);
-                        }}
-                        style={{
-                          background: "rgba(255, 255, 255, 0.05)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "6px",
-                          width: "32px",
-                          height: "32px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "var(--text-secondary)",
-                          cursor: "pointer",
-                          transition: "all 0.15s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "rgba(99, 102, 241, 0.2)";
-                          e.currentTarget.style.color = "#818cf8";
-                          e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.4)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                          e.currentTarget.style.color = "var(--text-secondary)";
-                          e.currentTarget.style.borderColor = "var(--border)";
-                        }}
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                      </button>
-
-                      {/* Botão Excluir (Não permite excluir a si mesmo) */}
-                      {!isMe && (
-                        <button
-                          title="Excluir funcionário"
-                          onClick={() => {
-                            setActionError(null);
-                            setDeletingEmployee(emp);
-                          }}
-                          style={{
-                            background: "rgba(255, 255, 255, 0.05)",
-                            border: "1px solid var(--border)",
-                            borderRadius: "6px",
-                            width: "32px",
-                            height: "32px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "var(--text-secondary)",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.2)";
-                            e.currentTarget.style.color = "#f87171";
-                            e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.4)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                            e.currentTarget.style.color = "var(--text-secondary)";
-                            e.currentTarget.style.borderColor = "var(--border)";
-                          }}
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          </svg>
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>—</span>
-                  )}
-                </div>
-              </div>
-            );
-          })
+                            {!isMe && (
+                              <button
+                                type="button"
+                                title="Excluir funcionário"
+                                onClick={() => {
+                                  setActionError(null);
+                                  setDeletingEmployee(emp);
+                                }}
+                                className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-300 text-xs">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* ================= MODAL: CRIAR FUNCIONÁRIO ================= */}
-      {isCreateOpen && (
+      {/* ================= MODAL: CRIAR FUNCIONÁRIO (Estilo Invite Members do Vídeo) ================= */}
+      {isCreateOpen && typeof document !== "undefined" && createPortal(
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            padding: "1rem",
-          }}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
+          onClick={() => !isPending && setIsCreateOpen(false)}
         >
           <div
-            className="card animate-fade-in"
-            style={{
-              width: "100%",
-              maxWidth: "460px",
-              backgroundColor: "#0d1322",
-              border: "1px solid rgba(99, 102, 241, 0.3)",
-              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6)",
-            }}
+            className="bg-white rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 max-w-md w-full animate-scale-in flex flex-col gap-5"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "1.25rem",
-                paddingBottom: "0.75rem",
-                borderBottom: "1px solid var(--border)",
-              }}
-            >
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                Novo Funcionário
-              </h2>
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                  Cadastrar Funcionário
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Preencha os dados e escolha o nível de acesso na plataforma.
+                </p>
+              </div>
               <button
-                onClick={() => setIsCreateOpen(false)}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                type="button"
+                onClick={() => !isPending && setIsCreateOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors cursor-pointer"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {actionError && (
-              <div className="alert alert-error" style={{ marginBottom: "1rem" }}>
-                {actionError}
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{actionError}</span>
               </div>
             )}
 
-            <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <form onSubmit={handleCreate} className="flex flex-col gap-4">
               {/* Nome */}
               <div>
-                <label htmlFor="create-name">Nome Completo *</label>
+                <label
+                  htmlFor="create-name"
+                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                >
+                  Nome Completo <span className="text-rose-500">*</span>
+                </label>
                 <input
                   id="create-name"
                   name="name"
                   type="text"
-                  className="input-dark"
+                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
                   placeholder="Ex: Amanda Silva"
                   required
                   disabled={isPending}
@@ -566,12 +479,17 @@ export default function EmployeesManager({
 
               {/* Email */}
               <div>
-                <label htmlFor="create-email">E-mail de Acesso *</label>
+                <label
+                  htmlFor="create-email"
+                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                >
+                  E-mail de Acesso <span className="text-rose-500">*</span>
+                </label>
                 <input
                   id="create-email"
                   name="email"
                   type="email"
-                  className="input-dark"
+                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
                   placeholder="exemplo@hubsupport.com"
                   required
                   disabled={isPending}
@@ -580,44 +498,79 @@ export default function EmployeesManager({
 
               {/* Senha */}
               <div>
-                <label htmlFor="create-password">Senha Inicial *</label>
+                <label
+                  htmlFor="create-password"
+                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                >
+                  Senha Inicial <span className="text-rose-500">*</span>
+                </label>
                 <input
                   id="create-password"
                   name="password"
                   type="password"
-                  className="input-dark"
+                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
                   placeholder="Mínimo 6 caracteres"
                   required
                   disabled={isPending}
                 />
               </div>
 
-              {/* Cargo */}
+              {/* Seleção de Cargo em Cartões Clean (vídeo 00:10 - 00:12) */}
               <div>
-                <label htmlFor="create-role">Cargo *</label>
-                <select
-                  id="create-role"
-                  name="role"
-                  className="input-dark"
-                  defaultValue="USER"
-                  disabled={isPending}
-                  style={{ cursor: "pointer" }}
-                >
-                  {ROLE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                  Cargo e Nível de Acesso <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
+                  {ROLE_OPTIONS.map((opt) => {
+                    const isSelected = createRole === opt.value;
+                    const meta = ROLE_METADATA[opt.value];
+
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setCreateRole(opt.value)}
+                        className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer flex items-center justify-between ${
+                          isSelected
+                            ? "bg-slate-50 border-slate-900 ring-1 ring-slate-900 shadow-xs"
+                            : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={`w-2 h-2 rounded-full shrink-0 ${meta?.dotColor || "bg-slate-400"}`}
+                          />
+                          <div>
+                            <span className="font-bold text-slate-900 block leading-tight">
+                              {opt.label}
+                            </span>
+                            <span className="text-[11px] text-slate-500 block leading-tight mt-0.5">
+                              {meta?.description}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-2 ${
+                            isSelected
+                              ? "bg-slate-900 border-slate-900 text-white"
+                              : "border-slate-300 bg-white"
+                          }`}
+                        >
+                          {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Actions */}
-              <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
+              <div className="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="btn-ghost"
-                  style={{ flex: 1, justifyContent: "center" }}
+                  className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
                   disabled={isPending}
                 >
                   Cancelar
@@ -625,156 +578,183 @@ export default function EmployeesManager({
                 <button
                   id="btn-confirm-create-employee"
                   type="submit"
-                  className="btn-primary"
-                  style={{ flex: 1, justifyContent: "center" }}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
                   disabled={isPending}
                 >
-                  {isPending ? "Cadastrando..." : "Cadastrar Funcionário"}
+                  {isPending ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Cadastrando...</span>
+                    </>
+                  ) : (
+                    "Cadastrar Funcionário"
+                  )}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ================= MODAL: EDITAR FUNCIONÁRIO ================= */}
-      {editingEmployee && (
+      {editingEmployee && typeof document !== "undefined" && createPortal(
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            padding: "1rem",
-          }}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
+          onClick={() => !isPending && setEditingEmployee(null)}
         >
           <div
-            className="card animate-fade-in"
-            style={{
-              width: "100%",
-              maxWidth: "460px",
-              backgroundColor: "#0d1322",
-              border: "1px solid rgba(99, 102, 241, 0.3)",
-              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6)",
-            }}
+            className="bg-white rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 max-w-md w-full animate-scale-in flex flex-col gap-5"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "1.25rem",
-                paddingBottom: "0.75rem",
-                borderBottom: "1px solid var(--border)",
-              }}
-            >
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                Editar Funcionário
-              </h2>
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                  Editar Funcionário
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Atualize as permissões ou status da conta.
+                </p>
+              </div>
               <button
-                onClick={() => setEditingEmployee(null)}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                type="button"
+                onClick={() => !isPending && setEditingEmployee(null)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors cursor-pointer"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {actionError && (
-              <div className="alert alert-error" style={{ marginBottom: "1rem" }}>
-                {actionError}
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{actionError}</span>
               </div>
             )}
 
-            <form onSubmit={handleUpdate} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <form onSubmit={handleUpdate} className="flex flex-col gap-4">
               {/* Nome */}
               <div>
-                <label htmlFor="edit-name">Nome *</label>
+                <label
+                  htmlFor="edit-name"
+                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                >
+                  Nome Completo <span className="text-rose-500">*</span>
+                </label>
                 <input
                   id="edit-name"
                   name="name"
                   type="text"
-                  className="input-dark"
+                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
                   defaultValue={editingEmployee.name}
                   required
                   disabled={isPending}
                 />
               </div>
 
-              {/* Email (NÃO PODE SER ALTERADO) */}
+              {/* Email (read-only) */}
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <label htmlFor="edit-email">E-mail</label>
-                  <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Não pode ser alterado</span>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label htmlFor="edit-email" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    E-mail
+                  </label>
+                  <span className="text-[11px] text-slate-400">Não editável</span>
                 </div>
                 <input
                   id="edit-email"
                   type="email"
-                  className="input-dark"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-500 rounded-xl px-3.5 py-2.5 text-sm cursor-not-allowed outline-none"
                   value={editingEmployee.email}
                   disabled
-                  style={{ opacity: 0.6, cursor: "not-allowed" }}
                 />
               </div>
 
               {/* Nova Senha */}
               <div>
-                <label htmlFor="edit-password">Nova Senha</label>
+                <label
+                  htmlFor="edit-password"
+                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                >
+                  Nova Senha <span className="text-slate-400 lowercase font-normal">(opcional)</span>
+                </label>
                 <input
                   id="edit-password"
                   name="password"
                   type="password"
-                  className="input-dark"
+                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 outline-none"
                   placeholder="Deixe em branco para manter a atual"
                   disabled={isPending}
                 />
               </div>
 
-              {/* Cargo */}
+              {/* Cargo Selector */}
               <div>
-                <label htmlFor="edit-role">Cargo</label>
-                <select
-                  id="edit-role"
-                  name="role"
-                  className="input-dark"
-                  defaultValue={editingEmployee.role}
-                  disabled={isPending}
-                  style={{ cursor: "pointer" }}
-                >
-                  {ROLE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                  Cargo
+                </label>
+                <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1">
+                  {ROLE_OPTIONS.map((opt) => {
+                    const isSelected = editRole === opt.value;
+                    const meta = ROLE_METADATA[opt.value];
+
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setEditRole(opt.value)}
+                        className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer flex items-center justify-between ${
+                          isSelected
+                            ? "bg-slate-50 border-slate-900 ring-1 ring-slate-900 shadow-xs"
+                            : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={`w-2 h-2 rounded-full shrink-0 ${meta?.dotColor || "bg-slate-400"}`}
+                          />
+                          <span className="font-bold text-slate-900">{opt.label}</span>
+                        </div>
+                        <div
+                          className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                            isSelected
+                              ? "bg-slate-900 border-slate-900 text-white"
+                              : "border-slate-300 bg-white"
+                          }`}
+                        >
+                          {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Status Ativar / Inativar */}
+              {/* Status Ativo / Inativo */}
               <div>
-                <label htmlFor="edit-active">Status do Acesso</label>
+                <label
+                  htmlFor="edit-active"
+                  className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+                >
+                  Status de Acesso
+                </label>
                 <select
                   id="edit-active"
                   name="active"
-                  className="input-dark"
+                  className="w-full bg-white border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
                   defaultValue={editingEmployee.active ? "true" : "false"}
                   disabled={isPending}
-                  style={{ cursor: "pointer" }}
                 >
-                  <option value="true">● Ativo (Pode fazer login)</option>
-                  <option value="false">○ Inativo (Acesso bloqueado)</option>
+                  <option value="true">● Ativo (Acesso Liberado)</option>
+                  <option value="false">○ Inativo (Acesso Bloqueado)</option>
                 </select>
               </div>
 
               {/* Actions */}
-              <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
+              <div className="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingEmployee(null)}
-                  className="btn-ghost"
-                  style={{ flex: 1, justifyContent: "center" }}
+                  className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
                   disabled={isPending}
                 >
                   Cancelar
@@ -782,85 +762,66 @@ export default function EmployeesManager({
                 <button
                   id="btn-confirm-edit-employee"
                   type="submit"
-                  className="btn-primary"
-                  style={{ flex: 1, justifyContent: "center" }}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
                   disabled={isPending}
                 >
-                  {isPending ? "Salvando..." : "Salvar Alterações"}
+                  {isPending ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    "Salvar Alterações"
+                  )}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ================= MODAL: EXCLUIR FUNCIONÁRIO ================= */}
-      {deletingEmployee && (
+      {deletingEmployee && typeof document !== "undefined" && createPortal(
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            padding: "1rem",
-          }}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
+          onClick={() => !isPending && setDeletingEmployee(null)}
         >
           <div
-            className="card animate-fade-in"
-            style={{
-              width: "100%",
-              maxWidth: "420px",
-              backgroundColor: "#0d1322",
-              border: "1px solid rgba(239, 68, 68, 0.4)",
-              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6)",
-            }}
+            className="bg-white rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 max-w-md w-full animate-scale-in flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ textAlign: "center", marginBottom: "1.25rem" }}>
-              <div
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "50%",
-                  background: "rgba(239, 68, 68, 0.15)",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 1rem",
-                  color: "#ef4444",
-                }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  <line x1="10" y1="11" x2="10" y2="17" />
-                  <line x1="14" y1="11" x2="14" y2="17" />
-                </svg>
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-600" />
               </div>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.5rem" }}>
-                Excluir Funcionário?
-              </h2>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-                Tem certeza que deseja excluir <strong>{deletingEmployee.name}</strong> ({deletingEmployee.email})?
-                Esta ação removerá o acesso e todos os dados associados permanentemente do sistema.
-              </p>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  Excluir Funcionário?
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Esta ação não poderá ser revertida.
+                </p>
+              </div>
             </div>
 
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Tem certeza que deseja excluir <strong>{deletingEmployee.name}</strong> ({deletingEmployee.email})?
+              Esta ação removerá o acesso do usuário ao sistema.
+            </p>
+
             {actionError && (
-              <div className="alert alert-error" style={{ marginBottom: "1rem" }}>
-                {actionError}
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{actionError}</span>
               </div>
             )}
 
-            <div style={{ display: "flex", gap: "0.75rem" }}>
+            <div className="flex items-center justify-end gap-3 mt-1 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setDeletingEmployee(null)}
-                className="btn-ghost"
-                style={{ flex: 1, justifyContent: "center" }}
+                className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2 text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50"
                 disabled={isPending}
               >
                 Cancelar
@@ -870,28 +831,22 @@ export default function EmployeesManager({
                 type="button"
                 onClick={handleDeleteConfirm}
                 disabled={isPending}
-                style={{
-                  flex: 1,
-                  background: "#ef4444",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "0.5rem",
-                  fontWeight: 600,
-                  fontSize: "0.875rem",
-                  cursor: "pointer",
-                  padding: "0.625rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                }}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
               >
-                {isPending ? "Excluindo..." : "Excluir Definitivamente"}
+                {isPending ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Excluindo...</span>
+                  </>
+                ) : (
+                  "Excluir Definitivamente"
+                )}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </main>
   );
 }

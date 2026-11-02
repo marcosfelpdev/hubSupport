@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
-import { Sparkles, Download, RotateCw, Clock, AlertTriangle, CheckCircle2, FileText, Loader2, Video } from "lucide-react";
+import React, { useState, useEffect, useTransition } from "react";
+import { Sparkles, Download, RotateCw, Clock, AlertTriangle, FileText, Loader2, Video } from "lucide-react";
 import { api } from "@/services/api";
 
 interface AiReportData {
@@ -83,45 +83,35 @@ export default function AiReportSection({
 
   const getStatusBadge = () => {
     switch (report.status) {
-      case "pending":
+      case "completed":
         return {
-          label: "Aguardando",
-          bg: "rgba(245, 158, 11, 0.12)",
-          color: "#fbbf24",
-          border: "rgba(245, 158, 11, 0.3)",
-          icon: <Clock size={12} />,
+          label: "Disponível",
+          badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          icon: <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />,
         };
       case "processing":
         return {
           label: "Processando IA",
-          bg: "rgba(99, 102, 241, 0.15)",
-          color: "#818cf8",
-          border: "rgba(99, 102, 241, 0.35)",
-          icon: <Loader2 size={12} className="animate-spin" />,
+          badgeClass: "bg-indigo-50 text-indigo-700 border-indigo-200",
+          icon: <Loader2 size={12} className="animate-spin text-indigo-600 shrink-0" />,
         };
-      case "completed":
+      case "pending":
         return {
-          label: "Disponível",
-          bg: "rgba(16, 185, 129, 0.15)",
-          color: "#34d399",
-          border: "rgba(16, 185, 129, 0.35)",
-          icon: <CheckCircle2 size={12} />,
+          label: "Aguardando",
+          badgeClass: "bg-amber-50 text-amber-700 border-amber-200",
+          icon: <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />,
         };
       case "failed":
         return {
           label: "Falha",
-          bg: "rgba(239, 68, 68, 0.15)",
-          color: "#f87171",
-          border: "rgba(239, 68, 68, 0.35)",
-          icon: <AlertTriangle size={12} />,
+          badgeClass: "bg-rose-50 text-rose-700 border-rose-200",
+          icon: <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />,
         };
       default:
         return {
           label: report.status,
-          bg: "rgba(255, 255, 255, 0.05)",
-          color: "var(--text-muted)",
-          border: "var(--border)",
-          icon: <FileText size={12} />,
+          badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
+          icon: <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />,
         };
     }
   };
@@ -129,121 +119,54 @@ export default function AiReportSection({
   const badge = getStatusBadge();
 
   return (
-    <div
-      style={{
-        background: "rgba(15, 23, 42, 0.6)",
-        border: "1px solid rgba(99, 102, 241, 0.25)",
-        borderRadius: "8px",
-        padding: "1rem",
-        marginBottom: "1rem",
-        position: "relative",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
-      }}
-    >
-      {/* Header da seção */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "0.75rem",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <div
-            style={{
-              width: "28px",
-              height: "28px",
-              borderRadius: "6px",
-              background: "linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3))",
-              border: "1px solid rgba(168, 85, 247, 0.4)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#c084fc",
-            }}
-          >
-            <Sparkles size={15} />
+    <div className="bg-slate-50/70 border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs mb-4">
+      {/* Cabeçalho da seção */}
+      <div className="flex items-center justify-between gap-3 mb-3.5 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <Sparkles size={16} />
           </div>
           <div>
-            <h3
-              style={{
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                margin: 0,
-              }}
-            >
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
               Relatório gerado por IA
             </h3>
-            <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Gerado a partir da gravação de tela com Google Gemini
-            </span>
+            </p>
           </div>
         </div>
 
         <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.3rem",
-            padding: "0.2rem 0.55rem",
-            borderRadius: "9999px",
-            fontSize: "0.7rem",
-            fontWeight: 600,
-            color: badge.color,
-            background: badge.bg,
-            border: `1px solid ${badge.border}`,
-          }}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-full border shadow-2xs ${badge.badgeClass}`}
         >
           {badge.icon}
-          {badge.label}
+          <span>{badge.label}</span>
         </span>
       </div>
 
       {/* Conteúdo baseado no estado */}
       {report.status === "pending" && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-            padding: "0.75rem",
-            background: "rgba(245, 158, 11, 0.06)",
-            border: "1px dashed rgba(245, 158, 11, 0.25)",
-            borderRadius: "6px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", color: "#fde68a", fontSize: "0.8rem" }}>
-            <Clock size={16} className="animate-pulse" />
-            <span>A gravação foi recebida e está aguardando o início da análise pela inteligência artificial.</span>
+        <div className="flex flex-col gap-3 p-3.5 bg-amber-50/60 border border-amber-200/80 rounded-xl">
+          <div className="flex items-center gap-2.5 text-xs text-amber-900">
+            <Clock size={16} className="text-amber-600 animate-pulse shrink-0" />
+            <span className="font-medium">
+              A gravação foi recebida e está aguardando o início da análise pela inteligência artificial.
+            </span>
           </div>
 
           {report.videoPath && (
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.25rem" }}>
+            <div className="flex justify-end pt-1">
               <a
                 href={`/api/reports/${workLogId}/recording`}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
                 id="btn-download-recording-pending"
-                style={{
-                  fontSize: "0.75rem",
-                  color: "#a5b4fc",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                  padding: "0.3rem 0.6rem",
-                  borderRadius: "5px",
-                  background: "rgba(99, 102, 241, 0.12)",
-                  border: "1px solid rgba(99, 102, 241, 0.3)",
-                  transition: "all 0.2s",
-                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs transition-all cursor-pointer"
                 title="Baixar gravação de vídeo original"
               >
-                <Video size={13} color="#818cf8" />
-                Baixar gravação de vídeo
+                <Video size={13} className="text-indigo-600" />
+                <span>Baixar gravação de vídeo</span>
               </a>
             </div>
           )}
@@ -251,70 +174,30 @@ export default function AiReportSection({
       )}
 
       {report.status === "processing" && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.625rem",
-            padding: "0.875rem",
-            background: "rgba(99, 102, 241, 0.08)",
-            border: "1px solid rgba(99, 102, 241, 0.3)",
-            borderRadius: "6px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", color: "#a5b4fc", fontSize: "0.825rem" }}>
-            <Loader2 size={16} className="animate-spin" />
-            <span style={{ fontWeight: 500 }}>
-              A IA está analisando o vídeo e estruturando o relatório em PDF...
-            </span>
+        <div className="flex flex-col gap-3 p-3.5 bg-indigo-50/60 border border-indigo-200/80 rounded-xl">
+          <div className="flex items-center gap-2.5 text-xs text-indigo-950 font-medium">
+            <Loader2 size={16} className="animate-spin text-indigo-600 shrink-0" />
+            <span>A IA está analisando o vídeo e estruturando o relatório em PDF...</span>
           </div>
-          {/* Barra de progresso animada */}
-          <div
-            style={{
-              width: "100%",
-              height: "4px",
-              background: "rgba(255, 255, 255, 0.1)",
-              borderRadius: "2px",
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                width: "45%",
-                height: "100%",
-                background: "linear-gradient(90deg, #6366f1, #a855f7)",
-                borderRadius: "2px",
-                animation: "pulse 1.5s infinite",
-              }}
-            />
+
+          {/* Barra de progresso moderna */}
+          <div className="w-full h-1.5 bg-indigo-100/80 rounded-full overflow-hidden">
+            <div className="w-1/2 h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full animate-pulse" />
           </div>
 
           {report.videoPath && (
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.25rem" }}>
+            <div className="flex justify-end pt-1">
               <a
                 href={`/api/reports/${workLogId}/recording`}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
                 id="btn-download-recording-processing"
-                style={{
-                  fontSize: "0.75rem",
-                  color: "#a5b4fc",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                  padding: "0.3rem 0.6rem",
-                  borderRadius: "5px",
-                  background: "rgba(99, 102, 241, 0.12)",
-                  border: "1px solid rgba(99, 102, 241, 0.3)",
-                  transition: "all 0.2s",
-                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs transition-all cursor-pointer"
                 title="Baixar gravação de vídeo original"
               >
-                <Video size={13} color="#818cf8" />
-                Baixar gravação
+                <Video size={13} className="text-indigo-600" />
+                <span>Baixar gravação</span>
               </a>
             </div>
           )}
@@ -322,34 +205,24 @@ export default function AiReportSection({
       )}
 
       {report.status === "completed" && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "0.75rem",
-            padding: "0.75rem 1rem",
-            background: "rgba(16, 185, 129, 0.08)",
-            border: "1px solid rgba(16, 185, 129, 0.25)",
-            borderRadius: "6px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <FileText size={18} color="#34d399" />
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-xs flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
+              <FileText size={18} />
+            </div>
             <div>
-              <p style={{ fontSize: "0.825rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+              <p className="text-xs sm:text-sm font-semibold text-slate-800 leading-tight">
                 Relatório executivo estruturado
               </p>
               {report.completedAt && (
-                <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", margin: 0 }}>
+                <p className="text-[11px] text-slate-400 mt-0.5">
                   Gerado em {new Date(report.completedAt).toLocaleString("pt-BR")}
                 </p>
               )}
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+          <div className="flex items-center gap-2 flex-wrap">
             {report.videoPath && (
               <a
                 href={`/api/reports/${workLogId}/recording`}
@@ -357,25 +230,11 @@ export default function AiReportSection({
                 rel="noopener noreferrer"
                 download
                 id="btn-download-recording"
-                style={{
-                  padding: "0.5rem 0.875rem",
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  background: "rgba(99, 102, 241, 0.15)",
-                  border: "1px solid rgba(99, 102, 241, 0.35)",
-                  color: "#c7d2fe",
-                  borderRadius: "6px",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.4rem",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs transition-all cursor-pointer"
                 title="Baixar arquivo da gravação de tela com áudio"
               >
-                <Video size={14} color="#818cf8" />
-                Baixar gravação
+                <Video size={13} className="text-slate-600" />
+                <span>Baixar gravação</span>
               </a>
             )}
 
@@ -385,55 +244,36 @@ export default function AiReportSection({
               rel="noopener noreferrer"
               download
               id="btn-download-pdf"
-              className="btn-primary"
-              style={{
-                padding: "0.5rem 0.875rem",
-                fontSize: "0.8rem",
-                background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
-                boxShadow: "0 2px 10px rgba(16, 185, 129, 0.3)",
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.4rem",
-              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-all cursor-pointer"
+              title="Baixar relatório executivo em PDF"
             >
-              <Download size={14} />
-              Baixar relatório PDF
+              <Download size={14} className="text-white" />
+              <span>Baixar relatório PDF</span>
             </a>
           </div>
         </div>
       )}
 
       {report.status === "failed" && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.625rem",
-            padding: "0.75rem",
-            background: "rgba(239, 68, 68, 0.08)",
-            border: "1px solid rgba(239, 68, 68, 0.25)",
-            borderRadius: "6px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
-            <AlertTriangle size={16} color="#f87171" style={{ marginTop: "2px", flexShrink: 0 }} />
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: "0.825rem", fontWeight: 600, color: "#fca5a5", margin: "0 0 0.25rem 0" }}>
+        <div className="flex flex-col gap-3 p-3.5 bg-rose-50/60 border border-rose-200/80 rounded-xl">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle size={16} className="text-rose-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-rose-900 leading-tight">
                 Não foi possível gerar o relatório
               </p>
-              <p style={{ fontSize: "0.75rem", color: "#f87171", margin: 0 }}>
+              <p className="text-[11px] text-rose-700 mt-1 leading-normal break-words">
                 {report.errorMessage || "Ocorreu um erro no processamento com a IA. Tente novamente."}
               </p>
               {retryFeedback && (
-                <p style={{ fontSize: "0.75rem", color: "#fbbf24", marginTop: "0.25rem" }}>
+                <p className="text-[11px] text-amber-700 font-medium mt-1">
                   {retryFeedback}
                 </p>
               )}
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
             {report.videoPath && (
               <a
                 href={`/api/reports/${workLogId}/recording`}
@@ -441,22 +281,11 @@ export default function AiReportSection({
                 rel="noopener noreferrer"
                 download
                 id="btn-download-recording-failed"
-                style={{
-                  fontSize: "0.75rem",
-                  color: "#a5b4fc",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                  padding: "0.35rem 0.7rem",
-                  borderRadius: "4px",
-                  background: "rgba(99, 102, 241, 0.12)",
-                  border: "1px solid rgba(99, 102, 241, 0.3)",
-                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-xs transition-all cursor-pointer"
                 title="Baixar gravação de vídeo original"
               >
-                <Video size={13} color="#818cf8" />
-                Baixar gravação
+                <Video size={13} className="text-slate-600" />
+                <span>Baixar gravação</span>
               </a>
             )}
 
@@ -464,22 +293,10 @@ export default function AiReportSection({
               type="button"
               onClick={handleRetry}
               disabled={isRetrying}
-              className="btn-ghost"
-              style={{
-                padding: "0.35rem 0.7rem",
-                fontSize: "0.75rem",
-                color: "#e2e8f0",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                borderRadius: "4px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.35rem",
-                cursor: "pointer",
-                marginLeft: "auto",
-              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 shadow-xs transition-all cursor-pointer ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <RotateCw size={13} className={isRetrying ? "animate-spin" : ""} />
-              {isRetrying ? "Reiniciando..." : "Tentar novamente"}
+              <RotateCw size={13} className={isRetrying ? "animate-spin text-rose-600" : "text-rose-600"} />
+              <span>{isRetrying ? "Reiniciando..." : "Tentar novamente"}</span>
             </button>
           </div>
         </div>

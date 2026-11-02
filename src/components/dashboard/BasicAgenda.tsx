@@ -8,8 +8,6 @@ import {
   Check,
   Trash2,
   AlertCircle,
-  Tag,
-  CheckCircle2,
 } from "lucide-react";
 
 export interface AgendaEvent {
@@ -50,26 +48,18 @@ const initialSampleEvents: AgendaEvent[] = [
   },
 ];
 
-const categoryColors: Record<AgendaEvent["category"], { bg: string; color: string; border: string }> = {
+const categoryBadgeConfig: Record<AgendaEvent["category"], { badgeClass: string }> = {
   Reunião: {
-    bg: "rgba(59, 130, 246, 0.15)",
-    color: "#60a5fa",
-    border: "rgba(59, 130, 246, 0.3)",
+    badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
   },
   Atendimento: {
-    bg: "rgba(168, 85, 247, 0.15)",
-    color: "#c084fc",
-    border: "rgba(168, 85, 247, 0.3)",
+    badgeClass: "bg-purple-50 text-purple-700 border-purple-200",
   },
   Técnico: {
-    bg: "rgba(245, 158, 11, 0.15)",
-    color: "#fbbf24",
-    border: "rgba(245, 158, 11, 0.3)",
+    badgeClass: "bg-amber-50 text-amber-700 border-amber-200",
   },
   Lembrete: {
-    bg: "rgba(16, 185, 129, 0.15)",
-    color: "#34d399",
-    border: "rgba(16, 185, 129, 0.3)",
+    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
   },
 };
 
@@ -237,122 +227,46 @@ export const BasicAgenda: React.FC = () => {
   const todayStr = today.toISOString().split("T")[0];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        borderRadius: "0.875rem",
-        overflow: "hidden",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.25)",
-        height: "100%",
-        minHeight: "580px",
-      }}
-    >
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs flex flex-col h-full min-h-[580px]">
       {/* Header */}
-      <div
-        style={{
-          padding: "1.25rem 1.25rem 1rem",
-          borderBottom: "1px solid var(--border)",
-          backgroundColor: "rgba(15, 23, 42, 0.4)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
-            <div
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(59, 130, 246, 0.15)",
-                border: "1px solid rgba(59, 130, 246, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#60a5fa",
-              }}
-            >
+      <div className="p-4 border-b border-slate-200 bg-white">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0">
               <CalendarIcon size={16} />
             </div>
             <div>
-              <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2 }}>
+              <h2 className="text-sm font-bold text-slate-900 leading-tight">
                 Agenda de Atendimentos
               </h2>
-              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "1px" }}>
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 Agenda funcional básica da equipe
               </p>
             </div>
           </div>
 
-          <span
-            style={{
-              fontSize: "0.68rem",
-              fontWeight: 600,
-              padding: "0.2rem 0.5rem",
-              borderRadius: "0.375rem",
-              backgroundColor: "rgba(59, 130, 246, 0.1)",
-              color: "#93c5fd",
-              border: "1px solid rgba(59, 130, 246, 0.25)",
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-            }}
-          >
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider shrink-0">
             Básica
           </span>
         </div>
 
         {/* Navegação do Mês */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginTop: "0.75rem",
-            backgroundColor: "rgba(8, 12, 22, 0.6)",
-            padding: "0.35rem 0.5rem",
-            borderRadius: "0.5rem",
-            border: "1px solid var(--border)",
-          }}
-        >
+        <div className="flex items-center justify-between mt-3 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl">
           <button
             onClick={prevMonth}
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              padding: "0.2rem",
-              display: "flex",
-              alignItems: "center",
-            }}
+            className="p-1 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors cursor-pointer"
             title="Mês anterior"
           >
             <ChevronLeft size={16} />
           </button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span
-              style={{
-                fontSize: "0.825rem",
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                textTransform: "capitalize",
-              }}
-            >
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-800 capitalize">
               {monthName}
             </span>
             <button
               onClick={goToToday}
-              style={{
-                fontSize: "0.68rem",
-                padding: "0.15rem 0.4rem",
-                borderRadius: "0.25rem",
-                backgroundColor: "rgba(99, 102, 241, 0.15)",
-                color: "#a5b4fc",
-                border: "1px solid rgba(99, 102, 241, 0.3)",
-                cursor: "pointer",
-              }}
+              className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 shadow-2xs transition-colors cursor-pointer"
             >
               Hoje
             </button>
@@ -360,15 +274,7 @@ export const BasicAgenda: React.FC = () => {
 
           <button
             onClick={nextMonth}
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              padding: "0.2rem",
-              display: "flex",
-              alignItems: "center",
-            }}
+            className="p-1 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors cursor-pointer"
             title="Próximo mês"
           >
             <ChevronRight size={16} />
@@ -377,29 +283,13 @@ export const BasicAgenda: React.FC = () => {
       </div>
 
       {/* Grade do Calendário */}
-      <div
-        style={{
-          padding: "0.75rem 1rem 0.5rem",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
+      <div className="p-3 border-b border-slate-200 bg-white">
         {/* Cabeçalho dias da semana */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            textAlign: "center",
-            marginBottom: "0.35rem",
-          }}
-        >
+        <div className="grid grid-cols-7 text-center mb-1">
           {weekDays.map((d, i) => (
             <span
               key={i}
-              style={{
-                fontSize: "0.7rem",
-                fontWeight: 600,
-                color: "var(--text-muted)",
-              }}
+              className="text-[11px] font-bold text-slate-400 py-1"
             >
               {d}
             </span>
@@ -407,13 +297,7 @@ export const BasicAgenda: React.FC = () => {
         </div>
 
         {/* Grade de dias */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            gap: "2px",
-          }}
-        >
+        <div className="grid grid-cols-7 gap-1">
           {calendarDays.slice(0, 35).map((day, idx) => {
             const isSelected = day.dateStr === selectedDate;
             const isToday = day.dateStr === todayStr;
@@ -423,47 +307,22 @@ export const BasicAgenda: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => setSelectedDate(day.dateStr)}
-                style={{
-                  height: "28px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "6px",
-                  border: isSelected
-                    ? "1px solid #6366f1"
+                className={`h-7 flex flex-col items-center justify-center rounded-lg text-xs font-semibold relative transition-all cursor-pointer ${
+                  isSelected
+                    ? "bg-slate-900 text-white shadow-2xs font-bold"
                     : isToday
-                    ? "1px solid rgba(99, 102, 241, 0.4)"
-                    : "1px solid transparent",
-                  backgroundColor: isSelected
-                    ? "rgba(99, 102, 241, 0.25)"
-                    : isToday
-                    ? "rgba(99, 102, 241, 0.1)"
-                    : "transparent",
-                  color: isSelected
-                    ? "#ffffff"
+                    ? "border border-indigo-400 bg-indigo-50/60 text-indigo-700 font-bold"
                     : day.isCurrentMonth
-                    ? "var(--text-primary)"
-                    : "rgba(148, 163, 184, 0.3)",
-                  fontSize: "0.75rem",
-                  fontWeight: isSelected || isToday ? 700 : 500,
-                  cursor: "pointer",
-                  position: "relative",
-                  transition: "all 0.12s ease",
-                  padding: 0,
-                }}
+                    ? "text-slate-700 hover:bg-slate-100"
+                    : "text-slate-300"
+                }`}
               >
                 <span>{day.dayNum}</span>
                 {hasEvent && (
                   <span
-                    style={{
-                      width: "4px",
-                      height: "4px",
-                      borderRadius: "50%",
-                      backgroundColor: isSelected ? "#ffffff" : "#60a5fa",
-                      position: "absolute",
-                      bottom: "2px",
-                    }}
+                    className={`w-1 h-1 rounded-full absolute bottom-0.5 ${
+                      isSelected ? "bg-white" : "bg-indigo-600"
+                    }`}
                   />
                 )}
               </button>
@@ -473,63 +332,29 @@ export const BasicAgenda: React.FC = () => {
       </div>
 
       {/* Seção do Dia Selecionado */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflowY: "auto",
-          padding: "0.875rem 1rem",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "0.75rem",
-          }}
-        >
+      <div className="flex-1 flex flex-col overflow-y-auto p-3.5 space-y-3">
+        <div className="flex items-center justify-between">
           <div>
-            <span
-              style={{
-                fontSize: "0.825rem",
-                fontWeight: 700,
-                color: "var(--text-primary)",
-                textTransform: "capitalize",
-              }}
-            >
+            <span className="text-xs font-bold text-slate-900 capitalize">
               {selectedDateFormatted}
             </span>
-            <span
-              style={{
-                fontSize: "0.72rem",
-                color: "var(--text-muted)",
-                marginLeft: "0.4rem",
-              }}
-            >
+            <span className="text-[11px] text-slate-500 ml-1.5">
               ({selectedDayEvents.length} {selectedDayEvents.length === 1 ? "item" : "itens"})
             </span>
           </div>
 
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.25rem",
-              fontSize: "0.72rem",
-              fontWeight: 600,
-              padding: "0.25rem 0.5rem",
-              borderRadius: "0.375rem",
-              backgroundColor: showAddForm ? "rgba(239, 68, 68, 0.15)" : "rgba(99, 102, 241, 0.15)",
-              color: showAddForm ? "#fca5a5" : "#a5b4fc",
-              border: `1px solid ${showAddForm ? "rgba(239, 68, 68, 0.3)" : "rgba(99, 102, 241, 0.3)"}`,
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
+            className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+              showAddForm
+                ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                : "bg-slate-900 text-white border-slate-900 hover:bg-slate-800 shadow-2xs"
+            }`}
           >
-            <Plus size={12} style={{ transform: showAddForm ? "rotate(45deg)" : "none", transition: "transform 0.15s ease" }} />
+            <Plus
+              size={12}
+              className={`transition-transform duration-150 ${showAddForm ? "rotate-45" : ""}`}
+            />
             {showAddForm ? "Cancelar" : "Novo"}
           </button>
         </div>
@@ -538,16 +363,7 @@ export const BasicAgenda: React.FC = () => {
         {showAddForm && (
           <form
             onSubmit={handleAddEvent}
-            style={{
-              marginBottom: "0.75rem",
-              padding: "0.75rem",
-              borderRadius: "0.5rem",
-              backgroundColor: "rgba(15, 23, 42, 0.8)",
-              border: "1px solid rgba(99, 102, 241, 0.3)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.5rem",
-            }}
+            className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-2.5 animate-fade-in"
           >
             <input
               type="text"
@@ -556,48 +372,21 @@ export const BasicAgenda: React.FC = () => {
               onChange={(e) => setNewTitle(e.target.value)}
               autoFocus
               required
-              style={{
-                width: "100%",
-                padding: "0.4rem 0.6rem",
-                fontSize: "0.78rem",
-                borderRadius: "0.375rem",
-                backgroundColor: "rgba(8, 12, 22, 0.8)",
-                border: "1px solid var(--border)",
-                color: "var(--text-primary)",
-                outline: "none",
-              }}
+              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none transition-colors"
             />
 
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="flex gap-2">
               <input
                 type="time"
                 value={newTime}
                 onChange={(e) => setNewTime(e.target.value)}
-                style={{
-                  width: "90px",
-                  padding: "0.35rem 0.5rem",
-                  fontSize: "0.75rem",
-                  borderRadius: "0.375rem",
-                  backgroundColor: "rgba(8, 12, 22, 0.8)",
-                  border: "1px solid var(--border)",
-                  color: "var(--text-primary)",
-                  outline: "none",
-                }}
+                className="w-24 px-2 py-1 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-slate-900 focus:outline-none"
               />
 
               <select
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value as AgendaEvent["category"])}
-                style={{
-                  flex: 1,
-                  padding: "0.35rem 0.5rem",
-                  fontSize: "0.75rem",
-                  borderRadius: "0.375rem",
-                  backgroundColor: "rgba(8, 12, 22, 0.8)",
-                  border: "1px solid var(--border)",
-                  color: "var(--text-primary)",
-                  outline: "none",
-                }}
+                className="flex-1 px-2 py-1 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-slate-900 focus:outline-none"
               >
                 <option value="Reunião">Reunião</option>
                 <option value="Atendimento">Atendimento</option>
@@ -607,16 +396,7 @@ export const BasicAgenda: React.FC = () => {
 
               <button
                 type="submit"
-                style={{
-                  padding: "0.35rem 0.75rem",
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
-                  borderRadius: "0.375rem",
-                  backgroundColor: "#6366f1",
-                  color: "#ffffff",
-                  border: "none",
-                  cursor: "pointer",
-                }}
+                className="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-2xs transition-colors cursor-pointer"
               >
                 Salvar
               </button>
@@ -625,127 +405,63 @@ export const BasicAgenda: React.FC = () => {
         )}
 
         {/* Lista de Eventos do Dia */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1 }}>
+        <div className="flex flex-col gap-2 flex-1">
           {selectedDayEvents.length === 0 ? (
-            <div
-              style={{
-                padding: "1.5rem 1rem",
-                textAlign: "center",
-                color: "var(--text-muted)",
-                fontSize: "0.78rem",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "0.35rem",
-              }}
-            >
-              <CalendarIcon size={24} style={{ opacity: 0.3 }} />
+            <div className="py-8 px-4 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-1.5">
+              <CalendarIcon size={24} className="opacity-40 text-slate-400" />
               <span>Nenhum compromisso agendado para este dia.</span>
               <button
                 onClick={() => setShowAddForm(true)}
-                style={{
-                  marginTop: "0.25rem",
-                  fontSize: "0.72rem",
-                  color: "#818cf8",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                }}
+                className="mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
               >
                 + Adicionar para {selectedDateFormatted}
               </button>
             </div>
           ) : (
             selectedDayEvents.map((evt) => {
-              const catConfig = categoryColors[evt.category] || categoryColors.Reunião;
+              const catConfig = categoryBadgeConfig[evt.category] || categoryBadgeConfig.Reunião;
 
               return (
                 <div
                   key={evt.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "0.625rem",
-                    padding: "0.6rem 0.75rem",
-                    borderRadius: "0.5rem",
-                    backgroundColor: evt.completed
-                      ? "rgba(15, 23, 42, 0.3)"
-                      : "rgba(15, 23, 42, 0.65)",
-                    border: "1px solid",
-                    borderColor: evt.completed
-                      ? "rgba(255, 255, 255, 0.05)"
-                      : "var(--border)",
-                    opacity: evt.completed ? 0.65 : 1,
-                    transition: "all 0.15s ease",
-                  }}
+                  className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all duration-150 ${
+                    evt.completed
+                      ? "bg-slate-50/80 border-slate-200 opacity-60"
+                      : "bg-white border-slate-200 shadow-2xs hover:border-slate-300"
+                  }`}
                 >
                   {/* Checkbox */}
                   <button
                     onClick={() => handleToggleComplete(evt.id)}
-                    style={{
-                      width: "18px",
-                      height: "18px",
-                      borderRadius: "4px",
-                      border: evt.completed
-                        ? "1px solid #10b981"
-                        : "1px solid var(--border-light)",
-                      backgroundColor: evt.completed
-                        ? "#10b981"
-                        : "rgba(8, 12, 22, 0.6)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      color: "#fff",
-                      flexShrink: 0,
-                      marginTop: "2px",
-                      padding: 0,
-                    }}
+                    className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer mt-0.5 shrink-0 transition-colors ${
+                      evt.completed
+                        ? "bg-emerald-600 border-emerald-600 text-white"
+                        : "border-slate-300 bg-white hover:border-slate-400"
+                    }`}
                     title={evt.completed ? "Marcar como pendente" : "Marcar como concluído"}
                   >
-                    {evt.completed && <Check size={12} strokeWidth={3} />}
+                    {evt.completed && <Check size={11} strokeWidth={3} />}
                   </button>
 
                   {/* Informações */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.2rem" }}>
-                      <span
-                        style={{
-                          fontSize: "0.7rem",
-                          fontWeight: 700,
-                          color: "var(--text-secondary)",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.2rem",
-                        }}
-                      >
-                        <Clock size={10} /> {evt.time}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[11px] font-bold text-slate-500 inline-flex items-center gap-1">
+                        <Clock size={10} className="text-slate-400" /> {evt.time}
                       </span>
                       <span
-                        style={{
-                          fontSize: "0.65rem",
-                          fontWeight: 600,
-                          padding: "0.08rem 0.35rem",
-                          borderRadius: "3px",
-                          backgroundColor: catConfig.bg,
-                          color: catConfig.color,
-                          border: `1px solid ${catConfig.border}`,
-                        }}
+                        className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${catConfig.badgeClass}`}
                       >
                         {evt.category}
                       </span>
                     </div>
 
                     <span
-                      style={{
-                        fontSize: "0.78rem",
-                        color: evt.completed ? "var(--text-muted)" : "var(--text-primary)",
-                        textDecoration: evt.completed ? "line-through" : "none",
-                        lineHeight: 1.3,
-                        display: "block",
-                        wordBreak: "break-word",
-                      }}
+                      className={`text-xs block leading-snug break-words ${
+                        evt.completed
+                          ? "line-through text-slate-400"
+                          : "text-slate-800 font-medium"
+                      }`}
                     >
                       {evt.title}
                     </span>
@@ -754,18 +470,8 @@ export const BasicAgenda: React.FC = () => {
                   {/* Botão Deletar */}
                   <button
                     onClick={() => handleDeleteEvent(evt.id)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "var(--text-muted)",
-                      cursor: "pointer",
-                      padding: "0.15rem",
-                      opacity: 0.6,
-                      transition: "opacity 0.15s ease",
-                    }}
+                    className="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer rounded"
                     title="Excluir compromisso"
-                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.6")}
                   >
                     <Trash2 size={13} />
                   </button>
@@ -777,19 +483,8 @@ export const BasicAgenda: React.FC = () => {
       </div>
 
       {/* Footer Info */}
-      <div
-        style={{
-          padding: "0.75rem 1rem",
-          backgroundColor: "rgba(8, 12, 22, 0.4)",
-          borderTop: "1px solid var(--border)",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.4rem",
-          fontSize: "0.7rem",
-          color: "var(--text-muted)",
-        }}
-      >
-        <AlertCircle size={13} style={{ color: "#60a5fa", flexShrink: 0 }} />
+      <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center gap-1.5 text-[11px] text-slate-500">
+        <AlertCircle size={13} className="text-sky-600 shrink-0" />
         <span>Módulo de agenda em fase básica; novas integrações serão implementadas em breve.</span>
       </div>
     </div>
