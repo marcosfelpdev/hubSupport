@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useTransition } from "react";
+import React, { useState, useEffect, useMemo, useTransition, useRef } from "react";
 import {
   CheckCircle2,
   FileText,
@@ -13,8 +13,12 @@ import {
   RotateCw,
   Cog,
   Lightbulb,
+  ChevronDown,
+  Check,
+  History,
+  ArrowRight,
 } from "lucide-react";
-import { WorkLogItem, api } from "@/services/api";
+import { WorkLogItem, WorkLogStatusHistoryItem, api } from "@/services/api";
 import TagBadge from "@/components/TagBadge";
 
 export interface StructuredReportData {
@@ -76,6 +80,7 @@ export interface WorkLogDetailData {
     email: string;
     role?: string | null;
   };
+  statusHistory?: WorkLogStatusHistoryItem[];
   aiReport?: {
     id?: string;
     status: string;
@@ -97,6 +102,15 @@ export interface WorkLogDetailContentProps {
   onOpenMediaModal?: (log: WorkLogItem | WorkLogDetailData) => void;
 }
 
+export const WORKLOG_STATUS_OPTIONS = [
+  "Realizado",
+  "Em andamento",
+  "Solucionado",
+  "Aguardando reunião",
+  "Não foi possível realizar",
+  "Backlog",
+] as const;
+
 export function getStatusPill(status: string): StatusPillConfig {
   const norm = (status || "").toLowerCase().trim();
 
@@ -105,9 +119,7 @@ export function getStatusPill(status: string): StatusPillConfig {
     norm === "finalizadas" ||
     norm === "finalizado" ||
     norm === "concluído" ||
-    norm === "concluido" ||
-    norm === "realizado" ||
-    norm === "já realizado"
+    norm === "concluido"
   ) {
     return {
       label: "Solucionado",
@@ -117,9 +129,18 @@ export function getStatusPill(status: string): StatusPillConfig {
     };
   }
 
+  if (norm === "realizado" || norm === "já realizado" || norm === "ja realizado") {
+    return {
+      label: norm.includes("já") || norm.includes("ja") ? "Já realizado" : "Realizado",
+      badgeClass:
+        "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
+      dotClass: "bg-emerald-500",
+    };
+  }
+
   if (norm === "em progresso" || norm === "em andamento") {
     return {
-      label: "Em progresso",
+      label: norm === "em progresso" ? "Em progresso" : "Em andamento",
       badgeClass:
         "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800",
       dotClass: "bg-sky-500",
@@ -134,16 +155,24 @@ export function getStatusPill(status: string): StatusPillConfig {
     norm === "aguardando reuniao"
   ) {
     return {
-      label: "Pendência",
+      label: norm.includes("reuni") ? "Aguardando reunião" : "Pendência",
       badgeClass:
         "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800",
       dotClass: "bg-amber-500",
     };
   }
 
-  if (norm === "não foi possível realizar" || norm === "não realizado") {
+  if (
+    norm === "não foi possível realizar" ||
+    norm === "nao foi possivel realizar" ||
+    norm === "não realizado" ||
+    norm === "nao realizado"
+  ) {
     return {
-      label: "Não realizado",
+      label:
+        norm.includes("possível") || norm.includes("possivel")
+          ? "Não foi possível realizar"
+          : "Não realizado",
       badgeClass:
         "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800",
       dotClass: "bg-rose-500",
@@ -165,6 +194,67 @@ export function getStatusPill(status: string): StatusPillConfig {
       "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700",
     dotClass: "bg-slate-400 dark:bg-slate-500",
   };
+}
+
+export function getRoleBadge(role?: string | null) {
+  const normRole = (role || "").toUpperCase();
+  switch (normRole) {
+    case "ADMIN":
+      return {
+        label: "Administrador",
+        className:
+          "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60",
+        dotColor: "bg-amber-500",
+      };
+    case "SUPPORT":
+      return {
+        label: "Suporte",
+        className:
+          "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/60",
+        dotColor: "bg-sky-500",
+      };
+    case "TECHNICIAN":
+      return {
+        label: "Técnico",
+        className:
+          "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60",
+        dotColor: "bg-purple-500",
+      };
+    case "MANAGER":
+      return {
+        label: "Gestor",
+        className:
+          "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60",
+        dotColor: "bg-indigo-500",
+      };
+    case "USER":
+    default:
+      return {
+        label: "Colaborador",
+        className:
+          "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+        dotColor: "bg-slate-500",
+      };
+  }
+}
+
+export function formatTimelineDate(dateStr?: string | Date | null): string {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    const dateFormatted = d.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    const timeFormatted = d.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return `${dateFormatted} às ${timeFormatted}`;
+  } catch {
+    return String(dateStr);
+  }
 }
 
 export function parseMediaPaths(media?: string | null): string[] {
@@ -192,12 +282,83 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   const [isRetrying, startRetryTransition] = useTransition();
   const [retryFeedback, setRetryFeedback] = useState<string | null>(null);
 
+  // Estados locais para alteração interativa de status e auditoria
+  const [currentStatus, setCurrentStatus] = useState<string>(log.status);
+  const [currentHistory, setCurrentHistory] = useState<WorkLogStatusHistoryItem[]>(
+    log.statusHistory || []
+  );
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
+  const [statusMenuOpen, setStatusMenuOpen] = useState<boolean>(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+
   // Sincroniza estado quando o atendimento muda
   useEffect(() => {
     setCurrentAiReport(log.aiReport ?? null);
     setGenerateFeedback(null);
     setRetryFeedback(null);
-  }, [log.id, log.aiReport]);
+    setCurrentStatus(log.status);
+    setCurrentHistory(log.statusHistory || []);
+    setStatusError(null);
+    setStatusMenuOpen(false);
+  }, [log.id, log.status, log.statusHistory, log.aiReport]);
+
+  // Fecha o dropdown ao clicar fora ou apertar Escape
+  useEffect(() => {
+    if (!statusMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        statusDropdownRef.current &&
+        !statusDropdownRef.current.contains(event.target as Node)
+      ) {
+        setStatusMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setStatusMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [statusMenuOpen]);
+
+  const handleSelectStatus = async (newStatus: string) => {
+    setStatusMenuOpen(false);
+    const normCurrent = (currentStatus || "").toLowerCase().trim();
+    const normNew = (newStatus || "").toLowerCase().trim();
+
+    if (normCurrent === normNew) {
+      return;
+    }
+
+    setIsUpdatingStatus(true);
+    setStatusError(null);
+
+    try {
+      const res = await api.worklogs.updateStatus(log.id, newStatus);
+      if (res.success) {
+        setCurrentStatus(res.status || newStatus);
+        if (res.history) {
+          setCurrentHistory(res.history);
+        }
+        onRefresh?.();
+      } else {
+        setStatusError(res.error || "Não foi possível atualizar o status.");
+      }
+    } catch (err) {
+      console.error("Erro ao atualizar status do atendimento:", err);
+      setStatusError(
+        err instanceof Error ? err.message : "Erro ao atualizar status do atendimento."
+      );
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   // Polling leve enquanto o relatório estiver pendente ou em processamento
   useEffect(() => {
@@ -244,7 +405,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   }, [currentAiReport?.structuredData]);
 
   const isSolved = useMemo(() => {
-    const norm = (log.status || "").toLowerCase().trim();
+    const norm = (currentStatus || "").toLowerCase().trim();
     return (
       norm === "solucionado" ||
       norm === "finalizadas" ||
@@ -252,13 +413,48 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
       norm === "concluído" ||
       norm === "concluido" ||
       norm === "realizado" ||
-      norm === "já realizado"
+      norm === "já realizado" ||
+      norm === "ja realizado"
     );
-  }, [log.status]);
+  }, [currentStatus]);
 
-  const statusPill = useMemo(() => getStatusPill(log.status), [log.status]);
+  const statusPill = useMemo(() => getStatusPill(currentStatus), [currentStatus]);
   const hasPdf = !!currentAiReport?.pdfPath;
   const hasVideo = !!currentAiReport?.videoPath;
+
+  // Constrói itens da linha do tempo garantindo evento de criação e ordenação decrescente
+  const timelineItems = useMemo(() => {
+    const list = [...currentHistory];
+    const hasInitial = list.some(
+      (item) =>
+        item.fromStatus.toLowerCase() === "registro inicial" ||
+        item.fromStatus.toLowerCase() === "criação" ||
+        item.fromStatus.toLowerCase() === "criacao"
+    );
+
+    if (!hasInitial) {
+      list.push({
+        id: `initial-${log.id}`,
+        workLogId: log.id,
+        fromStatus: "Registro Inicial",
+        toStatus: list.length > 0 ? list[list.length - 1].fromStatus : currentStatus,
+        changedById: log.userId || "",
+        changedBy: {
+          id: log.userId || "",
+          name: log.user?.name || "Autor do Atendimento",
+          role: log.user?.role || "USER",
+        },
+        createdAt:
+          typeof log.createdAt === "string"
+            ? log.createdAt
+            : new Date(log.createdAt).toISOString(),
+      });
+    }
+
+    return list.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [currentHistory, log.id, log.userId, log.user, log.createdAt, currentStatus]);
 
   const formattedDate = useMemo(() => {
     if (!log.createdAt) return "";
@@ -336,12 +532,81 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 {log.title || log.clientOrOffice}
               </h3>
 
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-xs ${statusPill.badgeClass}`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusPill.dotClass}`} />
-                <span>{statusPill.label}</span>
-              </span>
+              {/* Seletor Interativo de Status com Dropdown */}
+              <div className="relative inline-block" ref={statusDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => !isUpdatingStatus && setStatusMenuOpen((prev) => !prev)}
+                  disabled={isUpdatingStatus}
+                  aria-haspopup="listbox"
+                  aria-expanded={statusMenuOpen}
+                  title="Clique para alterar o status deste atendimento"
+                  className={`group inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer active:scale-95 disabled:opacity-75 disabled:cursor-wait select-none focus:outline-hidden focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500/60 ${statusPill.badgeClass}`}
+                >
+                  {isUpdatingStatus ? (
+                    <Loader2 size={12} className="animate-spin text-current shrink-0" />
+                  ) : (
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 transition-transform group-hover:scale-125 ${statusPill.dotClass}`}
+                    />
+                  )}
+                  <span>{statusPill.label}</span>
+                  <ChevronDown
+                    size={12}
+                    className={`opacity-60 group-hover:opacity-100 transition-transform duration-200 shrink-0 ${
+                      statusMenuOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {/* Popover Dropdown de Seleção de Status */}
+                {statusMenuOpen && (
+                  <div
+                    role="listbox"
+                    className="absolute left-0 mt-1.5 w-56 bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md"
+                  >
+                    <div className="px-2 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      Alterar status para
+                    </div>
+                    <div className="space-y-0.5">
+                      {WORKLOG_STATUS_OPTIONS.map((opt) => {
+                        const optPill = getStatusPill(opt);
+                        const isCurrent =
+                          (currentStatus || "").toLowerCase().trim() ===
+                          opt.toLowerCase().trim();
+
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            role="option"
+                            aria-selected={isCurrent}
+                            onClick={() => handleSelectStatus(opt)}
+                            className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left cursor-pointer ${
+                              isCurrent
+                                ? "bg-slate-100 dark:bg-slate-800/90 text-slate-900 dark:text-white font-semibold"
+                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white font-medium"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={`w-2 h-2 rounded-full shrink-0 ${optPill.dotClass}`}
+                              />
+                              <span className="truncate">{opt}</span>
+                            </div>
+                            {isCurrent && (
+                              <Check
+                                size={13}
+                                className="text-emerald-600 dark:text-emerald-400 shrink-0"
+                              />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {log.tag && (
                 <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
@@ -409,6 +674,14 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
           </div>
         )}
       </div>
+
+      {/* Alerta de erro na atualização de status */}
+      {statusError && (
+        <div className="flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl px-3.5 py-2 animate-in fade-in duration-200">
+          <AlertTriangle size={15} className="shrink-0 text-rose-600 dark:text-rose-400" />
+          <span className="font-medium">{statusError}</span>
+        </div>
+      )}
 
       {/* 2. Grid de 2 Colunas Lado a Lado: Descrição & Solução */}
       <div
@@ -886,7 +1159,111 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
         </div>
       )}
 
-      {/* 4. Slot de Ações do Rodapé (ex: Marcar como Solucionado) */}
+      {/* 4. Linha do Tempo: Histórico de Alterações de Status */}
+      <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col gap-3.5">
+        {/* Cabeçalho da Seção de Histórico */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800/80">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 shadow-2xs">
+              <History size={14} />
+            </div>
+            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+              Histórico de Alterações de Status
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700/60">
+              {timelineItems.length}
+            </span>
+          </div>
+        </div>
+
+        {/* Lista Vertical de Eventos com Linha Conectora */}
+        <div className="flex flex-col max-h-72 overflow-y-auto pr-1">
+          {timelineItems.map((item, idx) => {
+            const isLast = idx === timelineItems.length - 1;
+            const isInitial =
+              item.fromStatus.toLowerCase() === "registro inicial" ||
+              item.fromStatus.toLowerCase() === "criação" ||
+              item.fromStatus.toLowerCase() === "criacao";
+
+            const toPill = getStatusPill(item.toStatus);
+            const fromPill = getStatusPill(item.fromStatus);
+            const roleBadge = getRoleBadge(item.changedBy?.role);
+
+            return (
+              <div key={item.id} className="relative flex items-start gap-3 group">
+                {/* Marcador Dot e Linha Vertical Conectora */}
+                <div className="relative flex flex-col items-center shrink-0 self-stretch">
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#0b0f19] shadow-2xs ${toPill.dotClass} ring-2 ring-slate-200 dark:ring-slate-700/80 z-10 mt-1 transition-transform group-hover:scale-115`}
+                  />
+                  {!isLast && (
+                    <div className="w-0.5 bg-slate-200 dark:bg-slate-800 grow mt-1 mb-1" />
+                  )}
+                </div>
+
+                {/* Conteúdo do Evento */}
+                <div className={`flex-1 min-w-0 ${!isLast ? "pb-4" : "pb-1"}`}>
+                  <div className="flex items-center flex-wrap gap-2 mb-1">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      {item.changedBy?.name || "Usuário"}
+                    </span>
+
+                    <span
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${roleBadge.className}`}
+                    >
+                      <span className={`w-1 h-1 rounded-full ${roleBadge.dotColor}`} />
+                      <span>{roleBadge.label}</span>
+                    </span>
+
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium ml-auto flex items-center gap-1">
+                      <Clock size={11} className="opacity-70" />
+                      {formatTimelineDate(item.createdAt)}
+                    </span>
+                  </div>
+
+                  {/* Transição de Status Visual */}
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    {isInitial ? (
+                      <div className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                        <span className="text-slate-500 dark:text-slate-400">
+                          Registro inicial como
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border shadow-2xs ${toPill.badgeClass}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${toPill.dotClass}`} />
+                          <span>{toPill.label}</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 text-xs flex-wrap">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border shadow-2xs ${fromPill.badgeClass}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${fromPill.dotClass}`} />
+                          <span>{fromPill.label}</span>
+                        </span>
+                        <ArrowRight
+                          size={12}
+                          className="text-slate-400 dark:text-slate-500 shrink-0"
+                        />
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border shadow-2xs ${toPill.badgeClass}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${toPill.dotClass}`} />
+                          <span>{toPill.label}</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 5. Slot de Ações do Rodapé (ex: Marcar como Solucionado) */}
       {footerActions && (
         <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 flex-wrap">
           {footerActions}

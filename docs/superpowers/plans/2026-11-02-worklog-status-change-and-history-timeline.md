@@ -85,7 +85,7 @@
 **Files:**
 - Modify: `src/components/dashboard/WorkLogDetailContent.tsx`
 
-- [ ] **Step 1:** Em `src/components/dashboard/WorkLogDetailContent.tsx`:
+- [x] **Step 1:** Em `src/components/dashboard/WorkLogDetailContent.tsx`:
   - Atualizar o cabeçalho do card:
     - Transformar a pílula de status em um dropdown/seletor interativo estilizado no padrão CloudNexus.
     - Permitir a seleção entre as opções: `Realizado`, `Em andamento`, `Solucionado`, `Aguardando reunião`, `Não foi possível realizar`, `Backlog`.
@@ -99,9 +99,9 @@
       - Transição de status estilizada: `Status Anterior ➔ Novo Status`.
       - Timestamp formatado em português (`DD/MM/AAAA às HH:mm`).
     - Suporte a rolagem caso haja muitas alterações.
-- [ ] **Step 2:** Validar funcionamento e consistência nos temas Claro e Escuro.
-- [ ] **Step 3:** Executar `npx vite build` para checagem de build.
-- [ ] **Step 4:** Commit: `feat(ui): seletor interativo de status e linha do tempo de historico no card maximizado`.
+- [x] **Step 2:** Validar funcionamento e consistência nos temas Claro e Escuro.
+- [x] **Step 3:** Executar `npx vite build` para checagem de build.
+- [x] **Step 4:** Commit: `feat(ui): seletor interativo de status e linha do tempo de historico no card maximizado`.
 
 ---
 
@@ -115,3 +115,4 @@
 - [ ] **Step 3:** Verificar se as listagens refletem o novo status imediatamente.
 - [ ] **Step 4:** Validar temas Claro e Escuro.
 - [ ] **Step 5:** Registrar aprovação no plano e concluir a entrega.
+
