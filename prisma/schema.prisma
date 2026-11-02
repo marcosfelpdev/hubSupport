@@ -20,6 +20,8 @@ model User {
   createdAt DateTime  @default(now())
   notifications Notification[]
   workLogs      WorkLog[]
+  assignedEvents AgendaEvent[] @relation("AssignedAgendaEvents")
+  createdEvents  AgendaEvent[] @relation("CreatedAgendaEvents")
 }
 
 model Tag {
@@ -76,4 +78,20 @@ model AiReport {
   completedAt    DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+}
+
+model AgendaEvent {
+  id               String    @id @default(cuid())
+  date             String    // YYYY-MM-DD
+  time             String    // HH:mm
+  title            String
+  category         String    // "Reunião" | "Atendimento" | "Técnico" | "Lembrete"
+  completed        Boolean   @default(false)
+  employeeId       String?
+  employee         User?     @relation("AssignedAgendaEvents", fields: [employeeId], references: [id], onDelete: SetNull)
+  createdById      String?
+  createdBy        User?     @relation("CreatedAgendaEvents", fields: [createdById], references: [id], onDelete: SetNull)
+  notificationSent Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }

@@ -99,6 +99,30 @@ export interface NotificationItem {
   } | null;
 }
 
+export interface AgendaEventItem {
+  id: string;
+  date: string;
+  time: string;
+  title: string;
+  category: "Reunião" | "Atendimento" | "Técnico" | "Lembrete" | string;
+  completed: boolean;
+  employeeId?: string | null;
+  employee?: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string;
+  } | null;
+  createdById?: string | null;
+  createdBy?: {
+    id: string;
+    name: string;
+  } | null;
+  notificationSent?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface EmployeeItem {
   id: string;
   name: string;
@@ -269,6 +293,46 @@ export const api = {
     async markAllAsRead(): Promise<{ success: boolean }> {
       return request<{ success: boolean }>("/api/notifications/read-all", {
         method: "PATCH",
+      });
+    },
+  },
+
+  // Agenda Compartilhada
+  agenda: {
+    async getAll(): Promise<AgendaEventItem[]> {
+      return request<AgendaEventItem[]>("/api/agenda");
+    },
+    async create(data: {
+      title: string;
+      date: string;
+      time?: string;
+      category?: string;
+      employeeId?: string | null;
+    }): Promise<{ success: boolean; event: AgendaEventItem }> {
+      return request<{ success: boolean; event: AgendaEventItem }>("/api/agenda", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    async update(
+      id: string,
+      data: Partial<{
+        title: string;
+        date: string;
+        time: string;
+        category: string;
+        completed: boolean;
+        employeeId: string | null;
+      }>
+    ): Promise<{ success: boolean; event: AgendaEventItem }> {
+      return request<{ success: boolean; event: AgendaEventItem }>(`/api/agenda/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
+    },
+    async delete(id: string): Promise<{ success: boolean }> {
+      return request<{ success: boolean }>(`/api/agenda/${id}`, {
+        method: "DELETE",
       });
     },
   },
