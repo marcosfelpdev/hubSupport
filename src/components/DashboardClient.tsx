@@ -1,129 +1,28 @@
 import React, { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  Cog,
-  Lightbulb,
   Plus,
   Search,
-  Calendar,
   X,
-  Paperclip,
-  CheckCircle2,
   Clock,
-  AlertCircle,
   FileText,
 } from "lucide-react";
 import WorkLogForm from "@/components/WorkLogForm";
 import ScreenRecorderButton from "@/components/ScreenRecorderButton";
-import AiReportSection from "@/components/AiReportSection";
-import TagBadge from "@/components/TagBadge";
-import { WorkLog } from "@/components/WorkLogFeed";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
 import MediaGalleryModal from "@/components/MediaGalleryModal";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 import DateRangePopover, { DateRange } from "./dashboard/DateRangePopover";
+import { WorkLogItem } from "@/services/api";
+import WorkLogDetailContent from "@/components/dashboard/WorkLogDetailContent";
+import PdfViewerModal from "@/components/dashboard/PdfViewerModal";
 
 interface DashboardProps {
-  logs: any[];
+  logs: WorkLogItem[];
   currentUserId: string;
   employees: { name: string }[];
   onLogCreated?: () => void;
-}
-
-const avatarColors = [
-  "#6366f1",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#06b6d4",
-  "#ec4899",
-];
-
-function getAvatarColor(userId: string) {
-  let hash = 0;
-  for (let i = 0; i < (userId || "").length; i++) {
-    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
-function getInitials(name: string) {
-  if (!name) return "--";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-function getStatusPillConfig(status: string) {
-  const norm = (status || "").toLowerCase().trim();
-
-  if (
-    norm === "solucionado" ||
-    norm === "finalizadas" ||
-    norm === "finalizado" ||
-    norm === "concluído" ||
-    norm === "concluido" ||
-    norm === "realizado" ||
-    norm === "já realizado"
-  ) {
-    return {
-      label: "Solucionado",
-      badgeClass: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
-      dotClass: "bg-emerald-500",
-    };
-  }
-
-  if (norm === "em progresso" || norm === "em andamento") {
-    return {
-      label: "Em progresso",
-      badgeClass: "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800",
-      dotClass: "bg-sky-500",
-    };
-  }
-
-  if (
-    norm === "pendências" ||
-    norm === "pendencias" ||
-    norm === "pendente" ||
-    norm === "aguardando reunião" ||
-    norm === "aguardando reuniao"
-  ) {
-    return {
-      label: "Aguardando reunião",
-      badgeClass: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800",
-      dotClass: "bg-amber-500",
-    };
-  }
-
-  if (norm === "não foi possível realizar" || norm === "não realizado") {
-    return {
-      label: "Não realizado",
-      badgeClass: "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800",
-      dotClass: "bg-rose-500",
-    };
-  }
-
-  return {
-    label: status || "Registrado",
-    badgeClass: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700",
-    dotClass: "bg-slate-400 dark:bg-slate-500",
-  };
-}
-
-function formatDate(date: Date | string) {
-  try {
-    return new Date(date).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  } catch {
-    return "";
-  }
+  onRefresh?: () => void;
 }
 
 function toLocalDateStr(dateVal: Date | string): string {
@@ -144,14 +43,19 @@ function getMediaPaths(log: any): string[] {
 
 export default function DashboardClient({
   logs,
-  currentUserId,
+  currentUserId: _currentUserId,
   employees,
   onLogCreated,
+  onRefresh,
 }: DashboardProps) {
   const { isRecording } = useScreenRecording();
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState<File | null>(null);
+  const [pdfViewerLog, setPdfViewerLog] = useState<WorkLogItem | null>(null);
+
+  const fetchLogs = onRefresh || onLogCreated;
+
   const [filters, setFilters] = useState({
     requester: "",
     clientOrOffice: "",
@@ -238,8 +142,6 @@ export default function DashboardClient({
     setMediaCurrentIndex(startIndex);
     setMediaModalOpen(true);
   }
-
-  const selectedLogStatusPill = selectedLog ? getStatusPillConfig(selectedLog.status) : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -414,132 +316,13 @@ export default function DashboardClient({
         {/* Coluna da Direita: Detalhe Expandido do Atendimento */}
         <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs min-h-[calc(100vh-270px)] max-h-[calc(100vh-270px)] overflow-y-auto">
           {selectedLog ? (
-            <div className="flex flex-col gap-5 animate-fade-in">
-              {/* Header do Chamado */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-2xs"
-                    style={{ backgroundColor: getAvatarColor(selectedLog.userId) }}
-                  >
-                    {getInitials(selectedLog.user?.name || "")}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                      {selectedLog.user?.name || "Usuário do sistema"}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Registrado em {formatDate(selectedLog.createdAt)} às{" "}
-                      {new Date(selectedLog.createdAt).toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  {selectedLog.tag && (
-                    <TagBadge name={selectedLog.tag.name} color={selectedLog.tag.color} size="md" />
-                  )}
-                  {selectedLogStatusPill && (
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold shadow-2xs ${selectedLogStatusPill.badgeClass}`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selectedLogStatusPill.dotClass}`} />
-                      <span>{selectedLogStatusPill.label}</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Título do Atendimento (se houver) */}
-              {selectedLog.title && (
-                <div className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl p-4">
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
-                    Título do Atendimento
-                  </span>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    {selectedLog.title}
-                  </h3>
-                </div>
-              )}
-
-              {/* Informações Complementares: Solicitante, Escritório, Plataforma */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
-                    Solicitante
-                  </span>
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                    {selectedLog.requester || "Não informado"}
-                  </p>
-                </div>
-
-                <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
-                    Escritório / Cliente
-                  </span>
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                    {selectedLog.clientOrOffice || "Não informado"}
-                  </p>
-                </div>
-
-                {selectedLog.tag && (
-                  <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
-                      Plataforma
-                    </span>
-                    <div className="mt-0.5">
-                      <TagBadge name={selectedLog.tag.name} color={selectedLog.tag.color} size="sm" />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Botão de Anexo / Mídia */}
-              {getMediaPaths(selectedLog).length > 0 && (
-                <div>
-                  <button
-                    onClick={() => openMediaModal(selectedLog)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#111726] hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg transition-colors border border-slate-200 dark:border-slate-800 cursor-pointer shadow-2xs"
-                  >
-                    <Paperclip size={14} className="text-slate-500 dark:text-slate-400" />
-                    <span>Visualizar Mídias ({getMediaPaths(selectedLog).length})</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Seção Relatório de IA */}
-              <AiReportSection
-                workLogId={selectedLog.id}
-                initialReport={selectedLog.aiReport}
+            <div className="animate-fade-in">
+              <WorkLogDetailContent
+                log={selectedLog}
+                onRefresh={fetchLogs}
+                onOpenPdfModal={(_id) => setPdfViewerLog(selectedLog)}
+                onOpenMediaModal={(_log) => openMediaModal(selectedLog)}
               />
-
-              {/* Descrição e Ação Tomada */}
-              <div className="space-y-4">
-                <div className="bg-slate-50/60 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
-                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2">
-                    <AlertCircle size={14} />
-                    <span>Descrição do Problema</span>
-                  </div>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
-                    {selectedLog.reportedProblem || "Nenhuma descrição fornecida."}
-                  </p>
-                </div>
-
-                {selectedLog.actionTaken && selectedLog.actionTaken.trim() !== "" && (
-                  <div className="bg-slate-50/60 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
-                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
-                      <CheckCircle2 size={14} />
-                      <span>Ação Realizada</span>
-                    </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
-                      {selectedLog.actionTaken}
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center py-20 text-slate-400 dark:text-slate-500">
@@ -587,6 +370,13 @@ export default function DashboardClient({
         onClose={() => setMediaModalOpen(false)}
         mediaUrls={mediaItems}
         initialIndex={mediaCurrentIndex}
+      />
+
+      {/* Modal Visualizador de PDF Estilo Gemini */}
+      <PdfViewerModal
+        log={pdfViewerLog}
+        isOpen={!!pdfViewerLog}
+        onClose={() => setPdfViewerLog(null)}
       />
     </div>
   );

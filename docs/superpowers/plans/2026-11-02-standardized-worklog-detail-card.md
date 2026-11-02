@@ -60,13 +60,13 @@
 **Files:**
 - Modify: `src/components/DashboardClient.tsx`
 
-- [ ] **Step 1:** Atualizar `src/components/DashboardClient.tsx`:
+- [x] **Step 1:** Atualizar `src/components/DashboardClient.tsx`:
   - Substituir o conteúdo vertical antigo do painel direito pelo novo `WorkLogDetailContent`.
   - Integrar visualizador de PDF modal/embutido para quando o usuário clicar em "Visualizar PDF".
   - Integrar abertura do modal de mídias quando o usuário clicar no botão de mídias do card.
   - Manter suporte ao estado vazio caso nenhum atendimento esteja selecionado.
-- [ ] **Step 2:** Executar `npx vite build` para validar a compilação.
-- [ ] **Step 3:** Commit: `feat(ui): adotar estrutura padronizada do card maximizado na tela de atendimento principal`.
+- [x] **Step 2:** Executar `npx vite build` para validar a compilação.
+- [x] **Step 3:** Commit: `feat(ui): adotar estrutura padronizada do card maximizado na tela de atendimento principal`.
 
 ---
 
