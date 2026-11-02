@@ -77,3 +77,4 @@ interface WorkLogDetailContentProps {
   - Média: `bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800`
   - Baixa: `bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800`
 - Tipografia: tamanhos padronizados com hierarquia clara (`text-base sm:text-lg font-bold`, rótulos `uppercase tracking-wider text-[10px]` ou `text-xs font-semibold`).
+

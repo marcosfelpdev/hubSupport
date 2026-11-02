@@ -35,7 +35,7 @@
 **Files:**
 - Create: `src/components/dashboard/WorkLogDetailContent.tsx`
 
-- [ ] **Step 1:** Criar `src/components/dashboard/WorkLogDetailContent.tsx`:
+- [x] **Step 1:** Criar `src/components/dashboard/WorkLogDetailContent.tsx`:
   - Definir interfaces `WorkLogDetailContentProps`, `StructuredReportData` e `StatusPillConfig`.
   - Implementar cabeçalho padronizado:
     - Ícone no quadrado arredondado (`CheckCircle2` verde se solucionado, `FileText` cinza se não).
@@ -50,8 +50,8 @@
     - Se `status === "pending"` ou `"processing"`: Exibir status e barra de progresso com polling.
     - Se `!aiReport`: Exibir banner com botão `[✨ Gerar Relatório com IA]` sob demanda.
   - Slot `footerActions` para botões adicionais no rodapé.
-- [ ] **Step 2:** Executar `npx tsc --noEmit` para garantir 0 erros de tipagem.
-- [ ] **Step 3:** Commit: `feat(ui): criar componente WorkLogDetailContent padronizado para exibicao de atendimentos`.
+- [x] **Step 2:** Executar `npx tsc --noEmit` para garantir 0 erros de tipagem.
+- [x] **Step 3:** Commit: `feat(ui): criar componente WorkLogDetailContent padronizado para exibicao de atendimentos`.
 
 ---
 
@@ -105,3 +105,4 @@
 - [ ] **Step 3:** Validar visualização de PDFs e mídias a partir do card maximizado.
 - [ ] **Step 4:** Validar temas Claro e Escuro.
 - [ ] **Step 5:** Registrar aprovação final no plano.
+
