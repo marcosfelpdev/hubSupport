@@ -36,7 +36,7 @@
 **Files:**
 - Modify: `prisma/schema.prisma`
 
-- [ ] **Step 1:** Adicionar campos no schema:
+- [x] **Step 1:** Adicionar campos no schema:
   - Em `WorkLog`:
     ```prisma
     assignedToId     String?
@@ -46,9 +46,9 @@
     ```prisma
     assignedWorkLogs WorkLog[] @relation("AssignedWorkLogs")
     ```
-- [ ] **Step 2:** Pausar o servidor watch (`task-2116`), executar `npx prisma db push` e reiniciar o watch.
-- [ ] **Step 3:** Executar `npx tsc --noEmit` para verificar tipos gerados pelo Prisma.
-- [ ] **Step 4:** Commit: `feat(db): adicionar campo assignedToId para atribuicao de responsavel no WorkLog`.
+- [x] **Step 2:** Pausar o servidor watch (`task-2116`), executar `npx prisma db push` e reiniciar o watch.
+- [x] **Step 3:** Executar `npx tsc --noEmit` para verificar tipos gerados pelo Prisma.
+- [x] **Step 4:** Commit: `feat(db): adicionar campo assignedToId para atribuicao de responsavel no WorkLog`.
 
 ---
 
@@ -58,7 +58,7 @@
 - Modify: `src/server/routes/worklogs.routes.ts`
 - Modify: `src/services/api.ts`
 
-- [ ] **Step 1:** Em `src/server/routes/worklogs.routes.ts`:
+- [x] **Step 1:** Em `src/server/routes/worklogs.routes.ts`:
   - Atualizar `defaultWorkLogInclude`:
     ```ts
     assignedTo: {
@@ -73,10 +73,10 @@
     - Atualizar `prisma.workLog.update({ where: { id }, data: { assignedToId } })`.
     - Se houve alteração de responsável, registrar no histórico ou notificar se aplicável.
     - Retornar `{ success: true, assignedTo: updated.assignedTo }`.
-- [ ] **Step 2:** Em `src/services/api.ts`:
+- [x] **Step 2:** Em `src/services/api.ts`:
   - Atualizar interface `WorkLogItem` e `WorkLogDetailData` com `assignedToId?: string | null` e `assignedTo?: { id: string; name: string; email: string; role?: string | null } | null`.
   - Adicionar método `api.worklogs.assign(id: string, assignedToId: string | null)`.
-- [ ] **Step 3:** Executar `npx tsc --noEmit` e commit: `feat(api): endpoint e cliente para atribuicao de responsavel no atendimento`.
+- [x] **Step 3:** Executar `npx tsc --noEmit` e commit: `feat(api): endpoint e cliente para atribuicao de responsavel no atendimento`.
 
 ---
 
@@ -113,9 +113,9 @@
 **Files:**
 - Full codebase audit
 
-- [ ] **Step 1:** Executar `npx tsc --noEmit` e `npm run build`.
-- [ ] **Step 2:** Testar fluxo de assumir tarefa, atribuir a outro técnico, e desatribuir.
-- [ ] **Step 3:** Validar reflexo visual instantâneo no Kanban e nas listagens.
-- [ ] **Step 4:** Validar temas Claro e Escuro.
-- [ ] **Step 5:** Registrar aprovação no plano e concluir a entrega.
+- [x] **Step 1:** Executar `npx tsc --noEmit` e `npm run build`.
+- [x] **Step 2:** Testar fluxo de assumir tarefa, atribuir a outro técnico, e desatribuir.
+- [x] **Step 3:** Validar reflexo visual instantâneo no Kanban e nas listagens.
+- [x] **Step 4:** Validar temas Claro e Escuro.
+- [x] **Step 5:** Registrar aprovação no plano e concluir a entrega.
 

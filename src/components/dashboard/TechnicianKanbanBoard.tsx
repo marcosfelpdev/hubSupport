@@ -561,6 +561,19 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
         <ReportDetailsModal
           log={selectedLogForModal}
           onClose={() => setSelectedLogForModal(null)}
+          onRefresh={async () => {
+            onLogResolved?.();
+            try {
+              const updatedList = await api.worklogs.getTechnical();
+              setLogs(updatedList);
+              const reloaded = updatedList.find((x) => x.id === selectedLogForModal.id);
+              if (reloaded) {
+                setSelectedLogForModal(reloaded);
+              }
+            } catch (err) {
+              console.error("[Kanban] Erro ao sincronizar modal após refresh:", err);
+            }
+          }}
         />
       )}
     </div>
