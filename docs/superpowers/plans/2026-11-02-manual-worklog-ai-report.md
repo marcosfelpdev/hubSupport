@@ -34,21 +34,21 @@
 - Modify: `src/lib/gemini.ts`
 - Modify: `src/lib/report-processor.ts`
 
-- [ ] **Step 1:** In `src/lib/gemini.ts`, implement `analyzeFormWithGemini(context: WorkLogContext, mediaUrls?: string[]): Promise<StructuredReportData>`:
+- [x] **Step 1:** In `src/lib/gemini.ts`, implement `analyzeFormWithGemini(context: WorkLogContext, mediaUrls?: string[]): Promise<StructuredReportData>`:
   - Sanitiza o contexto do atendimento (`title`, `requester`, `clientOrOffice`, `reportedProblem`, `actionTaken`, `status`, `platform`, etc.).
   - Verifica arquivos de mídia anexados em `public/uploads` correspondentes aos caminhos em `mediaUrls`:
     - Para arquivos de imagem válidos (`.png`, `.jpg`, `.jpeg`, `.webp`), lê os bytes do disco e cria partes `inlineData: { mimeType, data: base64 }`.
   - Monta prompt executivo específico para relatórios baseados em formulário e mídias visuais.
   - Chama `ai.models.generateContent` com modelo `gemini-2.0-flash` e `responseSchema: REPORT_SCHEMA`.
   - Retorna `StructuredReportData` devidamente validado e sanitizado com fallbacks.
-- [ ] **Step 2:** In `src/lib/report-processor.ts`, update `processAiReportJob(workLogId: string)`:
+- [x] **Step 2:** In `src/lib/report-processor.ts`, update `processAiReportJob(workLogId: string)`:
   - Remove restrição rígida de `videoPath`.
   - Se `workLog.aiReport.videoPath` estiver presente, chama `analyzeRecordingWithGemini`.
   - Caso contrário, extrai os caminhos em `workLog.media` e chama `analyzeFormWithGemini`.
   - Compila o PDF através de `generateReportPdf({ workLogId, data: structuredData, context })`.
   - Atualiza o registro `AiReport` com `status: "completed"`, `pdfPath`, `structuredData`.
-- [ ] **Step 3:** Run `npx tsc --noEmit` and verify 0 type errors.
-- [ ] **Step 4:** Commit: `feat(ai): adicionar geracao de relatorios estruturados a partir de dados do chamado e midias`.
+- [x] **Step 3:** Run `npx tsc --noEmit` and verify 0 type errors.
+- [x] **Step 4:** Commit: `feat(ai): adicionar geracao de relatorios estruturados a partir de dados do chamado e midias`.
 
 ---
 
@@ -58,14 +58,14 @@
 - Modify: `src/server/routes/worklogs.routes.ts`
 - Modify: `src/services/api.ts`
 
-- [ ] **Step 1:** In `src/server/routes/worklogs.routes.ts`, add route `POST /:id/generate-ai-report`:
+- [x] **Step 1:** In `src/server/routes/worklogs.routes.ts`, add route `POST /:id/generate-ai-report`:
   - Aplica middleware `authenticateToken`.
   - Busca `workLog` por ID. Se não existir, retorna 404.
   - Se `workLog.aiReport?.status === "processing"`, retorna 400 informando que já está em processamento.
   - Realiza `prisma.aiReport.upsert` com `status: "pending"`, `startedAt: new Date()`, `errorMessage: null`.
   - Dispara `setImmediate(() => processAiReportJob(id))`.
   - Retorna `{ success: true }`.
-- [ ] **Step 2:** In `src/services/api.ts`, add under `api.worklogs`:
+- [x] **Step 2:** In `src/services/api.ts`, add under `api.worklogs`:
   ```ts
   async generateAiReport(id: string): Promise<{ success: boolean }> {
     return request<{ success: boolean }>(`/api/worklogs/${id}/generate-ai-report`, {
@@ -73,7 +73,7 @@
     });
   }
   ```
-- [ ] **Step 3:** Run `npx tsc --noEmit` and commit: `feat(api): endpoint para geracao sob demanda de relatorios de IA`.
+- [x] **Step 3:** Run `npx tsc --noEmit` and commit: `feat(api): endpoint para geracao sob demanda de relatorios de IA`.
 
 ---
 
@@ -82,7 +82,7 @@
 **Files:**
 - Modify: `src/components/AiReportSection.tsx`
 
-- [ ] **Step 1:** In `src/components/AiReportSection.tsx`:
+- [x] **Step 1:** In `src/components/AiReportSection.tsx`:
   - Quando `!report` (ou `report.status === null`):
     - Em vez de retornar `null`, renderizar o banner da Opção 1:
       - Caixa com gradiente suave índigo/ciano e bordas sutis.
@@ -95,8 +95,8 @@
       - Atualiza o estado local para `status: "pending"`.
       - O polling em `useEffect` detecta automaticamente a progressão para "processing" e depois para "completed".
   - Total suporte aos temas Claro e Escuro (CloudNexus).
-- [ ] **Step 2:** Run `npx vite build` and verify clean build.
-- [ ] **Step 3:** Commit: `feat(ui): banner inteligente no card maximizado para gerar relatorio de IA sob demanda`.
+- [x] **Step 2:** Run `npx vite build` and verify clean build.
+- [x] **Step 3:** Commit: `feat(ui): banner inteligente no card maximizado para gerar relatorio de IA sob demanda`.
 
 ---
 
@@ -109,3 +109,4 @@
 - [ ] **Step 2:** Testar chamado criado sem gravação de tela (como o exibido na imagem do usuário).
 - [ ] **Step 3:** Validar que o botão aparece, pode ser acionado e conclui a geração do relatório.
 - [ ] **Step 4:** Atualizar o plano e registrar relatório de aprovação.
+

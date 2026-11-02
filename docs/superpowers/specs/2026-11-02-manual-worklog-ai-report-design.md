@@ -75,3 +75,4 @@ Conforme alinhamento, a interface seguirá a **Opção 1**:
 - O clique aciona o Gemini multimodal com os dados do formulário e imagens anexadas.
 - O PDF corporativo é gerado e disponibilizado para visualização e download.
 - 0 erros em `npx tsc --noEmit` e `npx vite build`.
+
