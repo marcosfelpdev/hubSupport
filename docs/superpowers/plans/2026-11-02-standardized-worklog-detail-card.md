@@ -100,9 +100,10 @@
 **Files:**
 - Full codebase audit
 
-- [ ] **Step 1:** Executar `npx tsc --noEmit` e `npm run build`.
-- [ ] **Step 2:** Validar a renderização da tela de atendimentos com chamados com IA gerada (resumo, propostas, badges de prioridade) e sem IA gerada (banner sob demanda).
-- [ ] **Step 3:** Validar visualização de PDFs e mídias a partir do card maximizado.
-- [ ] **Step 4:** Validar temas Claro e Escuro.
-- [ ] **Step 5:** Registrar aprovação final no plano.
+- [x] **Step 1:** Executar `npx tsc --noEmit` e `npm run build` (`npx vite build`).
+- [x] **Step 2:** Validar a renderização da tela de atendimentos com chamados com IA gerada (resumo, propostas, badges de prioridade) e sem IA gerada (banner sob demanda).
+- [x] **Step 3:** Validar visualização de PDFs e mídias a partir do card maximizado.
+- [x] **Step 4:** Validar temas Claro e Escuro.
+- [x] **Step 5:** Registrar aprovação final no plano.
+
 

@@ -460,9 +460,9 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
                   {structured.title || "Relatório Executivo de IA"}
                 </h4>
-                {structured.subtitle && (
+                {(structured.subtitle || (structured as any).objective) && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {structured.subtitle}
+                    {structured.subtitle || (structured as any).objective}
                   </p>
                 )}
               </div>
@@ -526,13 +526,13 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
           </div>
 
           {/* Resumo Executivo */}
-          {structured.executiveSummary && (
+          {(structured.executiveSummary || (structured as any).summary) && (
             <div className="space-y-1.5">
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 Resumo Executivo
               </span>
               <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                {structured.executiveSummary}
+                {structured.executiveSummary || (structured as any).summary}
               </p>
             </div>
           )}
