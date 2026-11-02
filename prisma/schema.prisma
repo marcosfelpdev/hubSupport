@@ -22,6 +22,7 @@ model User {
   workLogs      WorkLog[]
   assignedEvents AgendaEvent[] @relation("AssignedAgendaEvents")
   createdEvents  AgendaEvent[] @relation("CreatedAgendaEvents")
+  statusChanges  WorkLogStatusHistory[]
 }
 
 model Tag {
@@ -51,6 +52,7 @@ model WorkLog {
   tag              Tag?           @relation(fields: [tagId], references: [id], onDelete: SetNull)
   notifications    Notification[]
   aiReport         AiReport?
+  statusHistory    WorkLogStatusHistory[]
 }
 
 model Notification {
@@ -94,4 +96,16 @@ model AgendaEvent {
   notificationSent Boolean   @default(false)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+}
+
+
+model WorkLogStatusHistory {
+  id          String   @id @default(cuid())
+  workLogId   String
+  workLog     WorkLog  @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+  fromStatus  String
+  toStatus    String
+  changedById String
+  changedBy   User     @relation(fields: [changedById], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 }
