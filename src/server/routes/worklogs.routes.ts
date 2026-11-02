@@ -9,6 +9,23 @@ import { processAiReportJob } from "../../lib/report-processor";
 
 const router = Router();
 
+const defaultWorkLogInclude = {
+  user: {
+    select: { name: true, email: true, role: true },
+  },
+  tag: true,
+  aiReport: true,
+  statusHistory: {
+    include: {
+      changedBy: {
+        select: { id: true, name: true, role: true },
+      },
+    },
+    orderBy: { createdAt: "desc" as const },
+  },
+};
+
+
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const RECORDINGS_DIR = path.join(process.cwd(), "storage", "recordings");
 
@@ -55,13 +72,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
             role: { not: "TECHNICIAN" },
           },
         },
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
         orderBy: {
           createdAt: "desc",
         },
@@ -75,13 +86,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
       const limit = isNaN(rawLimit) ? 25 : Math.min(Math.max(rawLimit, 1), 100);
       const logs = await prisma.workLog.findMany({
         take: limit,
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
         orderBy: {
           createdAt: "desc",
         },
@@ -98,13 +103,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
           status: "Solucionado",
         },
         take: limit,
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
         orderBy: {
           createdAt: "desc",
         },
@@ -144,13 +143,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
 
     const logs = await prisma.workLog.findMany({
       where: whereClause,
-      include: {
-        user: {
-          select: { name: true, email: true, role: true },
-        },
-        tag: true,
-        aiReport: true,
-      },
+      include: defaultWorkLogInclude,
       orderBy: {
         createdAt: "desc",
       },
@@ -177,26 +170,14 @@ router.get("/dashboard-summary", authenticateToken, async (req: Request, res: Re
       prisma.workLog.findMany({
         take: 25,
         orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
       }),
       // 2. Últimos relatórios marcados como Solucionado
       prisma.workLog.findMany({
         where: { status: "Solucionado" },
         take: 25,
         orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
       }),
       prisma.workLog.count(),
       prisma.workLog.count({ where: { status: "Solucionado" } }),
@@ -303,6 +284,16 @@ router.post(
         },
       });
 
+      // Registra evento de criação na linha do tempo de status
+      await prisma.workLogStatusHistory.create({
+        data: {
+          workLogId: newLog.id,
+          fromStatus: "Registro Inicial",
+          toStatus: finalStatus,
+          changedById: user.id,
+        },
+      });
+
       // Se houver gravação, cria AiReport e dispara processamento em background
       if (savedRecordingPath) {
         await prisma.aiReport.create({
@@ -379,14 +370,36 @@ router.patch(
         return;
       }
 
-      const updated = await prisma.workLog.update({
-        where: { id },
-        data: {
-          status: "Solucionado",
+      if (existing.status !== "Solucionado") {
+        await prisma.$transaction([
+          prisma.workLog.update({
+            where: { id },
+            data: {
+              status: "Solucionado",
+            },
+          }),
+          prisma.workLogStatusHistory.create({
+            data: {
+              workLogId: id,
+              fromStatus: existing.status,
+              toStatus: "Solucionado",
+              changedById: req.user!.id,
+            },
+          }),
+        ]);
+      }
+
+      const history = await prisma.workLogStatusHistory.findMany({
+        where: { workLogId: id },
+        include: {
+          changedBy: {
+            select: { id: true, name: true, role: true },
+          },
         },
+        orderBy: { createdAt: "desc" },
       });
 
-      res.json({ success: true, status: updated.status });
+      res.json({ success: true, status: "Solucionado", history });
     } catch (error) {
       console.error("[WorkLogs] Erro ao solucionar atendimento:", error);
       res.status(500).json({ error: "Erro ao solucionar atendimento." });
@@ -398,7 +411,6 @@ router.patch(
 router.patch(
   "/:id/status",
   authenticateToken,
-  requireTechnicianOrAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
@@ -418,14 +430,39 @@ router.patch(
         return;
       }
 
-      const updated = await prisma.workLog.update({
-        where: { id },
-        data: {
-          status: status.trim(),
+      const newStatus = status.trim();
+      const currentStatus = existing.status;
+
+      if (currentStatus !== newStatus) {
+        await prisma.$transaction([
+          prisma.workLog.update({
+            where: { id },
+            data: {
+              status: newStatus,
+            },
+          }),
+          prisma.workLogStatusHistory.create({
+            data: {
+              workLogId: id,
+              fromStatus: currentStatus,
+              toStatus: newStatus,
+              changedById: req.user!.id,
+            },
+          }),
+        ]);
+      }
+
+      const history = await prisma.workLogStatusHistory.findMany({
+        where: { workLogId: id },
+        include: {
+          changedBy: {
+            select: { id: true, name: true, role: true },
+          },
         },
+        orderBy: { createdAt: "desc" },
       });
 
-      res.json({ success: true, status: updated.status });
+      res.json({ success: true, status: newStatus, history });
     } catch (error) {
       console.error("[WorkLogs] Erro ao atualizar status:", error);
       res.status(500).json({ error: "Erro ao atualizar status do atendimento." });

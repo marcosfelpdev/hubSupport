@@ -1,3 +1,17 @@
+export interface WorkLogStatusHistoryItem {
+  id: string;
+  workLogId: string;
+  fromStatus: string;
+  toStatus: string;
+  changedById: string;
+  changedBy: {
+    id: string;
+    name: string;
+    role?: string | null;
+  };
+  createdAt: string;
+}
+
 // Serviços de comunicação HTTP com o Backend REST
 
 const TOKEN_KEY = "hubsupport_jwt_token";
@@ -57,6 +71,7 @@ export interface WorkLogItem {
     email: string;
     role?: string;
   };
+  statusHistory?: WorkLogStatusHistoryItem[];
   aiReport?: {
     id: string;
     status: string;
@@ -243,12 +258,12 @@ export const api = {
         body: formData,
       });
     },
-    async resolve(id: string): Promise<{ success: boolean; status: string; error?: string }> {
+    async resolve(id: string): Promise<{ success: boolean; status: string; history?: WorkLogStatusHistoryItem[]; error?: string }> {
       return request<{ success: boolean; status: string; error?: string }>(`/api/worklogs/${id}/resolve`, {
         method: "PATCH",
       });
     },
-    async updateStatus(id: string, status: string): Promise<{ success: boolean; status: string; error?: string }> {
+    async updateStatus(id: string, status: string): Promise<{ success: boolean; status: string; history?: WorkLogStatusHistoryItem[]; error?: string }> {
       return request<{ success: boolean; status: string; error?: string }>(`/api/worklogs/${id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
