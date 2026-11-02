@@ -34,16 +34,16 @@
 - Modify: `src/server/routes/worklogs.routes.ts`
 - Modify: `src/services/api.ts`
 
-- [ ] **Step 1:** In `src/server/routes/worklogs.routes.ts`, update `router.get("/")`:
+- [x] **Step 1:** In `src/server/routes/worklogs.routes.ts`, update `router.get("/")`:
   - Extract query params: `startDate` (`req.query.startDate as string`) and `endDate` (`req.query.endDate as string`).
   - If `startDate` or `endDate` are provided, parse dates:
     - `startDate`: `new Date(`${startDate}T00:00:00.000`)` (ou fuso local).
     - `endDate`: `new Date(`${endDate}T23:59:59.999`)`.
     - Apply `where.createdAt = { gte?: start, lte?: end }`.
   - When no date or type params are passed, do NOT restrict to `today`! Return all logs ordered by `createdAt: "desc"`.
-- [ ] **Step 2:** In `src/services/api.ts`, update `api.worklogs.getDaily()` / add `api.worklogs.getAll(params?: { startDate?: string; endDate?: string })` accepting optional query params.
-- [ ] **Step 3:** Test endpoint with PowerShell `Invoke-RestMethod` to verify that 25 historical logs are returned.
-- [ ] **Step 4:** Run `npx tsc --noEmit` and commit: `feat(api): desbloquear historico completo de atendimentos e suportar filtro de datas`.
+- [x] **Step 2:** In `src/services/api.ts`, update `api.worklogs.getDaily()` / add `api.worklogs.getAll(params?: { startDate?: string; endDate?: string })` accepting optional query params.
+- [x] **Step 3:** Test endpoint with PowerShell `Invoke-RestMethod` to verify that 25 historical logs are returned.
+- [x] **Step 4:** Run `npx tsc --noEmit` and commit: `feat(api): desbloquear historico completo de atendimentos e suportar filtro de datas`.
 
 ---
 
@@ -52,7 +52,7 @@
 **Files:**
 - Create: `src/components/dashboard/DateRangePopover.tsx`
 
-- [ ] **Step 1:** Create `src/components/dashboard/DateRangePopover.tsx`:
+- [x] **Step 1:** Create `src/components/dashboard/DateRangePopover.tsx`:
   - Props:
     ```ts
     interface DateRangePopoverProps {
@@ -69,7 +69,7 @@
     - Action buttons: "Aplicar" e "Limpar".
   - Handle click outside to close popover.
   - Complete Dark Mode and Light Mode support.
-- [ ] **Step 2:** Run `npx tsc --noEmit` and commit: `feat(ui): criar componente DateRangePopover com atalhos rapidos e datas personalizadas`.
+- [x] **Step 2:** Run `npx tsc --noEmit` and commit: `feat(ui): criar componente DateRangePopover com atalhos rapidos e datas personalizadas`.
 
 ---
 
@@ -78,14 +78,14 @@
 **Files:**
 - Modify: `src/components/DashboardClient.tsx`
 
-- [ ] **Step 1:** In `src/components/DashboardClient.tsx`:
+- [x] **Step 1:** In `src/components/DashboardClient.tsx`:
   - Replace filter state `date: ""` with `startDate: ""` and `endDate: ""` and `dateLabel: ""`.
   - Add `toLocalDateStr(date: Date | string): string` helper.
   - Replace old single date input with `<DateRangePopover>`.
   - Update `filteredLogs` memo to filter by `(startDate ? logDate >= startDate : true) && (endDate ? logDate <= endDate : true)`.
   - Update "Limpar filtros" button to clear `startDate` and `endDate`.
-- [ ] **Step 2:** Run `npx vite build` to ensure clean compile.
-- [ ] **Step 3:** Commit: `feat(dashboard): integrar filtro por periodo de datas no feed de atendimentos`.
+- [x] **Step 2:** Run `npx vite build` to ensure clean compile.
+- [x] **Step 3:** Commit: `feat(dashboard): integrar filtro por periodo de datas no feed de atendimentos`.
 
 ---
 
@@ -94,10 +94,10 @@
 **Files:**
 - Full repository audit
 
-- [ ] **Step 1:** Run `npx tsc --noEmit` and verify 0 TypeScript errors.
-- [ ] **Step 2:** Run `npx vite build` and verify clean production build.
-- [ ] **Step 3:** Verify that all 25 historical logs are visible when no date filter is active.
-- [ ] **Step 4:** Verify that selecting a period (e.g. 15 de outubro a 18 de outubro) filters accurately.
-- [ ] **Step 5:** Verify Light and Dark mode rendering.
-- [ ] **Step 6:** Update plan checkmarks and finalize.
+- [x] **Step 1:** Run `npx tsc --noEmit` and verify 0 TypeScript errors.
+- [x] **Step 2:** Run `npx vite build` and verify clean production build.
+- [x] **Step 3:** Verify that all 25 historical logs are visible when no date filter is active.
+- [x] **Step 4:** Verify that selecting a period (e.g. 15 de outubro a 18 de outubro) filters accurately.
+- [x] **Step 5:** Verify Light and Dark mode rendering.
+- [x] **Step 6:** Update plan checkmarks and finalize.
 
