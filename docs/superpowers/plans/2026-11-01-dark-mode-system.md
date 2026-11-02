@@ -87,10 +87,10 @@
 - Modify: `src/components/MediaGalleryModal.tsx`
 - Modify: `src/components/WorkLogForm.tsx`
 
-- [ ] **Step 1:** Adapt `ReportDetailsModal.tsx` modal window, PDF viewer container, tabs, and action toolbar with dark theme styling.
-- [ ] **Step 2:** Adapt `MediaGalleryModal.tsx` lightbox, central stage, and bottom thumbnails rail for dark mode.
-- [ ] **Step 3:** Adapt `WorkLogForm.tsx` form inputs, radio selectors, tags picker, and dropzone with `dark:bg-slate-900/60 dark:border-slate-700 dark:text-white`.
-- [ ] **Step 4:** Run `npx vite build` and commit: `feat(modals): suportar modo escuro em modais, galeria de midias e formulario`.
+- [x] **Step 1:** Adapt `ReportDetailsModal.tsx` modal window, PDF viewer container, tabs, and action toolbar with dark theme styling.
+- [x] **Step 2:** Adapt `MediaGalleryModal.tsx` lightbox, central stage, and bottom thumbnails rail for dark mode.
+- [x] **Step 3:** Adapt `WorkLogForm.tsx` form inputs, radio selectors, tags picker, and dropzone with `dark:bg-slate-900/60 dark:border-slate-700 dark:text-white`.
+- [x] **Step 4:** Run `npx vite build` and commit: `feat(modals): suportar modo escuro em modais, galeria de midias e formulario`.
 
 ---
 

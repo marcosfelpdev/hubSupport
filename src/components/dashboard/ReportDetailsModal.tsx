@@ -220,7 +220,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-fade-in"
+      className="fixed inset-0 z-50 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fade-in"
       onClick={onClose}
     >
       <div
@@ -251,7 +251,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({ log, onC
                   </h4>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                     {log.clientOrOffice} • Registrado em {formattedDate}
-                    {log.tag && <span className="ml-1 text-slate-400">• {log.tag.name}</span>}
+                    {log.tag && <span className="ml-1 text-slate-400 dark:text-slate-500">• {log.tag.name}</span>}
                   </p>
                 </div>
               </div>
