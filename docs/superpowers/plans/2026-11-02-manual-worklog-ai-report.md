@@ -105,8 +105,8 @@
 **Files:**
 - Full repository audit
 
-- [ ] **Step 1:** Run `npx tsc --noEmit` e `npm run build`.
-- [ ] **Step 2:** Testar chamado criado sem gravação de tela (como o exibido na imagem do usuário).
-- [ ] **Step 3:** Validar que o botão aparece, pode ser acionado e conclui a geração do relatório.
-- [ ] **Step 4:** Atualizar o plano e registrar relatório de aprovação.
+- [x] **Step 1:** Run `npx tsc --noEmit` e `npm run build`.
+- [x] **Step 2:** Testar chamado criado sem gravação de tela (como o exibido na imagem do usuário).
+- [x] **Step 3:** Validar que o botão aparece, pode ser acionado e conclui a geração do relatório.
+- [x] **Step 4:** Atualizar o plano e registrar relatório de aprovação.
 

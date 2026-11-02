@@ -163,8 +163,8 @@ const REPORT_SCHEMA = {
  */
 const CANDIDATE_MODELS = [
   process.env.GEMINI_MODEL?.trim(),
-  "gemini-3.8-flash",
   "gemini-3.5-flash",
+  "gemini-3.8-flash",
   "gemini-flash-latest",
 ].filter((m): m is string => Boolean(m && m.length > 0));
 
