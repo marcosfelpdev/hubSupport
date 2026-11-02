@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs/promises";
 import fsSync from "fs";
 import { prisma } from "../../lib/prisma";
-import { authenticateToken, requireTechnicianOrAdmin } from "../auth";
+import { authenticateToken, requireTechnicianOrAdmin, requireTechnicianManagerOrAdmin } from "../auth";
 import { processAiReportJob } from "../../lib/report-processor";
 
 const router = Router();
@@ -415,6 +415,7 @@ router.patch(
 router.patch(
   "/:id/assign",
   authenticateToken,
+  requireTechnicianManagerOrAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
