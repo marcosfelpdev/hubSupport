@@ -157,6 +157,15 @@ export interface EmployeeItem {
   };
 }
 
+const API_BASE = ((import.meta as any).env?.VITE_API_URL as string)?.replace(/\/+$/, "") || "";
+
+export function resolveApiUrl(path: string): string {
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+  return API_BASE ? `${API_BASE}${path}` : path;
+}
+
 async function request<T>(
   url: string,
   options: RequestInit = {}
@@ -176,7 +185,8 @@ async function request<T>(
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(url, {
+  const fullUrl = resolveApiUrl(url);
+  const response = await fetch(fullUrl, {
     ...options,
     headers,
     credentials: "include", // Garante cookies de sessão
