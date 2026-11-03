@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs/promises";
 import fsSync from "fs";
 import { prisma } from "../../lib/prisma";
-import { uploadBuffer } from "../services/r2Storage";
+import { uploadBuffer, fileExists } from "../services/r2Storage";
 import { authenticateToken, requireTechnicianOrAdmin, requireTechnicianManagerOrAdmin } from "../auth";
 import { processAiReportJob } from "../../lib/report-processor";
 
@@ -551,14 +551,9 @@ router.post(
         return;
       }
 
-      try {
-        const stats = await fs.stat(report.videoPath);
-        if (stats.size === 0) {
-          res.status(400).json({ error: "O arquivo de gravação associado está vazio (0 bytes)." });
-          return;
-        }
-      } catch {
-        res.status(404).json({ error: "O arquivo de gravação não foi encontrado no servidor." });
+      const exists = await fileExists(report.videoPath);
+      if (!exists) {
+        res.status(404).json({ error: "O arquivo de gravação não foi encontrado no storage." });
         return;
       }
 

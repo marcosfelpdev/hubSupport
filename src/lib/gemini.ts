@@ -157,14 +157,51 @@ const REPORT_SCHEMA = {
   ],
 };
 
+
+function isTransientError(err: unknown): boolean {
+  if (!err) return false;
+  const status = (err as { status?: number; statusCode?: number })?.status ||
+                 (err as { status?: number; statusCode?: number })?.statusCode;
+  if (status === 429 || status === 503) return true;
+
+  const errMsg = err instanceof Error ? err.message : String(err);
+  return (
+    errMsg.includes("503") ||
+    errMsg.includes("429") ||
+    errMsg.includes("high demand") ||
+    errMsg.includes("UNAVAILABLE") ||
+    errMsg.includes("RESOURCE_EXHAUSTED") ||
+    errMsg.includes("quota") ||
+    errMsg.includes("overloaded")
+  );
+}
+
+function formatGeminiErrorMessage(err: unknown): string {
+  if (!err) return "Não foi possível obter resposta dos servidores de IA.";
+  const msg = err instanceof Error ? err.message : String(err);
+  if (
+    msg.includes("503") ||
+    msg.includes("high demand") ||
+    msg.includes("UNAVAILABLE")
+  ) {
+    return "Os servidores do Google Gemini estão sob alta demanda temporária (Erro 503). Por favor, aguarde alguns instantes e clique em 'Tentar novamente'.";
+  }
+  if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
+    return "Limite de requisições do Gemini atingido temporariamente (Erro 429). Por favor, tente novamente em alguns instantes.";
+  }
+  return msg;
+}
+
 /**
  * Modelos candidatos suportados pelo Google Gemini com suporte multimodal (vídeo).
- * gemini-3.8-flash é a versão mais moderna recomendada pela API do Gemini.
+ * Prioriza gemini-2.0-flash e gemini-1.5-flash com fallback resiliente para mitigar 503 e 429.
  */
 const CANDIDATE_MODELS = [
   process.env.GEMINI_MODEL?.trim(),
-  "gemini-3.5-flash",
-  "gemini-3.8-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-2.5-flash",
+  "gemini-1.5-pro",
   "gemini-flash-latest",
 ].filter((m): m is string => Boolean(m && m.length > 0));
 
@@ -350,16 +387,15 @@ ${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.p
           }
         } catch (err: unknown) {
           lastError = err;
-          const status = (err as { status?: number })?.status;
-          console.warn(`[Gemini] Tentativa ${attempt} com modelo ${model} falhou:`, err);
+          const errMsg = err instanceof Error ? err.message : String(err);
+          console.warn(`[Gemini] Tentativa ${attempt} com modelo ${model} falhou: ${errMsg}`);
 
-          // Se for erro de cota (429) ou indisponibilidade de serviço (503), aguarda com backoff
-          if (status === 429 || status === 503) {
-            const delay = Math.pow(2, attempt) * 1000;
-            console.log(`[Gemini] Aguardando ${delay}ms antes da próxima tentativa...`);
+          if (isTransientError(err) && attempt < 3) {
+            const delay = Math.pow(2, attempt) * 1500;
+            console.log(`[Gemini] Erro de alta demanda/cota detectado. Aguardando ${delay}ms antes da tentativa ${attempt + 1}...`);
             await new Promise((resolve) => setTimeout(resolve, delay));
           } else {
-            // Outros erros: não tenta novamente com o mesmo modelo
+            // Se for erro permanente ou esgotou as tentativas do modelo, avança para o próximo modelo candidato
             break;
           }
         }
@@ -540,12 +576,12 @@ ${imageParts.length > 0 ? `- Mídias anexadas: Foram anexadas ${imageParts.lengt
         }
       } catch (err: unknown) {
         lastError = err;
-        const status = (err as { status?: number })?.status;
-        console.warn(`[Gemini] Tentativa ${attempt} com modelo ${model} falhou:`, err);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn(`[Gemini] Tentativa ${attempt} com modelo ${model} falhou: ${errMsg}`);
 
-        if (status === 429 || status === 503) {
-          const delay = Math.pow(2, attempt) * 1000;
-          console.log(`[Gemini] Aguardando ${delay}ms antes da próxima tentativa...`);
+        if (isTransientError(err) && attempt < 3) {
+          const delay = Math.pow(2, attempt) * 1500;
+          console.log(`[Gemini] Erro de alta demanda/cota detectado. Aguardando ${delay}ms antes da tentativa ${attempt + 1}...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
         } else {
           break;

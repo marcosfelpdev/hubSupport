@@ -226,7 +226,7 @@ export default function AiReportSection({
           {report.videoPath && (
             <div className="flex justify-end pt-1">
               <a
-                href={`/api/reports/${workLogId}/recording`}
+                href={api.worklogs.getDownloadRecordingUrl(workLogId)}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
@@ -261,7 +261,7 @@ export default function AiReportSection({
           {report.videoPath && (
             <div className="flex justify-end pt-1">
               <a
-                href={`/api/reports/${workLogId}/recording`}
+                href={api.worklogs.getDownloadRecordingUrl(workLogId)}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
@@ -298,7 +298,7 @@ export default function AiReportSection({
           <div className="flex items-center gap-2 flex-wrap">
             {report.videoPath && (
               <a
-                href={`/api/reports/${workLogId}/recording`}
+                href={api.worklogs.getDownloadRecordingUrl(workLogId)}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
@@ -312,7 +312,7 @@ export default function AiReportSection({
             )}
 
             <a
-              href={`/api/reports/${workLogId}/download`}
+              href={api.worklogs.getDownloadReportUrl(workLogId)}
               target="_blank"
               rel="noopener noreferrer"
               download
@@ -349,7 +349,7 @@ export default function AiReportSection({
           <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
             {report.videoPath && (
               <a
-                href={`/api/reports/${workLogId}/recording`}
+                href={api.worklogs.getDownloadRecordingUrl(workLogId)}
                 target="_blank"
                 rel="noopener noreferrer"
                 download

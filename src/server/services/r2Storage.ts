@@ -132,6 +132,30 @@ export async function getFileStream(
 }
 
 /**
+ * Verifica se um arquivo existe no R2 ou disco local.
+ */
+export async function fileExists(key: string): Promise<boolean> {
+  const normalizedKey = key.replace(/\\/g, "/").replace(/^\/+/, "");
+
+  if (isR2Configured && s3Client) {
+    try {
+      await s3Client.send(
+        new HeadObjectCommand({
+          Bucket: R2_BUCKET_NAME,
+          Key: normalizedKey,
+        })
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const localPath = path.join(process.cwd(), normalizedKey);
+  return fs.existsSync(localPath);
+}
+
+/**
  * Deleta um arquivo do R2 ou disco local.
  */
 export async function deleteFile(key: string): Promise<void> {
@@ -195,4 +219,3 @@ export async function downloadToTempFile(key: string, tempFilePath: string): Pro
 
   throw new Error(`Arquivo não encontrado para download temporário: ${key}`);
 }
-

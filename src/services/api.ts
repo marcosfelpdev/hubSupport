@@ -321,14 +321,16 @@ export const api = {
       return request<WorkLogItem["aiReport"]>(`/api/worklogs/${id}/ai-status`);
     },
     getDownloadReportUrl(id: string): string {
-      return resolveApiUrl(`/api/reports/${id}/download`);
+      const token = getToken();
+      return resolveApiUrl(`/api/reports/${id}/download${token ? `?token=${encodeURIComponent(token)}` : ""}`);
     },
     getViewReportUrl(id: string): string {
       const token = getToken();
       return resolveApiUrl(`/api/reports/${id}/download?view=inline${token ? `&token=${encodeURIComponent(token)}` : ""}`);
     },
     getDownloadRecordingUrl(id: string): string {
-      return resolveApiUrl(`/api/reports/${id}/recording`);
+      const token = getToken();
+      return resolveApiUrl(`/api/reports/${id}/recording${token ? `?token=${encodeURIComponent(token)}` : ""}`);
     },
   },
 
