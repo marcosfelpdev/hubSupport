@@ -100,9 +100,14 @@ export async function getFileStream(
   }
 
   // Fallback local
-  const localPath = path.join(process.cwd(), normalizedKey);
+  let localPath = path.join(process.cwd(), normalizedKey);
   if (!fs.existsSync(localPath)) {
-    throw new Error(`Arquivo local não encontrado: ${localPath}`);
+    const publicPath = path.join(process.cwd(), "public", normalizedKey);
+    if (fs.existsSync(publicPath)) {
+      localPath = publicPath;
+    } else {
+      throw new Error(`Arquivo local não encontrado: ${localPath}`);
+    }
   }
 
   const stat = fs.statSync(localPath);
@@ -132,6 +137,19 @@ export async function getFileStream(
 }
 
 /**
+ * Obtém o conteúdo completo de um arquivo como Buffer (do R2 ou disco local).
+ */
+export async function getFileBuffer(key: string): Promise<Buffer> {
+  const normalizedKey = key.replace(/\\/g, "/").replace(/^\/+/, "");
+  const { stream } = await getFileStream(normalizedKey);
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
+/**
  * Verifica se um arquivo existe no R2 ou disco local.
  */
 export async function fileExists(key: string): Promise<boolean> {
@@ -152,7 +170,9 @@ export async function fileExists(key: string): Promise<boolean> {
   }
 
   const localPath = path.join(process.cwd(), normalizedKey);
-  return fs.existsSync(localPath);
+  if (fs.existsSync(localPath)) return true;
+  const publicPath = path.join(process.cwd(), "public", normalizedKey);
+  return fs.existsSync(publicPath);
 }
 
 /**
@@ -214,6 +234,11 @@ export async function downloadToTempFile(key: string, tempFilePath: string): Pro
   const localPath = path.join(process.cwd(), normalizedKey);
   if (fs.existsSync(localPath)) {
     fs.copyFileSync(localPath, tempFilePath);
+    return tempFilePath;
+  }
+  const publicPath = path.join(process.cwd(), "public", normalizedKey);
+  if (fs.existsSync(publicPath)) {
+    fs.copyFileSync(publicPath, tempFilePath);
     return tempFilePath;
   }
 

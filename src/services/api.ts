@@ -332,6 +332,50 @@ export const api = {
       const token = getToken();
       return resolveApiUrl(`/api/reports/${id}/recording${token ? `?token=${encodeURIComponent(token)}` : ""}`);
     },
+    async downloadFile(url: string, defaultFilename: string): Promise<void> {
+      const token = getToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const fullUrl = resolveApiUrl(url + (token ? (url.includes("?") ? `&token=${encodeURIComponent(token)}` : `?token=${encodeURIComponent(token)}`) : ""));
+      const res = await fetch(fullUrl, {
+        headers,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        let errorMsg = `Erro ${res.status} ao baixar arquivo.`;
+        try {
+          const json = await res.json();
+          if (json.error) errorMsg = json.error;
+        } catch {}
+        throw new Error(errorMsg);
+      }
+
+      let filename = defaultFilename;
+      const disposition = res.headers.get("content-disposition");
+      if (disposition && disposition.includes("filename=")) {
+        const match = disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+    },
+    async downloadReport(id: string): Promise<void> {
+      return this.downloadFile(`/api/reports/${id}/download`, `relatorio-${id.slice(0, 8)}.pdf`);
+    },
+    async downloadRecording(id: string): Promise<void> {
+      return this.downloadFile(`/api/reports/${id}/recording`, `gravacao-${id.slice(0, 8)}.webm`);
+    },
     async delete(id: string): Promise<{ success: boolean; message?: string }> {
       return request<{ success: boolean; message?: string }>(`/api/worklogs/${id}`, {
         method: "DELETE",

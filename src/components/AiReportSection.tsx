@@ -29,6 +29,37 @@ export default function AiReportSection({
   const [retryFeedback, setRetryFeedback] = useState<string | null>(null);
   const [isGenerating, startGeneratingTransition] = useTransition();
   const [generateFeedback, setGenerateFeedback] = useState<string | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
+  const [downloadFeedback, setDownloadFeedback] = useState<string | null>(null);
+
+  const handleDownloadPdf = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDownloadingPdf(true);
+    setDownloadFeedback(null);
+    try {
+      await api.worklogs.downloadReport(workLogId);
+    } catch (err) {
+      console.warn("Download direto via fetch falhou, abrindo URL:", err);
+      window.open(api.worklogs.getDownloadReportUrl(workLogId), "_blank");
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  const handleDownloadVideo = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDownloadingVideo(true);
+    setDownloadFeedback(null);
+    try {
+      await api.worklogs.downloadRecording(workLogId);
+    } catch (err) {
+      console.warn("Download da gravação falhou, abrindo URL:", err);
+      window.open(api.worklogs.getDownloadRecordingUrl(workLogId), "_blank");
+    } finally {
+      setIsDownloadingVideo(false);
+    }
+  };
 
   // Sincroniza estado quando o atendimento selecionado muda
   useEffect(() => {
@@ -260,18 +291,17 @@ export default function AiReportSection({
 
           {report.videoPath && (
             <div className="flex justify-end pt-1">
-              <a
-                href={api.worklogs.getDownloadRecordingUrl(workLogId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
+              <button
+                type="button"
+                onClick={handleDownloadVideo}
+                disabled={isDownloadingVideo}
                 id="btn-download-recording-processing"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer disabled:opacity-60"
                 title="Baixar gravação de vídeo original"
               >
-                <Video size={13} className="text-indigo-600 dark:text-indigo-400" />
+                {isDownloadingVideo ? <Loader2 size={13} className="animate-spin text-indigo-600 dark:text-indigo-400" /> : <Video size={13} className="text-indigo-600 dark:text-indigo-400" />}
                 <span>Baixar gravação</span>
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -297,32 +327,30 @@ export default function AiReportSection({
 
           <div className="flex items-center gap-2 flex-wrap">
             {report.videoPath && (
-              <a
-                href={api.worklogs.getDownloadRecordingUrl(workLogId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
+              <button
+                type="button"
+                onClick={handleDownloadVideo}
+                disabled={isDownloadingVideo}
                 id="btn-download-recording"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer disabled:opacity-60"
                 title="Baixar arquivo da gravação de tela com áudio"
               >
-                <Video size={13} className="text-slate-600 dark:text-slate-400" />
+                {isDownloadingVideo ? <Loader2 size={13} className="animate-spin text-slate-600 dark:text-slate-400" /> : <Video size={13} className="text-slate-600 dark:text-slate-400" />}
                 <span>Baixar gravação</span>
-              </a>
+              </button>
             )}
 
-            <a
-              href={api.worklogs.getDownloadReportUrl(workLogId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              download
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
               id="btn-download-pdf"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-xs transition-all cursor-pointer disabled:opacity-60"
               title="Baixar relatório executivo em PDF"
             >
-              <Download size={14} className="text-white" />
+              {isDownloadingPdf ? <Loader2 size={14} className="animate-spin text-white" /> : <Download size={14} className="text-white" />}
               <span>Baixar relatório PDF</span>
-            </a>
+            </button>
           </div>
         </div>
       )}
@@ -348,18 +376,17 @@ export default function AiReportSection({
 
           <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
             {report.videoPath && (
-              <a
-                href={api.worklogs.getDownloadRecordingUrl(workLogId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
+              <button
+                type="button"
+                onClick={handleDownloadVideo}
+                disabled={isDownloadingVideo}
                 id="btn-download-recording-failed"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer disabled:opacity-60"
                 title="Baixar gravação de vídeo original"
               >
-                <Video size={13} className="text-slate-600 dark:text-slate-400" />
+                {isDownloadingVideo ? <Loader2 size={13} className="animate-spin text-slate-600 dark:text-slate-400" /> : <Video size={13} className="text-slate-600 dark:text-slate-400" />}
                 <span>Baixar gravação</span>
-              </a>
+              </button>
             )}
 
             <button

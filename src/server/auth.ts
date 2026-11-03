@@ -53,8 +53,8 @@ export async function authenticateToken(
       token = authHeader.split(" ")[1];
     } else if (req.cookies && req.cookies.token) {
       token = req.cookies.token;
-    } else if (req.query && typeof req.query.token === 'string') {
-      token = req.query.token;
+    } else if (req.query && req.query.token) {
+      token = Array.isArray(req.query.token) ? String(req.query.token[0]) : String(req.query.token);
     }
 
     if (!token) {

@@ -1,6 +1,7 @@
 import { GoogleGenAI, createPartFromUri } from "@google/genai";
 import fs from "fs/promises";
 import path from "path";
+import { getFileBuffer } from "../server/services/r2Storage";
 
 export interface ProposalItem {
   item: string;
@@ -176,7 +177,7 @@ function isTransientError(err: unknown): boolean {
   );
 }
 
-function formatGeminiErrorMessage(err: unknown): string {
+export function formatGeminiErrorMessage(err: unknown): string {
   if (!err) return "Não foi possível obter resposta dos servidores de IA.";
   const msg = err instanceof Error ? err.message : String(err);
   if (
@@ -199,10 +200,9 @@ function formatGeminiErrorMessage(err: unknown): string {
 const CANDIDATE_MODELS = [
   process.env.GEMINI_MODEL?.trim(),
   "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
   "gemini-1.5-flash",
-  "gemini-2.5-flash",
   "gemini-1.5-pro",
-  "gemini-flash-latest",
 ].filter((m): m is string => Boolean(m && m.length > 0));
 
 export async function analyzeRecordingWithGemini(
@@ -488,23 +488,25 @@ export async function analyzeFormWithGemini(
 
   const ai = new GoogleGenAI({ apiKey });
 
-  // 2. Carrega imagens anexadas (se houver) de public/uploads
+  // 2. Carrega imagens e mídias anexadas (se houver) via storage (R2 ou local)
   const imageParts: Array<{ inlineData: { mimeType: string; data: string } }> = [];
 
   if (mediaUrls && Array.isArray(mediaUrls)) {
     for (const rawUrl of mediaUrls) {
       try {
-        const cleanPath = rawUrl.startsWith("/") ? rawUrl.slice(1) : rawUrl;
-        const fullPath = path.join(process.cwd(), "public", cleanPath.replace(/^public\//, ""));
-        
-        const ext = path.extname(fullPath).toLowerCase();
+        const cleanPath = typeof rawUrl === "string" ? rawUrl.replace(/^\/+/, "") : "";
+        if (!cleanPath) continue;
+
+        const ext = path.extname(cleanPath).toLowerCase();
         let mime = "";
         if (ext === ".png") mime = "image/png";
         else if (ext === ".jpg" || ext === ".jpeg") mime = "image/jpeg";
         else if (ext === ".webp") mime = "image/webp";
+        else if (ext === ".gif") mime = "image/gif";
+        else if (ext === ".pdf") mime = "application/pdf";
 
         if (mime) {
-          const fileBuffer = await fs.readFile(fullPath);
+          const fileBuffer = await getFileBuffer(cleanPath);
           if (fileBuffer && fileBuffer.length > 0) {
             imageParts.push({
               inlineData: {
@@ -512,7 +514,7 @@ export async function analyzeFormWithGemini(
                 data: fileBuffer.toString("base64"),
               },
             });
-            console.log(`[Gemini] Imagem anexada incluída na análise: ${path.basename(fullPath)} (${(fileBuffer.length / 1024).toFixed(1)} KB)`);
+            console.log(`[Gemini] Mídia/imagem anexada incluída na análise: ${path.basename(cleanPath)} (${(fileBuffer.length / 1024).toFixed(1)} KB)`);
           }
         }
       } catch (err) {

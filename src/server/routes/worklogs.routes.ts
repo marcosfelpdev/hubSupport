@@ -293,23 +293,32 @@ router.post(
         },
       });
 
-      // Se houver gravação, cria AiReport e dispara processamento em background
-      if (savedRecordingPath) {
-        await prisma.aiReport.create({
-          data: {
-            workLogId: newLog.id,
-            status: "pending",
-            videoPath: savedRecordingPath,
-            startedAt: new Date(),
-          },
-        });
-
-        setImmediate(() => {
-          processAiReportJob(newLog.id).catch((err) => {
-            console.error(`[WorkLog] Erro no job em segundo plano para ${newLog.id}:`, err);
-          });
-        });
+      // Se não houver gravação de tela mas houver um vídeo anexado nas mídias, associa como vídeo da análise
+      if (!savedRecordingPath && files?.media) {
+        const videoMedia = files.media.find((f) => (f.mimetype || "").startsWith("video/"));
+        if (videoMedia) {
+          const cleanName = videoMedia.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const key = `storage/recordings/${Date.now()}-${cleanName}`;
+          await uploadBuffer(videoMedia.buffer, key, videoMedia.mimetype || "video/webm");
+          savedRecordingPath = key;
+        }
       }
+
+      // Cria AiReport e dispara processamento em segundo plano (com gravação ou com formulário + mídias)
+      await prisma.aiReport.create({
+        data: {
+          workLogId: newLog.id,
+          status: "pending",
+          videoPath: savedRecordingPath,
+          startedAt: new Date(),
+        },
+      });
+
+      setImmediate(() => {
+        processAiReportJob(newLog.id).catch((err) => {
+          console.error(`[WorkLog] Erro no job de relatório para ${newLog.id}:`, err);
+        });
+      });
 
       // Se ação técnica/implementação, cria notificação para os técnicos
       if (isTechnicalAction || isImplementation) {
@@ -535,31 +544,44 @@ router.post(
     try {
       const id = req.params.id as string;
 
-      const report = await prisma.aiReport.findUnique({
-        where: { workLogId: id },
+      const workLog = await prisma.workLog.findUnique({
+        where: { id },
+        include: { aiReport: true },
       });
 
-      if (!report || !report.videoPath) {
-        res.status(404).json({ error: "Gravação de vídeo não encontrada para este atendimento." });
+      if (!workLog) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
         return;
       }
 
-      if (report.status === "processing") {
+      if (workLog.aiReport && workLog.aiReport.status === "processing") {
         res.status(400).json({
           error: "O relatório já está sendo processado no momento. Por favor, aguarde alguns instantes.",
         });
         return;
       }
 
-      const exists = await fileExists(report.videoPath);
-      if (!exists) {
-        res.status(404).json({ error: "O arquivo de gravação não foi encontrado no storage." });
-        return;
+      // Se houver vídeo registrado, valida se o arquivo ainda existe no storage
+      if (workLog.aiReport?.videoPath) {
+        const exists = await fileExists(workLog.aiReport.videoPath);
+        if (!exists) {
+          console.warn(`[WorkLogs] Vídeo ${workLog.aiReport.videoPath} não encontrado no storage. Gerando com base no formulário e mídias.`);
+          await prisma.aiReport.update({
+            where: { workLogId: id },
+            data: { videoPath: null },
+          });
+        }
       }
 
-      await prisma.aiReport.update({
+      await prisma.aiReport.upsert({
         where: { workLogId: id },
-        data: {
+        create: {
+          workLogId: id,
+          status: "pending",
+          errorMessage: null,
+          startedAt: new Date(),
+        },
+        update: {
           status: "pending",
           errorMessage: null,
           startedAt: new Date(),
