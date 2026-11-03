@@ -7,6 +7,7 @@
     "dev:server": "tsx watch src/server/index.ts",
     "dev:client": "vite",
     "build": "prisma generate && vite build",
+    "build:server": "prisma generate",
     "start": "tsx src/server/index.ts",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
@@ -17,7 +18,9 @@
     "@aws-sdk/s3-request-presigner": "^3.1161.0",
     "@google/genai": "^2.30.0",
     "@prisma/client": "^5.22.0",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/bcryptjs": "^2.4.6",
+    "@vitejs/plugin-react": "^6.1.2",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -30,11 +33,13 @@
     "prisma": "^5.22.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "vite": "^8.3.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
-    "@tailwindcss/vite": "^4.3.3",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -44,14 +49,10 @@
     "@types/pdfkit": "^0.17.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6.1.2",
     "concurrently": "^10.0.6",
     "eslint": "^9",
     "playwright": "^1.64.1",
-    "tailwindcss": "^4",
-    "tsx": "^4.23.15",
-    "typescript": "^5",
-    "vite": "^8.3.4"
+    "typescript": "^5"
   },
   "allowScripts": {
     "@prisma/client@5.22.0": true,

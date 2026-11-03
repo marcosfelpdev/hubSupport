@@ -26,3 +26,4 @@ services:
         sync: false
       - key: R2_BUCKET_NAME
         value: hubsupport-storage
+
