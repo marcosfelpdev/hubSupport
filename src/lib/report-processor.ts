@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { analyzeRecordingWithGemini, analyzeFormWithGemini, WorkLogContext } from "./gemini";
 import { generateReportPdf } from "./pdf-generator";
+import { downloadToTempFile } from "../server/services/r2Storage";
+import os from "os";
+import path from "path";
+import fs from "fs";
 
 export async function processAiReportJob(workLogId: string) {
   console.log(`[ReportProcessor] Iniciando processamento do relatório para WorkLog: ${workLogId}`);
@@ -61,10 +65,18 @@ export async function processAiReportJob(workLogId: string) {
     // Se houver gravação de tela, usa análise com vídeo
     if (workLog.aiReport?.videoPath) {
       console.log(`[ReportProcessor] Enviando vídeo para Gemini AI...`);
-      structuredData = await analyzeRecordingWithGemini(
-        workLog.aiReport.videoPath,
-        context
-      );
+      const ext = path.extname(workLog.aiReport.videoPath) || ".webm";
+      const tempVideoPath = path.join(os.tmpdir(), `gemini-${workLogId}-${Date.now()}${ext}`);
+      try {
+        await downloadToTempFile(workLog.aiReport.videoPath, tempVideoPath);
+        structuredData = await analyzeRecordingWithGemini(tempVideoPath, context);
+      } finally {
+        if (fs.existsSync(tempVideoPath)) {
+          try {
+            fs.unlinkSync(tempVideoPath);
+          } catch {}
+        }
+      }
     } else {
       // Atendimento criado sem vídeo (análise das informações + imagens anexadas)
       console.log(`[ReportProcessor] Enviando dados do formulário e mídias para Gemini AI...`);

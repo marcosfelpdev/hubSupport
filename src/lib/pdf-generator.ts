@@ -3,6 +3,7 @@ import fs from "fs";
 import fsp from "fs/promises";
 import path from "path";
 import { StructuredReportData, WorkLogContext } from "./gemini";
+import { uploadBuffer } from "../server/services/r2Storage";
 
 const REPORTS_DIR = path.join(process.cwd(), "storage", "reports");
 
@@ -28,7 +29,6 @@ export async function generateReportPdf({
   await ensureReportsDir();
 
   const fileName = `relatorio-${workLogId}-${Date.now()}.pdf`;
-  const filePath = path.join(REPORTS_DIR, fileName);
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -42,8 +42,21 @@ export async function generateReportPdf({
       },
     });
 
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
+    const chunks: Buffer[] = [];
+    doc.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    doc.on("end", async () => {
+      try {
+        const pdfBuffer = Buffer.concat(chunks);
+        const key = `storage/reports/${fileName}`;
+        await uploadBuffer(pdfBuffer, key, "application/pdf");
+        resolve(key);
+      } catch (err) {
+        reject(err);
+      }
+    });
+    doc.on("error", (err) => {
+      reject(err);
+    });
 
     // Paleta de cores corporativa baseada no modelo
     const accentBlue = "#2563eb"; // Barra de destaque e badges
@@ -406,13 +419,5 @@ export async function generateReportPdf({
     }
 
     doc.end();
-
-    stream.on("finish", () => {
-      resolve(filePath);
-    });
-
-    stream.on("error", (err) => {
-      reject(err);
-    });
   });
 }

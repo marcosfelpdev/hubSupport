@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs/promises";
 import { prisma } from "../../lib/prisma";
 import { authenticateToken } from "../auth";
+import { getFileStream } from "../services/r2Storage";
 
 const router = Router();
 
@@ -29,26 +30,23 @@ router.get("/:id/download", authenticateToken, async (req: Request, res: Respons
     }
 
     const rawPdfPath = workLog.aiReport.pdfPath;
-    const pdfFilePath = path.isAbsolute(rawPdfPath)
-      ? rawPdfPath
-      : path.join(process.cwd(), rawPdfPath);
-
-    try {
-      await fs.access(pdfFilePath);
-    } catch {
-      res.status(404).json({ error: "O arquivo PDF do relatório não foi encontrado no servidor." });
-      return;
-    }
-
     const clientSafeName = workLog.clientOrOffice.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 30);
     const downloadFileName = `relatorio-${clientSafeName}-${workLog.id.slice(0, 8)}.pdf`;
 
-    res.setHeader("Content-Type", "application/pdf");
     const isInline = req.query.view === "inline";
+    res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `${isInline ? "inline" : "attachment"}; filename="${downloadFileName}"`);
     res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
 
-    res.sendFile(pdfFilePath);
+    try {
+      const fileInfo = await getFileStream(rawPdfPath);
+      if (fileInfo.contentLength) {
+        res.setHeader("Content-Length", fileInfo.contentLength);
+      }
+      fileInfo.stream.pipe(res);
+    } catch (err) {
+      res.status(404).json({ error: "O arquivo PDF do relatório não foi encontrado." });
+    }
   } catch (error) {
     console.error("[Reports] Erro no download do relatório PDF:", error);
     res.status(500).json({ error: "Erro interno ao processar download do relatório." });
@@ -78,18 +76,7 @@ router.get("/:id/recording", authenticateToken, async (req: Request, res: Respon
     }
 
     const rawVideoPath = workLog.aiReport.videoPath;
-    const videoFilePath = path.isAbsolute(rawVideoPath)
-      ? rawVideoPath
-      : path.join(process.cwd(), rawVideoPath);
-
-    try {
-      await fs.access(videoFilePath);
-    } catch {
-      res.status(404).json({ error: "O arquivo de gravação não foi encontrado no servidor." });
-      return;
-    }
-
-    const ext = path.extname(videoFilePath).toLowerCase() || ".webm";
+    const ext = path.extname(rawVideoPath).toLowerCase() || ".webm";
     const mimeType = ext === ".mp4" ? "video/mp4" : "video/webm";
 
     const clientSafeName = workLog.clientOrOffice.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 30);
@@ -99,7 +86,21 @@ router.get("/:id/recording", authenticateToken, async (req: Request, res: Respon
     res.setHeader("Content-Disposition", `attachment; filename="${downloadFileName}"`);
     res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
 
-    res.sendFile(videoFilePath);
+    try {
+      const range = req.headers.range;
+      const fileInfo = await getFileStream(rawVideoPath, range);
+      res.status(fileInfo.statusCode || 200);
+      if (fileInfo.contentRange) {
+        res.setHeader("Content-Range", fileInfo.contentRange);
+      }
+      if (fileInfo.contentLength) {
+        res.setHeader("Content-Length", fileInfo.contentLength);
+      }
+      res.setHeader("Accept-Ranges", "bytes");
+      fileInfo.stream.pipe(res);
+    } catch (err) {
+      res.status(404).json({ error: "O arquivo de gravação não foi encontrado." });
+    }
   } catch (error) {
     console.error("[Reports] Erro no download da gravação de tela:", error);
     res.status(500).json({ error: "Erro interno ao processar download da gravação." });

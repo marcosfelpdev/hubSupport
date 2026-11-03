@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs/promises";
 import fsSync from "fs";
 import { prisma } from "../../lib/prisma";
+import { uploadBuffer } from "../services/r2Storage";
 import { authenticateToken, requireTechnicianOrAdmin, requireTechnicianManagerOrAdmin } from "../auth";
 import { processAiReportJob } from "../../lib/report-processor";
 
@@ -41,19 +42,7 @@ if (!fsSync.existsSync(RECORDINGS_DIR)) {
 }
 
 // Configuração do Multer com armazenamento customizado
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (file.fieldname === "recordedVideo") {
-      cb(null, RECORDINGS_DIR);
-    } else {
-      cb(null, UPLOAD_DIR);
-    }
-  },
-  filename: (req, file, cb) => {
-    const cleanName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    cb(null, `${Date.now()}-${cleanName}`);
-  },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -252,14 +241,21 @@ router.post(
       const mediaPaths: string[] = [];
       if (files?.media) {
         for (const file of files.media) {
-          mediaPaths.push(`/uploads/${file.filename}`);
+          const cleanName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const key = `uploads/${Date.now()}-${cleanName}`;
+          await uploadBuffer(file.buffer, key, file.mimetype || "application/octet-stream");
+          mediaPaths.push(`/${key}`);
         }
       }
 
       // Processar vídeo gravado
       let savedRecordingPath: string | null = null;
       if (files?.recordedVideo && files.recordedVideo[0]) {
-        savedRecordingPath = path.join(RECORDINGS_DIR, files.recordedVideo[0].filename);
+        const videoFile = files.recordedVideo[0];
+        const cleanName = videoFile.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const key = `storage/recordings/${Date.now()}-${cleanName}`;
+        await uploadBuffer(videoFile.buffer, key, videoFile.mimetype || "video/webm");
+        savedRecordingPath = key;
       }
 
       const isTechnicalAction =

@@ -1,0 +1,5 @@
+# Proxy todas as chamadas de API para o backend no Render
+/api/*  https://hubsupport-api.onrender.com/api/:splat  200
+
+# Roteamento SPA (fallback para index.html do React Router)
+/*      /index.html                                     200

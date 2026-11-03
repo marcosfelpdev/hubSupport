@@ -11,6 +11,7 @@ import notificationsRoutes from "./routes/notifications.routes";
 import employeesRoutes from "./routes/employees.routes";
 import tagsRoutes from "./routes/tags.routes";
 import agendaRoutes from "./routes/agenda.routes";
+import { getFileStream } from "./services/r2Storage";
 
 export const app = express();
 
@@ -26,11 +27,26 @@ app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Servir uploads estáticos públicos (anexos comuns do atendimento)
+// Servir uploads (Cloudflare R2 com fallback para disco local)
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
+
+app.get("/uploads/:filename", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const key = `uploads/${req.params.filename}`;
+    const fileInfo = await getFileStream(key);
+    res.setHeader("Content-Type", fileInfo.contentType || "application/octet-stream");
+    if (fileInfo.contentLength) {
+      res.setHeader("Content-Length", fileInfo.contentLength);
+    }
+    fileInfo.stream.pipe(res);
+  } catch {
+    next();
+  }
+});
+
 app.use("/uploads", express.static(UPLOAD_DIR));
 
 // Health check
