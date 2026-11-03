@@ -190,20 +190,49 @@ export function formatGeminiErrorMessage(err: unknown): string {
   if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
     return "Limite de requisições do Gemini atingido temporariamente (Erro 429). Por favor, tente novamente em alguns instantes.";
   }
+  if (msg.includes("404") || msg.includes("NOT_FOUND") || msg.includes("no longer available")) {
+    return "O modelo de IA solicitado está indisponível no momento (Erro 404). Por favor, clique em 'Tentar novamente'.";
+  }
+  if (msg.trim().startsWith("{")) {
+    try {
+      const parsed = JSON.parse(msg);
+      if (parsed?.error?.message) {
+        return `Erro na comunicação com o Google Gemini: ${parsed.error.message}`;
+      }
+    } catch {
+      // ignora erro de parse
+    }
+  }
   return msg;
 }
 
+const DEPRECATED_MODEL_PREFIXES = ["gemini-1.5", "gemini-2.0", "gemini-2.5"];
+
 /**
- * Modelos candidatos suportados pelo Google Gemini com suporte multimodal (vídeo).
- * Prioriza gemini-2.0-flash e gemini-1.5-flash com fallback resiliente para mitigar 503 e 429.
+ * Modelos candidatos suportados atualmente na API v1beta do Google Gemini com suporte multimodal.
+ * Prioriza gemini-3.5-flash-lite e gemini-flash-lite-latest (baixa latência e alta disponibilidade),
+ * seguidos pelos modelos Flash 3.x como fallback resiliente para mitigar erros 503 e 429.
  */
-const CANDIDATE_MODELS = [
-  process.env.GEMINI_MODEL?.trim(),
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro",
-].filter((m): m is string => Boolean(m && m.length > 0));
+const envModel = process.env.GEMINI_MODEL?.trim();
+const validEnvModel =
+  envModel && !DEPRECATED_MODEL_PREFIXES.some((prefix) => envModel.startsWith(prefix))
+    ? envModel
+    : undefined;
+
+const CANDIDATE_MODELS = Array.from(
+  new Set(
+    [
+      validEnvModel,
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3-flash-preview",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-3.8-flash",
+      "gemini-flash-latest",
+    ].filter((m): m is string => Boolean(m && m.length > 0))
+  )
+);
 
 export async function analyzeRecordingWithGemini(
   videoFilePath: string,
@@ -386,8 +415,11 @@ ${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.p
             break;
           }
         } catch (err: unknown) {
-          lastError = err;
           const errMsg = err instanceof Error ? err.message : String(err);
+          const is404 = errMsg.includes("404") || errMsg.includes("NOT_FOUND") || errMsg.includes("no longer available");
+          if (!lastError || !is404) {
+            lastError = err;
+          }
           console.warn(`[Gemini] Tentativa ${attempt} com modelo ${model} falhou: ${errMsg}`);
 
           if (isTransientError(err) && attempt < 3) {
@@ -577,8 +609,11 @@ ${imageParts.length > 0 ? `- Mídias anexadas: Foram anexadas ${imageParts.lengt
           break;
         }
       } catch (err: unknown) {
-        lastError = err;
         const errMsg = err instanceof Error ? err.message : String(err);
+        const is404 = errMsg.includes("404") || errMsg.includes("NOT_FOUND") || errMsg.includes("no longer available");
+        if (!lastError || !is404) {
+          lastError = err;
+        }
         console.warn(`[Gemini] Tentativa ${attempt} com modelo ${model} falhou: ${errMsg}`);
 
         if (isTransientError(err) && attempt < 3) {
