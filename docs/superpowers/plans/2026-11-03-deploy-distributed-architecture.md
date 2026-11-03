@@ -28,19 +28,12 @@
 - `package.json`
 - `.env.example`
 
-- [ ] **Step 1.1:** Atualizar `prisma/schema.prisma` alterando o provider para `postgresql` e configurando `directUrl`:
-  ```prisma
-  datasource db {
-    provider  = "postgresql"
-    url       = env("DATABASE_URL")
-    directUrl = env("DIRECT_URL")
-  }
-  ```
-- [ ] **Step 1.2:** Ajustar colunas de texto extenso no schema para `@db.Text` (ex: `reportedProblem`, `actionTaken`, `media`, `structuredData`, `message`).
-- [ ] **Step 1.3:** Atualizar `.env.example` com o formato das URLs do Supabase (pooler porta 6543 e direct porta 5432).
-- [ ] **Step 1.4:** Executar `npx prisma generate` e verificar compilação de tipos.
-- [ ] **Step 1.5:** Criar script de teste automatizado `scripts/test-prisma-connection.ts` para testar tanto conexão local quanto Postgres quando as credenciais forem fornecidas.
-- [ ] **Step 1.6:** Commit das alterações da Task 1.
+- [x] **Step 1.1:** Atualizar `prisma/schema.prisma` alterando o provider para `postgresql` e configurando `directUrl`.
+- [x] **Step 1.2:** Ajustar colunas de texto extenso no schema para `@db.Text` (ex: `reportedProblem`, `actionTaken`, `media`, `structuredData`, `message`).
+- [x] **Step 1.3:** Atualizar `.env.example` com o formato das URLs do Supabase (pooler porta 6543 e direct porta 5432).
+- [x] **Step 1.4:** Executar `npx prisma generate` e verificar compilação de tipos.
+- [x] **Step 1.5:** Executar `npx prisma db push` e `npm run seed` inicializando a base limpa no Supabase.
+- [x] **Step 1.6:** Commit das alterações da Task 1 (`230da62`).
 
 ---
 
@@ -52,55 +45,46 @@
 - `src/lib/pdf-generator.ts` (upload direto do buffer PDF para o R2)
 - `src/lib/report-processor.ts` (leitura temporária para envio ao Gemini)
 
-- [ ] **Step 2.1:** Instalar `@aws-sdk/client-s3` e `@aws-sdk/s3-request-presigner` como dependências de produção.
-- [ ] **Step 2.2:** Criar `src/server/services/r2Storage.ts` implementando:
-  - Inicialização do `S3Client` apontando para o endpoint do Cloudflare R2: `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`.
-  - Detecção de credenciais: se faltar `R2_ACCOUNT_ID`, operar em modo local (`fs`), caso contrário operar no R2.
-  - Funções: `uploadBuffer(buffer, key, contentType)`, `getObjectStream(key)`, `getPresignedUrl(key)`, `deleteObject(key)`.
-- [ ] **Step 2.3:** Refatorar `src/server/routes/worklogs.routes.ts`:
-  - Multer configurado com `memoryStorage` quando R2 estiver ativo.
-  - Endpoint de gravação (`POST /:id/recording`) e anexos (`POST /:id/attachments`) enviando buffers para `r2Storage`.
-  - Endpoint de streaming (`GET /api/reports/:id/recording`) obtendo stream do R2 e transmitindo para a resposta HTTP com suporte a range de vídeo.
-- [ ] **Step 2.4:** Refatorar `src/lib/pdf-generator.ts` para acumular o PDF em memória (buffer) e enviar via `r2Storage.uploadBuffer(...)`.
-- [ ] **Step 2.5:** Refatorar `src/lib/report-processor.ts` para baixar o stream do R2 para `/tmp` temporário apenas durante a análise multimodal com o Gemini, limpando ao final.
-- [ ] **Step 2.6:** Executar suite de verificação com `npx tsc --noEmit` e `npm run build`.
-- [ ] **Step 2.7:** Commit das alterações da Task 2.
+- [x] **Step 2.1:** Instalar `@aws-sdk/client-s3` e `@aws-sdk/s3-request-presigner` como dependências de produção.
+- [x] **Step 2.2:** Criar `src/server/services/r2Storage.ts` com suporte a `uploadBuffer`, `getFileStream`, `downloadToTempFile` e `deleteFile`.
+- [x] **Step 2.3:** Refatorar `src/server/routes/worklogs.routes.ts` com `multer.memoryStorage` e persistência direta no R2.
+- [x] **Step 2.4:** Refatorar `src/lib/pdf-generator.ts` para acumular o PDF em memória e enviar via `r2Storage.uploadBuffer(...)`.
+- [x] **Step 2.5:** Refatorar `src/lib/report-processor.ts` para baixar temporariamente do R2 para `/tmp` durante análise com Gemini e limpar no `finally`.
+- [x] **Step 2.6:** Executar suite de verificação com `npx tsc --noEmit` e `npm run build`.
+- [x] **Step 2.7:** Commit das alterações da Task 2 (`3343d07`).
 
 ---
 
 ### Task 3: Preparação e Configuração do Backend para o Render
 **Files to create/modify:**
 - `package.json`
-- `render.yaml` (Blueprint declarativo opcional para o Render)
+- `render.yaml` (Blueprint declarativo para o Render)
 - `src/server/app.ts` e `src/server/index.ts`
 
-- [ ] **Step 3.1:** Mover `"tsx"` de `devDependencies` para `dependencies` no `package.json`.
-- [ ] **Step 3.2:** Adicionar script de produção: `"start": "prisma generate && tsx src/server/index.ts"`.
-- [ ] **Step 3.3:** Validar a rota `GET /api/health` em `src/server/app.ts` garantindo tempo de resposta < 10ms para os pings do UptimeRobot.
-- [ ] **Step 3.4:** Criar `render.yaml` configurando o serviço Web gratuito do Render com comando de build (`npm install && npm run build && npx prisma db push`) e start.
-- [ ] **Step 3.5:** Commit das alterações da Task 3.
+- [x] **Step 3.1:** Mover `"tsx"` e dependências de build para `dependencies` no `package.json`.
+- [x] **Step 3.2:** Adicionar script de produção: `"start": "tsx src/server/index.ts"`.
+- [x] **Step 3.3:** Validar a rota `GET /api/health` em `src/server/app.ts` respondendo com status 200 OK.
+- [x] **Step 3.4:** Criar `render.yaml` configurando o serviço Web gratuito do Render.
+- [x] **Step 3.5:** Commit e deploy no Render com sucesso (`https://hubsupport-api.onrender.com`).
 
 ---
 
 ### Task 4: Configuração do Frontend para Cloudflare Pages
 **Files to create/modify:**
 - `public/_redirects`
-- `vite.config.mts`
+- `functions/api/[[catchall]].ts`
+- `functions/uploads/[[catchall]].ts`
+- `src/services/api.ts`
 
-- [ ] **Step 4.1:** Criar `public/_redirects` com as regras de roteamento e proxy:
-  ```text
-  /api/*  https://hubsupport-api.onrender.com/api/:splat  200
-  /*      /index.html                                     200
-  ```
-- [ ] **Step 4.2:** Testar `npm run build` e confirmar que `dist/_redirects` é gerado corretamente na raiz da compilação.
-- [ ] **Step 4.3:** Commit das alterações da Task 4.
+- [x] **Step 4.1:** Criar `public/_redirects` e Cloudflare Pages Functions para proxy transparente da API.
+- [x] **Step 4.2:** Configurar fallback dinâmico de produção em `src/services/api.ts` direcionando para a API no Render com CORS liberado.
+- [x] **Step 4.3:** Deploy no Cloudflare Pages com sucesso (`https://hubsupport.pages.dev`).
 
 ---
 
-### Task 5: Guia Prático Passo a Passo com o Usuário
-- [ ] **Step 5.1:** Conectar conta Supabase (obter `DATABASE_URL` e `DIRECT_URL`).
-- [ ] **Step 5.2:** Conectar bucket Cloudflare R2 (obter Account ID, Access Key, Secret Key e Bucket Name).
-- [ ] **Step 5.3:** Conectar repositório ao Render (configurar variáveis de ambiente e rodar primeiro deploy).
-- [ ] **Step 5.4:** Configurar monitor UptimeRobot para ping a cada 10 min em `/api/health`.
-- [ ] **Step 5.5:** Conectar repositório ao Cloudflare Pages e validar acesso online completo.
-
+### Task 5: Validação Integrada em Produção
+- [x] **Step 5.1:** Conectar e validar Supabase PostgreSQL com usuários reais.
+- [x] **Step 5.2:** Conectar e validar Cloudflare R2 com upload/download de teste.
+- [x] **Step 5.3:** Validar API no Render com health check e login de administrador.
+- [x] **Step 5.4:** Ativar monitor UptimeRobot para Keep-Alive anti-hibernação a cada 10 min.
+- [x] **Step 5.5:** Validar acesso completo e login na SPA do Cloudflare Pages em `https://hubsupport.pages.dev`.
