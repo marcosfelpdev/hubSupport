@@ -157,7 +157,16 @@ export interface EmployeeItem {
   };
 }
 
-const API_BASE = ((import.meta as any).env?.VITE_API_URL as string)?.replace(/\/+$/, "") || "";
+const DEFAULT_PROD_API = "https://hubsupport-api.onrender.com";
+const isLocal =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.endsWith(".local"));
+
+const API_BASE =
+  ((import.meta as any).env?.VITE_API_URL as string)?.replace(/\/+$/, "") ||
+  (isLocal ? "" : DEFAULT_PROD_API);
 
 export function resolveApiUrl(path: string): string {
   if (path.startsWith("http://") || path.startsWith("https://")) {
@@ -312,14 +321,14 @@ export const api = {
       return request<WorkLogItem["aiReport"]>(`/api/worklogs/${id}/ai-status`);
     },
     getDownloadReportUrl(id: string): string {
-      return `/api/reports/${id}/download`;
+      return resolveApiUrl(`/api/reports/${id}/download`);
     },
     getViewReportUrl(id: string): string {
       const token = getToken();
-      return `/api/reports/${id}/download?view=inline${token ? `&token=${encodeURIComponent(token)}` : ""}`;
+      return resolveApiUrl(`/api/reports/${id}/download?view=inline${token ? `&token=${encodeURIComponent(token)}` : ""}`);
     },
     getDownloadRecordingUrl(id: string): string {
-      return `/api/reports/${id}/recording`;
+      return resolveApiUrl(`/api/reports/${id}/recording`);
     },
   },
 
