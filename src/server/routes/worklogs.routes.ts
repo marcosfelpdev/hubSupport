@@ -4,8 +4,8 @@ import path from "path";
 import fs from "fs/promises";
 import fsSync from "fs";
 import { prisma } from "../../lib/prisma";
-import { uploadBuffer, fileExists } from "../services/r2Storage";
-import { authenticateToken, requireTechnicianOrAdmin, requireTechnicianManagerOrAdmin } from "../auth";
+import { uploadBuffer, fileExists, deleteFile } from "../services/r2Storage";
+import { authenticateToken, requireTechnicianOrAdmin, requireTechnicianManagerOrAdmin, requireAdmin } from "../auth";
 import { processAiReportJob } from "../../lib/report-processor";
 
 const router = Router();
@@ -666,6 +666,68 @@ router.post(
     } catch (error) {
       console.error("[WorkLogs] Erro ao disparar geração de relatório de IA:", error);
       res.status(500).json({ error: "Erro ao iniciar processamento de IA." });
+    }
+  }
+);
+
+
+// DELETE /api/worklogs/:id (Apenas Administradores)
+router.delete(
+  "/:id",
+  authenticateToken,
+  requireAdmin,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+
+      const workLog = await prisma.workLog.findUnique({
+        where: { id },
+        include: {
+          aiReport: true,
+        },
+      });
+
+      if (!workLog) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      // 1. Exclui arquivos associados (gravação e PDF) do R2 ou disco local
+      if (workLog.aiReport?.videoPath) {
+        await deleteFile(workLog.aiReport.videoPath);
+      }
+      if (workLog.aiReport?.pdfPath) {
+        await deleteFile(workLog.aiReport.pdfPath);
+      }
+
+      // 2. Exclui mídias anexadas (se houver)
+      if (workLog.media) {
+        try {
+          const mediaUrls = JSON.parse(workLog.media);
+          if (Array.isArray(mediaUrls)) {
+            for (const mediaUrl of mediaUrls) {
+              const cleanKey = typeof mediaUrl === "string" ? mediaUrl.replace(/^\/+/, "") : "";
+              if (cleanKey) {
+                await deleteFile(cleanKey);
+              }
+            }
+          }
+        } catch {}
+      }
+
+      // 3. Remove relacionamentos dependentes no banco
+      await prisma.workLogStatusHistory.deleteMany({ where: { workLogId: id } });
+      await prisma.aiReport.deleteMany({ where: { workLogId: id } });
+      await prisma.notification.deleteMany({ where: { workLogId: id } });
+
+      // 4. Remove o atendimento
+      await prisma.workLog.delete({ where: { id } });
+
+      console.log(`[WorkLogs] Atendimento ${id} excluído com sucesso por ${req.user?.name} (${req.user?.email})`);
+      res.json({ success: true, message: "Atendimento e relatórios excluídos com sucesso." });
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao excluir atendimento:", error);
+      res.status(500).json({ error: "Erro ao excluir o atendimento." });
     }
   }
 );

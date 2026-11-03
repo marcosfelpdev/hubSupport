@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { deleteFile, isR2Configured } from "../src/server/services/r2Storage";
 import fs from "fs";
 import path from "path";
 
@@ -15,8 +16,7 @@ async function main() {
   const notificationCount = await prisma.notification.count();
   const agendaCount = await prisma.agendaEvent.count();
 
-  console.log("Contagens antes da limpeza:");
-  console.log({
+  console.log("Contagens antes da limpeza:", {
     users: userCount,
     tags: tagCount,
     workLogs: workLogCount,
@@ -26,8 +26,24 @@ async function main() {
     agendaEvents: agendaCount,
   });
 
+  // Limpeza de arquivos no R2 (se configurado) antes de remover os registros
+  if (isR2Configured) {
+    console.log("☁️  Removendo arquivos de gravações e relatórios do Cloudflare R2...");
+    const reports = await prisma.aiReport.findMany({
+      select: { videoPath: true, pdfPath: true },
+    });
+    for (const report of reports) {
+      if (report.videoPath) {
+        await deleteFile(report.videoPath);
+      }
+      if (report.pdfPath) {
+        await deleteFile(report.pdfPath);
+      }
+    }
+  }
+
   // Limpeza de tabelas transacionais de teste
-  console.log("\n🧹 Limpando dados transacionais de teste...");
+  console.log("\n🧹 Limpando dados transacionais de teste no banco...");
   await prisma.workLogStatusHistory.deleteMany();
   await prisma.aiReport.deleteMany();
   await prisma.notification.deleteMany();
@@ -36,18 +52,14 @@ async function main() {
 
   console.log("✅ Tabelas de atendimentos, relatórios, notificações e eventos limpas!");
 
-  // Limpeza de arquivos físicos de teste em storage/ e public/uploads/
-  const cleanDir = (dirPath: string, keepExtensions: string[] = []) => {
+  // Limpeza de arquivos físicos locais em storage/ e public/uploads/
+  const cleanDir = (dirPath: string) => {
     if (!fs.existsSync(dirPath)) return;
     const files = fs.readdirSync(dirPath);
     let removed = 0;
     for (const file of files) {
       const fullPath = path.join(dirPath, file);
       if (fs.statSync(fullPath).isFile()) {
-        const ext = path.extname(file).toLowerCase();
-        if (keepExtensions.length > 0 && !keepExtensions.includes(ext)) {
-          continue;
-        }
         fs.unlinkSync(fullPath);
         removed++;
       }
@@ -68,4 +80,3 @@ async function main() {
 main()
   .catch(console.error)
   .finally(() => prisma.$disconnect());
-

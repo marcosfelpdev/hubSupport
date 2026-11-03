@@ -22,6 +22,7 @@ import {
   Users,
   Search,
   UserCheck,
+  Trash2,
 } from "lucide-react";
 import { WorkLogItem, WorkLogStatusHistoryItem, EmployeeItem, api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -109,6 +110,8 @@ export interface WorkLogDetailData {
 export interface WorkLogDetailContentProps {
   log: WorkLogDetailData;
   onRefresh?: () => void;
+  onClose?: () => void;
+  onDelete?: (deletedId: string) => void;
   headerAction?: React.ReactNode;
   footerActions?: React.ReactNode;
   onOpenPdfModal?: (logId: string) => void;
@@ -311,6 +314,8 @@ export function parseMediaPaths(media?: string | null): string[] {
 export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   log,
   onRefresh,
+  onClose,
+  onDelete,
   headerAction,
   footerActions,
   onOpenPdfModal,
@@ -318,11 +323,32 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
 }) => {
   const { user: currentUser } = useAuth();
 
-  const currentUserRole = currentUser?.role?.toUpperCase();
+    const currentUserRole = currentUser?.role?.toUpperCase();
+  const isAdmin = currentUserRole === "ADMIN";
   const canAssign =
     currentUserRole === "ADMIN" ||
     currentUserRole === "MANAGER" ||
     currentUserRole === "TECHNICIAN";
+
+  // Estados para exclusão administrativa
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      await api.worklogs.delete(log.id);
+      setShowDeleteModal(false);
+      onDelete?.(log.id);
+      onRefresh?.();
+      onClose?.();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Erro ao excluir atendimento.");
+      setIsDeleting(false);
+    }
+  };
 
   // Estado local do relatório de IA para suportar polling e geração sob demanda
   const [currentAiReport, setCurrentAiReport] = useState(log.aiReport ?? null);
@@ -818,11 +844,29 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
           </div>
         </div>
 
-        {headerAction && (
-          <div className="shrink-0 flex items-center self-start sm:self-center">
-            {headerAction}
-          </div>
-        )}
+        <div className="shrink-0 flex items-center gap-2 self-start sm:self-center">
+          {isAdmin && (
+            <button
+              type="button"
+              id="btn-delete-worklog"
+              onClick={() => {
+                setDeleteError(null);
+                setShowDeleteModal(true);
+              }}
+              disabled={isDeleting}
+              title="Excluir este atendimento permanentemente (Apenas Administrador)"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900/60 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 disabled:opacity-50"
+            >
+              <Trash2 size={13} className="shrink-0" />
+              <span className="hidden sm:inline">Excluir</span>
+            </button>
+          )}
+          {headerAction && (
+            <div>
+              {headerAction}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Barra de Atribuição / Responsável Técnico */}
@@ -1667,6 +1711,72 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
       {footerActions && (
         <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 flex-wrap">
           {footerActions}
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão (Admin) */}
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[60] flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => !isDeleting && setShowDeleteModal(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <AlertTriangle size={20} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
+                  Excluir Atendimento Permanentemente?
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                  Tem certeza que deseja remover o atendimento{" "}
+                  <strong className="text-slate-700 dark:text-slate-300">
+                    &quot;{log.title || log.clientOrOffice}&quot;
+                  </strong>
+                  ? Esta ação excluirá os relatórios, histórico e arquivos associados (Cloudflare R2 e banco). Esta operação não pode ser desfeita.
+                </p>
+                {deleteError && (
+                  <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mt-2 bg-rose-50 dark:bg-rose-950/40 p-2 rounded-lg border border-rose-200 dark:border-rose-900">
+                    {deleteError}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-delete-worklog"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-500 rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Excluindo...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={13} />
+                    <span>Confirmar Exclusão</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

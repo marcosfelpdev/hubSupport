@@ -388,6 +388,11 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
             <WorkLogDetailContent
               log={log}
               onRefresh={onRefresh}
+              onClose={onClose}
+              onDelete={() => {
+                onClose();
+                onRefresh?.();
+              }}
               headerAction={
                 <button
                   type="button"

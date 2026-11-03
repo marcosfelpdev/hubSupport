@@ -332,6 +332,11 @@ export const api = {
       const token = getToken();
       return resolveApiUrl(`/api/reports/${id}/recording${token ? `?token=${encodeURIComponent(token)}` : ""}`);
     },
+    async delete(id: string): Promise<{ success: boolean; message?: string }> {
+      return request<{ success: boolean; message?: string }>(`/api/worklogs/${id}`, {
+        method: "DELETE",
+      });
+    },
   },
 
   // Tags Mestre / Categorias de Plataforma

@@ -320,6 +320,10 @@ export default function DashboardClient({
               <WorkLogDetailContent
                 log={selectedLog}
                 onRefresh={fetchLogs}
+                onDelete={() => {
+                  setSelectedLogId(null);
+                  fetchLogs?.();
+                }}
                 onOpenPdfModal={(_id) => setPdfViewerLog(selectedLog)}
                 onOpenMediaModal={(_log) => openMediaModal(selectedLog)}
               />
