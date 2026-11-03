@@ -15,8 +15,8 @@ async function testFrontendFlow() {
     await page.waitForURL((url) => url.pathname === '/login', { timeout: 10000 });
 
     console.log('2. Realizando login...');
-    await page.fill('#email', 'marcosf@hubsupport.com');
-    await page.fill('#password', '076250@Ma');
+    await page.fill('#email', process.env.TEST_ADMIN_EMAIL || 'admin@hubsupport.com');
+    await page.fill('#password', process.env.TEST_ADMIN_PASSWORD || 'HubSupport@2026');
     await page.click('#btn-login');
 
     await page.waitForURL((url) => url.pathname === '/dashboard', { timeout: 15000 });

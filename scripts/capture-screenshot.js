@@ -5,9 +5,12 @@ async function capture() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
+  const adminEmail = process.env.TEST_ADMIN_EMAIL || 'admin@hubsupport.com';
+  const adminPassword = process.env.TEST_ADMIN_PASSWORD || 'HubSupport@2026';
+
   await page.goto('http://localhost:3000/login');
-  await page.fill('#email', 'marcosf@hubsupport.com');
-  await page.fill('#password', '076250@Ma');
+  await page.fill('#email', adminEmail);
+  await page.fill('#password', adminPassword);
   await page.click('#btn-login');
   await page.waitForURL((url) => url.pathname === '/dashboard');
   await page.waitForTimeout(1000);

@@ -6,19 +6,24 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Iniciando seed no banco de dados...");
 
-  // 1. Criar usuário Mestre / Administrador
-  const adminPassword = await bcrypt.hash("076250@Ma", 12);
+  const adminEmail = process.env.ADMIN_SEED_EMAIL?.trim() || "admin@hubsupport.com";
+  const adminName = process.env.ADMIN_SEED_NAME?.trim() || "Administrador";
+  const adminPasswordPlain = process.env.ADMIN_SEED_PASSWORD?.trim() || "HubSupport@2026";
+  const userPasswordPlain = process.env.USER_SEED_PASSWORD?.trim() || "Colaborador@2026";
+
+  // 1. Criar usuário Administrador
+  const adminPassword = await bcrypt.hash(adminPasswordPlain, 12);
   const admin = await prisma.user.upsert({
-    where: { email: "marcosf@hubsupport.com" },
+    where: { email: adminEmail },
     update: {
-      name: "Marcos",
+      name: adminName,
       password: adminPassword,
       role: "ADMIN",
       active: true,
     },
     create: {
-      name: "Marcos",
-      email: "marcosf@hubsupport.com",
+      name: adminName,
+      email: adminEmail,
       password: adminPassword,
       role: "ADMIN",
       active: true,
@@ -26,7 +31,7 @@ async function main() {
   });
 
   // 2. Criar colaboradores de teste
-  const userPassword = await bcrypt.hash("senha123", 12);
+  const userPassword = await bcrypt.hash(userPasswordPlain, 12);
 
   const user1 = await prisma.user.upsert({
     where: { email: "ana@hubsupport.com" },
@@ -134,14 +139,14 @@ async function main() {
     }
   }
 
-  console.log("✅ Usuários configurados:");
+  console.log("✅ Usuários configurados com sucesso:");
   console.log(`   👑 [ADMIN] ${admin.name} (${admin.email})`);
   console.log(`   👤 [COLABORADOR] ${user1.name} (${user1.email})`);
   console.log(`   👤 [COLABORADOR] ${user2.name} (${user2.email})`);
-  console.log(`   🔧 [TÉCNICO] ${techUser.name} (${techUser.email}) - Senha: senha123`);
-  console.log(`   📊 [GESTOR] ${managerUser.name} (${managerUser.email}) - Senha: senha123`);
+  console.log(`   🔧 [TÉCNICO] ${techUser.name} (${techUser.email})`);
+  console.log(`   📊 [GESTOR] ${managerUser.name} (${managerUser.email})`);
   console.log("🏷️  Tags Mestre criadas com sucesso!");
-  console.log("\n✨ Seed concluído com sucesso e banco 100% limpo de chamados de teste!");
+  console.log("\n✨ Seed concluído com sucesso!");
 }
 
 main()

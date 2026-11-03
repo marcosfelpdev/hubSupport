@@ -16,8 +16,8 @@ async function run() {
 
   // 2. Login
   console.log('2. Efetuando login...');
-  await page.fill('#email', 'ana@hubsupport.com');
-  await page.fill('#password', 'senha123');
+  await page.fill('#email', process.env.TEST_USER_EMAIL || 'ana@hubsupport.com');
+  await page.fill('#password', process.env.TEST_USER_PASSWORD || 'Colaborador@2026');
   await page.click('#btn-login');
 
   await page.waitForURL((url) => url.pathname === '/dashboard', { timeout: 15000 });

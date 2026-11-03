@@ -2,7 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma";
 
-export const JWT_SECRET = process.env.JWT_SECRET || "hubsupport-jwt-secret-production-key-2026";
+const isProduction = process.env.NODE_ENV === "production";
+export const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  (isProduction
+    ? (() => {
+        throw new Error("A variável de ambiente JWT_SECRET é obrigatória em ambiente de produção.");
+      })()
+    : "hubsupport-dev-secret-key-change-in-env");
 
 export interface AuthenticatedUser {
   id: string;

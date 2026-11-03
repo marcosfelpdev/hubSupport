@@ -35,9 +35,9 @@ async function runQaAudit() {
     await page.goto('http://localhost:3000', { waitUntil: 'networkidle' });
 
     if (page.url().includes('/login')) {
-      console.log('  Efetuando login como marcosf@hubsupport.com...');
-      await page.fill('#email', 'marcosf@hubsupport.com');
-      await page.fill('#password', '076250@Ma');
+      console.log('  Efetuando login como admin@hubsupport.com...');
+      await page.fill('#email', process.env.TEST_ADMIN_EMAIL || 'admin@hubsupport.com');
+      await page.fill('#password', process.env.TEST_ADMIN_PASSWORD || 'HubSupport@2026');
       await page.click('#btn-login');
       await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15000 });
       console.log('  ✅ Login concluído!');

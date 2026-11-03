@@ -13,17 +13,23 @@
 # testing
 /coverage
 
-# next.js
+# next.js & vite
 /.next/
 /out/
+/dist/
+/build/
 
-# production
-/build
-/dist
-
-# user uploads
+# user uploads & private storage
 /public/uploads/
 /storage/
+
+# databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/*.db
+prisma/*.db-journal
 
 # misc
 .DS_Store
@@ -35,14 +41,15 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env*.local
+.env.production
+.env.development
+!.env.example
 
-# vercel
+# vercel & build caches
 .vercel
-
-# typescript
 *.tsbuildinfo
 next-env.d.ts
-
 .kilo/

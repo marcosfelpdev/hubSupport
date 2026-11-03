@@ -14,9 +14,9 @@ async function run() {
   await page.goto('http://localhost:3000/login');
   await page.waitForSelector('#email');
 
-  console.log('2. Efetuando login como marcosf@hubsupport.com...');
-  await page.fill('#email', 'marcosf@hubsupport.com');
-  await page.fill('#password', '076250@Ma');
+  console.log('2. Efetuando login como admin@hubsupport.com...');
+  await page.fill('#email', process.env.TEST_ADMIN_EMAIL || 'admin@hubsupport.com');
+  await page.fill('#password', process.env.TEST_ADMIN_PASSWORD || 'HubSupport@2026');
   await page.click('#btn-login');
 
   await page.waitForURL((url) => url.pathname === '/dashboard', { timeout: 15000 });
@@ -56,7 +56,7 @@ async function run() {
 
   await page.fill('#create-name', 'Fernanda Lima');
   await page.fill('#create-email', 'fernanda@hubsupport.com');
-  await page.fill('#create-password', 'senha1234');
+  await page.fill('#create-password', process.env.TEST_EMPLOYEE_PASSWORD || 'Teste@2026');
   await page.click('#btn-confirm-create-employee');
 
   console.log(' Aguardando criação e recarregamento...');
