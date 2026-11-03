@@ -4,10 +4,30 @@ import path from "path";
 import fs from "fs/promises";
 import fsSync from "fs";
 import { prisma } from "../../lib/prisma";
-import { authenticateToken, requireTechnicianOrAdmin } from "../auth";
+import { authenticateToken, requireTechnicianOrAdmin, requireTechnicianManagerOrAdmin } from "../auth";
 import { processAiReportJob } from "../../lib/report-processor";
 
 const router = Router();
+
+const defaultWorkLogInclude = {
+  user: {
+    select: { id: true, name: true, email: true, role: true },
+  },
+  assignedTo: {
+    select: { id: true, name: true, email: true, role: true },
+  },
+  tag: true,
+  aiReport: true,
+  statusHistory: {
+    include: {
+      changedBy: {
+        select: { id: true, name: true, role: true },
+      },
+    },
+    orderBy: { createdAt: "desc" as const },
+  },
+};
+
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const RECORDINGS_DIR = path.join(process.cwd(), "storage", "recordings");
@@ -55,13 +75,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
             role: { not: "TECHNICIAN" },
           },
         },
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
         orderBy: {
           createdAt: "desc",
         },
@@ -75,13 +89,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
       const limit = isNaN(rawLimit) ? 25 : Math.min(Math.max(rawLimit, 1), 100);
       const logs = await prisma.workLog.findMany({
         take: limit,
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
         orderBy: {
           createdAt: "desc",
         },
@@ -98,13 +106,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
           status: "Solucionado",
         },
         take: limit,
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
         orderBy: {
           createdAt: "desc",
         },
@@ -113,27 +115,38 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
       return;
     }
 
-    // Padrão: atendimentos do dia atual
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+        // Filtro por período de datas ou todos os atendimentos por padrão
+    const startDateParam = req.query.startDate as string | undefined;
+    const endDateParam = req.query.endDate as string | undefined;
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const whereClause: any = {};
+
+    if (startDateParam || endDateParam) {
+      whereClause.createdAt = {};
+      if (startDateParam) {
+        const [y, m, d] = startDateParam.split("-").map(Number);
+        const start = new Date(y, m - 1, d, 0, 0, 0, 0);
+        whereClause.createdAt.gte = start;
+      }
+      if (endDateParam) {
+        const [y, m, d] = endDateParam.split("-").map(Number);
+        const end = new Date(y, m - 1, d, 23, 59, 59, 999);
+        whereClause.createdAt.lte = end;
+      }
+    } else if (type === "daily") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      whereClause.createdAt = {
+        gte: today,
+        lt: tomorrow,
+      };
+    }
 
     const logs = await prisma.workLog.findMany({
-      where: {
-        createdAt: {
-          gte: today,
-          lt: tomorrow,
-        },
-      },
-      include: {
-        user: {
-          select: { name: true, email: true, role: true },
-        },
-        tag: true,
-        aiReport: true,
-      },
+      where: whereClause,
+      include: defaultWorkLogInclude,
       orderBy: {
         createdAt: "desc",
       },
@@ -160,26 +173,14 @@ router.get("/dashboard-summary", authenticateToken, async (req: Request, res: Re
       prisma.workLog.findMany({
         take: 25,
         orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
       }),
       // 2. Últimos relatórios marcados como Solucionado
       prisma.workLog.findMany({
         where: { status: "Solucionado" },
         take: 25,
         orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: { name: true, email: true, role: true },
-          },
-          tag: true,
-          aiReport: true,
-        },
+        include: defaultWorkLogInclude,
       }),
       prisma.workLog.count(),
       prisma.workLog.count({ where: { status: "Solucionado" } }),
@@ -286,6 +287,16 @@ router.post(
         },
       });
 
+      // Registra evento de criação na linha do tempo de status
+      await prisma.workLogStatusHistory.create({
+        data: {
+          workLogId: newLog.id,
+          fromStatus: "Registro Inicial",
+          toStatus: finalStatus,
+          changedById: user.id,
+        },
+      });
+
       // Se houver gravação, cria AiReport e dispara processamento em background
       if (savedRecordingPath) {
         await prisma.aiReport.create({
@@ -362,17 +373,97 @@ router.patch(
         return;
       }
 
-      const updated = await prisma.workLog.update({
-        where: { id },
-        data: {
-          status: "Solucionado",
+      if (existing.status !== "Solucionado") {
+        await prisma.$transaction([
+          prisma.workLog.update({
+            where: { id },
+            data: {
+              status: "Solucionado",
+            },
+          }),
+          prisma.workLogStatusHistory.create({
+            data: {
+              workLogId: id,
+              fromStatus: existing.status,
+              toStatus: "Solucionado",
+              changedById: req.user!.id,
+            },
+          }),
+        ]);
+      }
+
+      const history = await prisma.workLogStatusHistory.findMany({
+        where: { workLogId: id },
+        include: {
+          changedBy: {
+            select: { id: true, name: true, role: true },
+          },
         },
+        orderBy: { createdAt: "desc" },
       });
 
-      res.json({ success: true, status: updated.status });
+      res.json({ success: true, status: "Solucionado", history });
     } catch (error) {
       console.error("[WorkLogs] Erro ao solucionar atendimento:", error);
       res.status(500).json({ error: "Erro ao solucionar atendimento." });
+    }
+  }
+);
+
+
+// PATCH /api/worklogs/:id/assign
+router.patch(
+  "/:id/assign",
+  authenticateToken,
+  requireTechnicianManagerOrAdmin,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const { assignedToId } = req.body;
+
+      const existing = await prisma.workLog.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      let targetUserId: string | null = null;
+      if (assignedToId && typeof assignedToId === "string" && assignedToId.trim() !== "") {
+        const userExists = await prisma.user.findUnique({
+          where: { id: assignedToId.trim() },
+          select: { id: true, name: true, email: true, role: true },
+        });
+
+        if (!userExists) {
+          res.status(400).json({ error: "Usuário responsável não encontrado." });
+          return;
+        }
+        targetUserId = userExists.id;
+      }
+
+      const updated = await prisma.workLog.update({
+        where: { id },
+        data: {
+          assignedToId: targetUserId,
+        },
+        include: {
+          assignedTo: {
+            select: { id: true, name: true, email: true, role: true },
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        assignedTo: updated.assignedTo,
+        assignedToId: updated.assignedToId,
+      });
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao atribuir responsável:", error);
+      res.status(500).json({ error: "Erro ao atribuir responsável ao atendimento." });
     }
   }
 );
@@ -381,7 +472,6 @@ router.patch(
 router.patch(
   "/:id/status",
   authenticateToken,
-  requireTechnicianOrAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
@@ -401,14 +491,39 @@ router.patch(
         return;
       }
 
-      const updated = await prisma.workLog.update({
-        where: { id },
-        data: {
-          status: status.trim(),
+      const newStatus = status.trim();
+      const currentStatus = existing.status;
+
+      if (currentStatus !== newStatus) {
+        await prisma.$transaction([
+          prisma.workLog.update({
+            where: { id },
+            data: {
+              status: newStatus,
+            },
+          }),
+          prisma.workLogStatusHistory.create({
+            data: {
+              workLogId: id,
+              fromStatus: currentStatus,
+              toStatus: newStatus,
+              changedById: req.user!.id,
+            },
+          }),
+        ]);
+      }
+
+      const history = await prisma.workLogStatusHistory.findMany({
+        where: { workLogId: id },
+        include: {
+          changedBy: {
+            select: { id: true, name: true, role: true },
+          },
         },
+        orderBy: { createdAt: "desc" },
       });
 
-      res.json({ success: true, status: updated.status });
+      res.json({ success: true, status: newStatus, history });
     } catch (error) {
       console.error("[WorkLogs] Erro ao atualizar status:", error);
       res.status(500).json({ error: "Erro ao atualizar status do atendimento." });
@@ -504,6 +619,62 @@ router.get(
     } catch (error) {
       console.error("[WorkLogs] Erro ao consultar status da IA:", error);
       res.status(500).json({ error: "Erro ao consultar status da IA." });
+    }
+  }
+);
+
+// POST /api/worklogs/:id/generate-ai-report
+router.post(
+  "/:id/generate-ai-report",
+  authenticateToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+
+      const workLog = await prisma.workLog.findUnique({
+        where: { id },
+        include: { aiReport: true },
+      });
+
+      if (!workLog) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      if (workLog.aiReport && workLog.aiReport.status === "processing") {
+        res.status(400).json({
+          error: "O relatório já está sendo processado no momento. Por favor, aguarde alguns instantes.",
+        });
+        return;
+      }
+
+      // Cria ou atualiza registro de AiReport para pending
+      await prisma.aiReport.upsert({
+        where: { workLogId: id },
+        create: {
+          workLogId: id,
+          status: "pending",
+          startedAt: new Date(),
+          errorMessage: null,
+        },
+        update: {
+          status: "pending",
+          startedAt: new Date(),
+          errorMessage: null,
+        },
+      });
+
+      // Dispara job assíncrono em segundo plano
+      setImmediate(() => {
+        processAiReportJob(id).catch((err) => {
+          console.error(`[WorkLog] Erro no job de geração de relatório para ${id}:`, err);
+        });
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao disparar geração de relatório de IA:", error);
+      res.status(500).json({ error: "Erro ao iniciar processamento de IA." });
     }
   }
 );

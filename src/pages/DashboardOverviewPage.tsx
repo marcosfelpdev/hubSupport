@@ -246,6 +246,7 @@ export default function DashboardOverviewPage() {
       <ReportDetailsModal
         log={selectedLog}
         onClose={() => setSelectedLog(null)}
+        onRefresh={fetchDashboard}
       />
     </main>
   );

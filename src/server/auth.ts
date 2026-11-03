@@ -99,3 +99,13 @@ export function requireTechnicianOrAdmin(req: Request, res: Response, next: Next
   }
   next();
 }
+
+
+export function requireTechnicianManagerOrAdmin(req: Request, res: Response, next: NextFunction): void {
+  const role = req.user?.role?.toUpperCase();
+  if (role !== "TECHNICIAN" && role !== "MANAGER" && role !== "ADMIN") {
+    res.status(403).json({ error: "Acesso restrito a administradores, gestores e técnicos." });
+    return;
+  }
+  next();
+}

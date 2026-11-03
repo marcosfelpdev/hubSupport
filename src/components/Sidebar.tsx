@@ -143,23 +143,6 @@ export default function Sidebar({ user }: { user: User }) {
           </div>
         </div>
 
-        {/* Card / Pill Seletor de Cliente / Escritório (Vídeo 00:01) */}
-        <div className="bg-white dark:bg-[#111726] border border-slate-200/90 dark:border-slate-800 rounded-xl p-2.5 shadow-xs flex items-center justify-between mt-3 text-xs">
-          <div className="flex items-center gap-2 truncate">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span className="font-medium text-slate-700 dark:text-slate-300 truncate">Matriz Principal • SP</span>
-          </div>
-          <svg
-            className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0 ml-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-
         {/* Indicador de Gravação de Tela Ativa */}
         {isRecording && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold mt-3 shadow-xs animate-pulse">

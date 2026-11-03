@@ -20,6 +20,10 @@ model User {
   createdAt DateTime  @default(now())
   notifications Notification[]
   workLogs      WorkLog[]
+  assignedEvents AgendaEvent[] @relation("AssignedAgendaEvents")
+  createdEvents  AgendaEvent[] @relation("CreatedAgendaEvents")
+  statusChanges  WorkLogStatusHistory[]
+  assignedWorkLogs WorkLog[] @relation("AssignedWorkLogs")
 }
 
 model Tag {
@@ -49,6 +53,9 @@ model WorkLog {
   tag              Tag?           @relation(fields: [tagId], references: [id], onDelete: SetNull)
   notifications    Notification[]
   aiReport         AiReport?
+  statusHistory    WorkLogStatusHistory[]
+  assignedToId     String?
+  assignedTo       User?                  @relation("AssignedWorkLogs", fields: [assignedToId], references: [id], onDelete: SetNull)
 }
 
 model Notification {
@@ -76,4 +83,32 @@ model AiReport {
   completedAt    DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+}
+
+model AgendaEvent {
+  id               String    @id @default(cuid())
+  date             String    // YYYY-MM-DD
+  time             String    // HH:mm
+  title            String
+  category         String    // "Reunião" | "Atendimento" | "Técnico" | "Lembrete"
+  completed        Boolean   @default(false)
+  employeeId       String?
+  employee         User?     @relation("AssignedAgendaEvents", fields: [employeeId], references: [id], onDelete: SetNull)
+  createdById      String?
+  createdBy        User?     @relation("CreatedAgendaEvents", fields: [createdById], references: [id], onDelete: SetNull)
+  notificationSent Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+
+model WorkLogStatusHistory {
+  id          String   @id @default(cuid())
+  workLogId   String
+  workLog     WorkLog  @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+  fromStatus  String
+  toStatus    String
+  changedById String
+  changedBy   User     @relation(fields: [changedById], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 }

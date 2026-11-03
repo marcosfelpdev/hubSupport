@@ -10,6 +10,7 @@ import reportsRoutes from "./routes/reports.routes";
 import notificationsRoutes from "./routes/notifications.routes";
 import employeesRoutes from "./routes/employees.routes";
 import tagsRoutes from "./routes/tags.routes";
+import agendaRoutes from "./routes/agenda.routes";
 
 export const app = express();
 
@@ -44,6 +45,7 @@ app.use("/api/reports", reportsRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/employees", employeesRoutes);
 app.use("/api/tags", tagsRoutes);
+app.use("/api/agenda", agendaRoutes);
 
 // Servir frontend SPA compilado se existir (Modo Produção ou Build Estática)
 const DIST_DIR = path.join(process.cwd(), "dist");

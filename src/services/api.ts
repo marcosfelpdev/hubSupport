@@ -1,3 +1,17 @@
+export interface WorkLogStatusHistoryItem {
+  id: string;
+  workLogId: string;
+  fromStatus: string;
+  toStatus: string;
+  changedById: string;
+  changedBy: {
+    id: string;
+    name: string;
+    role?: string | null;
+  };
+  createdAt: string;
+}
+
 // Serviços de comunicação HTTP com o Backend REST
 
 const TOKEN_KEY = "hubsupport_jwt_token";
@@ -57,6 +71,14 @@ export interface WorkLogItem {
     email: string;
     role?: string;
   };
+  statusHistory?: WorkLogStatusHistoryItem[];
+  assignedToId?: string | null;
+  assignedTo?: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string | null;
+  } | null;
   aiReport?: {
     id: string;
     status: string;
@@ -97,6 +119,30 @@ export interface NotificationItem {
     implementation: boolean;
     status: string;
   } | null;
+}
+
+export interface AgendaEventItem {
+  id: string;
+  date: string;
+  time: string;
+  title: string;
+  category: "Reunião" | "Atendimento" | "Técnico" | "Lembrete" | string;
+  completed: boolean;
+  employeeId?: string | null;
+  employee?: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string;
+  } | null;
+  createdById?: string | null;
+  createdBy?: {
+    id: string;
+    name: string;
+  } | null;
+  notificationSent?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface EmployeeItem {
@@ -143,10 +189,21 @@ async function request<T>(
     }
   }
 
-  const data = await response.json();
+  let data: any = {};
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(data.error || "Ocorreu um erro ao processar a requisição.");
+    if (response.status === 502 || response.status === 503 || response.status === 504) {
+      throw new Error("O servidor backend está offline ou reiniciando. Verifique a conexão.");
+    }
+    throw new Error(data?.error || `Erro na requisição (${response.status}): ${response.statusText || "Falha na comunicação"}`);
   }
 
   return data as T;
@@ -183,6 +240,13 @@ export const api = {
     async getDaily(): Promise<WorkLogItem[]> {
       return request<WorkLogItem[]>("/api/worklogs");
     },
+    async getAll(params?: { startDate?: string; endDate?: string }): Promise<WorkLogItem[]> {
+      const query = new URLSearchParams();
+      if (params?.startDate) query.set("startDate", params.startDate);
+      if (params?.endDate) query.set("endDate", params.endDate);
+      const qs = query.toString();
+      return request<WorkLogItem[]>(`/api/worklogs${qs ? `?${qs}` : ""}`);
+    },
     async getRecent(limit = 25): Promise<WorkLogItem[]> {
       return request<WorkLogItem[]>(`/api/worklogs?type=recent&limit=${limit}`);
     },
@@ -201,12 +265,24 @@ export const api = {
         body: formData,
       });
     },
-    async resolve(id: string): Promise<{ success: boolean; status: string; error?: string }> {
+    async resolve(id: string): Promise<{ success: boolean; status: string; history?: WorkLogStatusHistoryItem[]; error?: string }> {
       return request<{ success: boolean; status: string; error?: string }>(`/api/worklogs/${id}/resolve`, {
         method: "PATCH",
       });
     },
-    async updateStatus(id: string, status: string): Promise<{ success: boolean; status: string; error?: string }> {
+    async assign(
+      id: string,
+      assignedToId: string | null
+    ): Promise<{ success: boolean; assignedTo?: { id: string; name: string; email: string; role?: string | null } | null; error?: string }> {
+      return request<{ success: boolean; assignedTo?: { id: string; name: string; email: string; role?: string | null } | null; error?: string }>(
+        `/api/worklogs/${id}/assign`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ assignedToId }),
+        }
+      );
+    },
+    async updateStatus(id: string, status: string): Promise<{ success: boolean; status: string; history?: WorkLogStatusHistoryItem[]; error?: string }> {
       return request<{ success: boolean; status: string; error?: string }>(`/api/worklogs/${id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
@@ -214,6 +290,11 @@ export const api = {
     },
     async retryAi(id: string): Promise<{ success: boolean }> {
       return request<{ success: boolean }>(`/api/worklogs/${id}/retry-ai`, {
+        method: "POST",
+      });
+    },
+    async generateAiReport(id: string): Promise<{ success: boolean }> {
+      return request<{ success: boolean }>(`/api/worklogs/${id}/generate-ai-report`, {
         method: "POST",
       });
     },
@@ -273,8 +354,51 @@ export const api = {
     },
   },
 
+  // Agenda Compartilhada
+  agenda: {
+    async getAll(): Promise<AgendaEventItem[]> {
+      return request<AgendaEventItem[]>("/api/agenda");
+    },
+    async create(data: {
+      title: string;
+      date: string;
+      time?: string;
+      category?: string;
+      employeeId?: string | null;
+    }): Promise<{ success: boolean; event: AgendaEventItem }> {
+      return request<{ success: boolean; event: AgendaEventItem }>("/api/agenda", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    async update(
+      id: string,
+      data: Partial<{
+        title: string;
+        date: string;
+        time: string;
+        category: string;
+        completed: boolean;
+        employeeId: string | null;
+      }>
+    ): Promise<{ success: boolean; event: AgendaEventItem }> {
+      return request<{ success: boolean; event: AgendaEventItem }>(`/api/agenda/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
+    },
+    async delete(id: string): Promise<{ success: boolean }> {
+      return request<{ success: boolean }>(`/api/agenda/${id}`, {
+        method: "DELETE",
+      });
+    },
+  },
+
   // Gestão de Funcionários
   employees: {
+    async list(): Promise<EmployeeItem[]> {
+      return request<EmployeeItem[]>("/api/employees");
+    },
     async getAll(): Promise<EmployeeItem[]> {
       return request<EmployeeItem[]>("/api/employees");
     },

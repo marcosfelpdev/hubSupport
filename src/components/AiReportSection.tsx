@@ -27,11 +27,14 @@ export default function AiReportSection({
   const [report, setReport] = useState<AiReportData | null>(initialReport ?? null);
   const [isRetrying, startRetryTransition] = useTransition();
   const [retryFeedback, setRetryFeedback] = useState<string | null>(null);
+  const [isGenerating, startGeneratingTransition] = useTransition();
+  const [generateFeedback, setGenerateFeedback] = useState<string | null>(null);
 
   // Sincroniza estado quando o atendimento selecionado muda
   useEffect(() => {
     setReport(initialReport ?? null);
     setRetryFeedback(null);
+    setGenerateFeedback(null);
   }, [workLogId, initialReport]);
 
   // Polling leve enquanto estiver nos estados "pending" ou "processing"
@@ -57,9 +60,22 @@ export default function AiReportSection({
     return () => clearInterval(interval);
   }, [workLogId, report?.status]);
 
-  if (!report) {
-    return null;
-  }
+  const handleGenerateReport = () => {
+    setGenerateFeedback(null);
+    startGeneratingTransition(async () => {
+      try {
+        await api.worklogs.generateAiReport(workLogId);
+        setReport({
+          id: `ai-${workLogId}`,
+          status: "pending",
+        });
+      } catch (err) {
+        setGenerateFeedback(
+          err instanceof Error ? err.message : "Erro ao solicitar geração de relatório."
+        );
+      }
+    });
+  };
 
   const handleRetry = () => {
     setRetryFeedback(null);
@@ -80,6 +96,55 @@ export default function AiReportSection({
       }
     });
   };
+
+  if (!report) {
+    return (
+      <div className="bg-gradient-to-r from-indigo-50/70 via-sky-50/40 to-indigo-50/70 dark:from-indigo-950/25 dark:via-sky-950/15 dark:to-indigo-950/25 border border-indigo-200/80 dark:border-indigo-900/60 rounded-2xl p-4 sm:p-5 shadow-xs mb-4 transition-all">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-100/70 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-2xs mt-0.5 sm:mt-0">
+              <Sparkles size={20} className="text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                  Relatório Executivo com IA
+                </h3>
+              </div>
+              <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 mt-1 max-w-xl leading-relaxed">
+                Este chamado foi registrado sem gravação de tela. Você pode gerar uma análise técnica formal e estruturada com base nas informações e mídias deste atendimento.
+              </p>
+              {generateFeedback && (
+                <div className="flex items-center gap-1.5 mt-2 text-xs text-rose-600 dark:text-rose-400 font-medium">
+                  <AlertTriangle size={13} className="shrink-0" />
+                  <span>{generateFeedback}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGenerateReport}
+            disabled={isGenerating}
+            className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 active:scale-[0.98] shadow-xs hover:shadow-sm transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 size={16} className="animate-spin text-white" />
+                <span>Iniciando IA...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} className="text-white" />
+                <span>Gerar Relatório com IA</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusBadge = () => {
     switch (report.status) {
@@ -131,7 +196,9 @@ export default function AiReportSection({
               Relatório gerado por IA
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              Gerado a partir da gravação de tela com Google Gemini
+              {report.videoPath
+                ? "Gerado a partir da gravação de tela com Google Gemini"
+                : "Gerado a partir dos dados e mídias do chamado com Google Gemini"}
             </p>
           </div>
         </div>
@@ -150,7 +217,9 @@ export default function AiReportSection({
           <div className="flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-200">
             <Clock size={16} className="text-amber-600 dark:text-amber-400 animate-pulse shrink-0" />
             <span className="font-medium">
-              A gravação foi recebida e está aguardando o início da análise pela inteligência artificial.
+              {report.videoPath
+                ? "A gravação foi recebida e está aguardando o início da análise pela inteligência artificial."
+                : "O chamado foi recebido e está aguardando o início da análise pela inteligência artificial."}
             </span>
           </div>
 
@@ -177,7 +246,11 @@ export default function AiReportSection({
         <div className="flex flex-col gap-3 p-3.5 bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-900/60 rounded-xl">
           <div className="flex items-center gap-2.5 text-xs text-indigo-950 dark:text-indigo-200 font-medium">
             <Loader2 size={16} className="animate-spin text-indigo-600 dark:text-indigo-400 shrink-0" />
-            <span>A IA está analisando o vídeo e estruturando o relatório em PDF...</span>
+            <span>
+              {report.videoPath
+                ? "A IA está analisando o vídeo e estruturando o relatório em PDF..."
+                : "A IA está analisando as informações do chamado e estruturando o relatório em PDF..."}
+            </span>
           </div>
 
           {/* Barra de progresso moderna */}

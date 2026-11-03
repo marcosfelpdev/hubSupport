@@ -2,12 +2,12 @@
 
 import { useMemo, useState, useTransition, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Cog, Lightbulb, CheckCircle2, Paperclip, AlertCircle, FileText } from "lucide-react";
+import { Cog, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import { api } from "@/services/api";
-import AiReportSection from "@/components/AiReportSection";
-import TagBadge from "@/components/TagBadge";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
 import MediaGalleryModal from "@/components/MediaGalleryModal";
+import WorkLogDetailContent from "@/components/dashboard/WorkLogDetailContent";
+import PdfViewerModal from "@/components/dashboard/PdfViewerModal";
 
 export interface TechnicalWorkLog {
   id: string;
@@ -50,35 +50,7 @@ interface TechnicianDashboardProps {
   currentUserId: string;
   employees: { name: string }[];
   onLogResolved?: () => void;
-}
-
-const avatarColors = [
-  "#6366f1",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#06b6d4",
-  "#ec4899",
-];
-
-function getAvatarColor(userId?: string) {
-  if (!userId) return avatarColors[0];
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
-function getInitials(name?: string) {
-  if (!name) return "US";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  onRefresh?: () => void;
 }
 
 function getStatusPillConfig(status: string) {
@@ -137,18 +109,6 @@ function getStatusPillConfig(status: string) {
   };
 }
 
-function formatDate(date: Date | string) {
-  try {
-    return new Date(date).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  } catch {
-    return "";
-  }
-}
-
 function getMediaPaths(log: TechnicalWorkLog): string[] {
   try {
     return JSON.parse(log.media || "[]");
@@ -161,6 +121,7 @@ export default function TechnicianDashboardClient({
   logs: initialLogs,
   employees,
   onLogResolved,
+  onRefresh,
 }: TechnicianDashboardProps) {
   const [searchParams] = useSearchParams();
   const requestedId = searchParams.get("id");
@@ -169,6 +130,9 @@ export default function TechnicianDashboardClient({
   const [selectedLogId, setSelectedLogId] = useState<string | null>(requestedId || null);
   const [isPending, startTransition] = useTransition();
   const [actionFeedback, setActionFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [pdfViewerLog, setPdfViewerLog] = useState<TechnicalWorkLog | null>(null);
+
+  const fetchLogs = onRefresh || onLogResolved;
 
   // Sincroniza caso initialLogs mude
   useEffect(() => {
@@ -288,8 +252,6 @@ export default function TechnicianDashboardClient({
     });
   }
 
-  const selectedStatusPill = selectedLog ? getStatusPillConfig(selectedLog.status) : null;
-
   return (
     <div className="w-full">
       {/* Barra de Filtros */}
@@ -364,7 +326,7 @@ export default function TechnicianDashboardClient({
       {/* Grid Principal: Cards minimizados ao lado (esquerda) e Card expandido ao lado (direita) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-h-[calc(100vh-280px)]">
         {/* Coluna Esquerda: Cards minimizados */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 max-h-[calc(100vh-270px)] overflow-y-auto pr-1">
+        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 max-h-[calc(100vh-270px)] overflow-y-auto p-1 pr-1.5">
           {filteredLogs.length === 0 ? (
             <div className="bg-white dark:bg-[#111726] border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center py-12 px-4 shadow-xs">
               <div className="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto mb-3 shadow-2xs">
@@ -412,189 +374,46 @@ export default function TechnicianDashboardClient({
                 </div>
               )}
 
-              {/* Topo do card expandido */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-2xs"
-                    style={{ backgroundColor: getAvatarColor(selectedLog.userId) }}
-                  >
-                    {getInitials(selectedLog.user.name)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                        {selectedLog.user.name}
+              <WorkLogDetailContent
+                log={selectedLog}
+                onRefresh={fetchLogs}
+                onOpenPdfModal={(_id) => setPdfViewerLog(selectedLog)}
+                onOpenMediaModal={(_log) => openMediaModal(selectedLog)}
+                footerActions={
+                  <div className="border-t border-slate-200 dark:border-slate-800 pt-5 mt-2 flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
+                        Resolução Técnica
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Quando o chamado for atendido e resolvido, defina-o como solucionado.
                       </p>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        {selectedLog.user.role === "ADMIN"
-                          ? "Administrador"
-                          : selectedLog.user.role === "SUPPORT"
-                            ? "Suporte"
-                            : selectedLog.user.role === "MANAGER"
-                              ? "Gestor"
-                              : "Colaborador"}
-                      </span>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Registrado em {formatDate(selectedLog.createdAt)} às{" "}
-                      {new Date(selectedLog.createdAt).toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Master Tag */}
-                  {selectedLog.tag && (
-                    <TagBadge name={selectedLog.tag.name} color={selectedLog.tag.color} size="md" />
-                  )}
-
-                  {/* Tags Ação Técnica / Implementação */}
-                  {selectedLog.technicalAction && (
-                    <div
-                      title="Ação Técnica"
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-semibold shadow-2xs"
-                    >
-                      <Cog size={12} />
-                      <span>Ação Técnica</span>
-                    </div>
-                  )}
-                  {selectedLog.implementation && (
-                    <div
-                      title="Implementação"
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-semibold shadow-2xs"
-                    >
-                      <Lightbulb size={12} />
-                      <span>Implementação</span>
-                    </div>
-                  )}
-
-                  {selectedStatusPill && (
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold shadow-2xs ${selectedStatusPill.badgeClass}`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selectedStatusPill.dotClass}`} />
-                      <span>{selectedStatusPill.label}</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Título do Chamado (se houver) */}
-              {selectedLog.title && (
-                <div className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl p-4">
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
-                    Título do Atendimento
-                  </span>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    {selectedLog.title}
-                  </h3>
-                </div>
-              )}
-
-              {/* Solicitante & Escritório */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
-                    Solicitante
-                  </span>
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                    {selectedLog.requester || "Não informado"}
-                  </p>
-                </div>
-                <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
-                    Escritório / Cliente
-                  </span>
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                    {selectedLog.clientOrOffice || "Não informado"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Botão Mídia (se houver) */}
-              {getMediaPaths(selectedLog).length > 0 && (
-                <div>
-                  <button
-                    onClick={() => openMediaModal(selectedLog)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#111726] hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg transition-colors border border-slate-200 dark:border-slate-800 cursor-pointer shadow-2xs"
-                  >
-                    <Paperclip size={14} className="text-slate-500 dark:text-slate-400" />
-                    <span>Visualizar Mídias ({getMediaPaths(selectedLog).length})</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Seção Relatório de IA */}
-              <AiReportSection
-                workLogId={selectedLog.id}
-                initialReport={selectedLog.aiReport}
-              />
-
-              {/* Detalhes do Chamado */}
-              <div className="space-y-4">
-                {/* Problema relatado */}
-                <div className="bg-slate-50/60 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
-                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2">
-                    <AlertCircle size={14} />
-                    <span>Descrição do Problema</span>
-                  </div>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
-                    {selectedLog.reportedProblem || "Nenhuma descrição fornecida."}
-                  </p>
-                </div>
-
-                {/* Ação realizada (se houver histórico) */}
-                {selectedLog.actionTaken && selectedLog.actionTaken.trim() !== "" && (
-                  <div className="bg-slate-50/60 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
-                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
-                      <CheckCircle2 size={14} />
-                      <span>Ação Realizada pelo Autor</span>
-                    </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
-                      {selectedLog.actionTaken}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* SEÇÃO DE AÇÃO TÉCNICA: BOTÃO "SOLUCIONADO" */}
-              <div className="border-t border-slate-200 dark:border-slate-800 pt-5 mt-2 flex items-center justify-between flex-wrap gap-4">
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
-                    Resolução Técnica
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Quando o chamado for atendido e resolvido, defina-o como solucionado.
-                  </p>
-                </div>
-
-                <div>
-                  {selectedLog.status === "Solucionado" ? (
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-semibold text-xs shadow-2xs">
-                      <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
-                      <span>Solucionado</span>
-                    </div>
-                  ) : (
-                    <button
-                      id="btn-solucionado"
-                      onClick={() => handleMarkSolved(selectedLog.id)}
-                      disabled={isPending}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isPending ? (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div>
+                      {selectedLog.status === "Solucionado" ? (
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-semibold text-xs shadow-2xs">
+                          <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
+                          <span>Solucionado</span>
+                        </div>
                       ) : (
-                        <CheckCircle2 size={16} />
+                        <button
+                          id="btn-solucionado"
+                          onClick={() => handleMarkSolved(selectedLog.id)}
+                          disabled={isPending}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isPending ? (
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <CheckCircle2 size={16} />
+                          )}
+                          <span>Marcar como Solucionado</span>
+                        </button>
                       )}
-                      <span>Marcar como Solucionado</span>
-                    </button>
-                  )}
-                </div>
-              </div>
+                    </div>
+                  </div>
+                }
+              />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center py-20 text-slate-400 dark:text-slate-500">
@@ -613,6 +432,13 @@ export default function TechnicianDashboardClient({
         onClose={() => setMediaModalOpen(false)}
         mediaUrls={mediaItems}
         initialIndex={mediaCurrentIndex}
+      />
+
+      {/* Modal Visualizador de PDF Estilo Gemini */}
+      <PdfViewerModal
+        log={pdfViewerLog}
+        isOpen={!!pdfViewerLog}
+        onClose={() => setPdfViewerLog(null)}
       />
     </div>
   );
