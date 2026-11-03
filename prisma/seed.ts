@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Iniciando seed...");
+  console.log("🌱 Iniciando seed no banco de dados...");
 
   // 1. Criar usuário Mestre / Administrador
   const adminPassword = await bcrypt.hash("076250@Ma", 12);
@@ -60,7 +60,7 @@ async function main() {
     },
   });
 
-  // 3. Criar usuário Técnico de teste
+  // 3. Criar usuário Técnico
   const techUser = await prisma.user.upsert({
     where: { email: "tecnico@hubsupport.com" },
     update: {
@@ -77,7 +77,24 @@ async function main() {
     },
   });
 
-  // 4. Criar Tags Mestre iniciais (idempotente)
+  // 4. Criar usuário Gestor
+  const managerUser = await prisma.user.upsert({
+    where: { email: "gestao@hubsupport.com" },
+    update: {
+      name: "Juliana Gestora",
+      role: "MANAGER",
+      active: true,
+    },
+    create: {
+      name: "Juliana Gestora",
+      email: "gestao@hubsupport.com",
+      password: userPassword,
+      role: "MANAGER",
+      active: true,
+    },
+  });
+
+  // 5. Criar Tags Mestre iniciais (idempotente)
   const defaultTags = [
     { name: "Plataforma Web", color: "#3b82f6" },
     { name: "Sistema ERP", color: "#f59e0b" },
@@ -94,68 +111,27 @@ async function main() {
     });
   }
 
-  const defaultTagWeb = await prisma.tag.findUnique({ where: { name: "Plataforma Web" } });
-  const defaultTagERP = await prisma.tag.findUnique({ where: { name: "Sistema ERP" } });
-
-  // 5. Criar chamados de exemplo com ação técnica e implementação se não existirem
-  const countTechLogs = await prisma.workLog.count({
-    where: {
-      OR: [{ technicalAction: true }, { implementation: true }],
-    },
-  });
-
-  if (countTechLogs === 0) {
-    const log1 = await prisma.workLog.create({
-      data: {
-        title: "Falha na sincronização da API de faturamento",
-        requester: "Roberta Souza",
-        clientOrOffice: "Escritório Central SP",
-        reportedProblem: "Falha na sincronização da API de faturamento com o banco de dados principal. Retorno de erro 504 Timeout nas requisições noturnas.",
-        actionTaken: "Realizado diagnóstico preliminar na fila de processamento. Necessário ajuste no script de conciliação e deploy de patch de performance.",
-        status: "Em andamento",
-        technicalAction: true,
-        implementation: false,
-        media: "[]",
-        userId: user1.id,
-        tagId: defaultTagERP?.id,
-      },
-    });
-
-    const log2 = await prisma.workLog.create({
-      data: {
-        title: "Sugestão de automação para exportação de relatórios XLSX",
-        requester: "Mariana Costa",
-        clientOrOffice: "Filial Curitiba",
-        reportedProblem: "Sugestão de automação para exportação de relatórios diários em formato XLSX e envio automático para os gerentes regionais.",
-        actionTaken: "Documentado escopo da demanda com a equipe de atendimento. Encaminhado para a equipe técnica analisar viabilidade de implementação do cronjob.",
-        status: "Aguardando reunião",
-        technicalAction: false,
-        implementation: true,
-        media: "[]",
-        userId: user2.id,
-        tagId: defaultTagWeb?.id,
-      },
-    });
-
-    // Criar notificações para o técnico
-    await prisma.notification.createMany({
-      data: [
-        {
-          userId: techUser.id,
-          workLogId: log1.id,
-          title: "Novo chamado: Ação Técnica",
-          message: `${user1.name} registrou um atendimento para "Escritório Central SP" que requer atuação técnica.`,
-          read: false,
+  // 6. Chamados de exemplo opcionais (apenas se explicitamente habilitado via SEED_SAMPLE_LOGS=true)
+  if (process.env.SEED_SAMPLE_LOGS === "true") {
+    const defaultTagERP = await prisma.tag.findUnique({ where: { name: "Sistema ERP" } });
+    const countLogs = await prisma.workLog.count();
+    if (countLogs === 0) {
+      await prisma.workLog.create({
+        data: {
+          title: "Falha na sincronização da API",
+          requester: "Roberta Souza",
+          clientOrOffice: "Escritório Central SP",
+          reportedProblem: "Falha na sincronização da API de faturamento.",
+          actionTaken: "Realizado diagnóstico preliminar.",
+          status: "Em andamento",
+          technicalAction: true,
+          implementation: false,
+          media: "[]",
+          userId: user1.id,
+          tagId: defaultTagERP?.id,
         },
-        {
-          userId: techUser.id,
-          workLogId: log2.id,
-          title: "Novo chamado: Implementação",
-          message: `${user2.name} registrou um atendimento para "Filial Curitiba" que requer atuação técnica.`,
-          read: false,
-        },
-      ],
-    });
+      });
+    }
   }
 
   console.log("✅ Usuários configurados:");
@@ -163,8 +139,9 @@ async function main() {
   console.log(`   👤 [COLABORADOR] ${user1.name} (${user1.email})`);
   console.log(`   👤 [COLABORADOR] ${user2.name} (${user2.email})`);
   console.log(`   🔧 [TÉCNICO] ${techUser.name} (${techUser.email}) - Senha: senha123`);
+  console.log(`   📊 [GESTOR] ${managerUser.name} (${managerUser.email}) - Senha: senha123`);
   console.log("🏷️  Tags Mestre criadas com sucesso!");
-  console.log("\n✨ Seed concluído com sucesso!");
+  console.log("\n✨ Seed concluído com sucesso e banco 100% limpo de chamados de teste!");
 }
 
 main()
