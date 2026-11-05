@@ -68,6 +68,43 @@ export async function uploadBuffer(
 }
 
 /**
+ * Faz upload de um arquivo a partir do disco para o R2 (via stream) ou move/copia no disco local.
+ * Mantém o consumo de RAM estritamente constante (~poucos KBs) mesmo para arquivos de 1GB+.
+ */
+export async function uploadFileFromDisk(
+  filePath: string,
+  key: string,
+  contentType: string
+): Promise<string> {
+  const normalizedKey = key.replace(/\\/g, "/").replace(/^\/+/, "");
+  const stat = await fs.promises.stat(filePath);
+
+  if (isR2Configured && s3Client) {
+    const fileStream = fs.createReadStream(filePath);
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: normalizedKey,
+        Body: fileStream,
+        ContentLength: stat.size,
+        ContentType: contentType,
+      })
+    );
+    return normalizedKey;
+  }
+
+  // Fallback local: copia o arquivo do temp para a pasta final
+  const localPath = path.join(process.cwd(), normalizedKey);
+  const dir = path.dirname(localPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  await fs.promises.copyFile(filePath, localPath);
+  return normalizedKey;
+}
+
+
+/**
  * Obtém o stream e metadados de um arquivo do R2 ou disco local.
  */
 export async function getFileStream(

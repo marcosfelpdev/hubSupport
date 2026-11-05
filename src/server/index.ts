@@ -11,6 +11,10 @@ const server = app.listen(PORT, () => {
   startAgendaNotificationJob();
 });
 
+// Suporte a uploads extensos (até 1GB) com timeout expandido para 15 minutos
+server.requestTimeout = 15 * 60 * 1000;
+server.headersTimeout = 16 * 60 * 1000;
+
 // Encerramento limpo em sinais de interrupção
 process.on("SIGTERM", () => {
   console.log("[HubSupport Backend] Recebido SIGTERM, encerrando servidor...");

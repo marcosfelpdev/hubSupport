@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs/promises";
 import fsSync from "fs";
 import { prisma } from "../../lib/prisma";
-import { uploadBuffer, fileExists, deleteFile } from "../services/r2Storage";
+import { uploadFileFromDisk, uploadBuffer, fileExists, deleteFile } from "../services/r2Storage";
 import { authenticateToken, requireTechnicianOrAdmin, requireTechnicianManagerOrAdmin, requireAdmin } from "../auth";
 import { processAiReportJob } from "../../lib/report-processor";
 
@@ -32,6 +32,7 @@ const defaultWorkLogInclude = {
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const RECORDINGS_DIR = path.join(process.cwd(), "storage", "recordings");
+const TEMP_DIR = path.join(process.cwd(), "storage", "temp");
 
 // Garante que os diretórios existam
 if (!fsSync.existsSync(UPLOAD_DIR)) {
@@ -40,14 +41,25 @@ if (!fsSync.existsSync(UPLOAD_DIR)) {
 if (!fsSync.existsSync(RECORDINGS_DIR)) {
   fsSync.mkdirSync(RECORDINGS_DIR, { recursive: true });
 }
+if (!fsSync.existsSync(TEMP_DIR)) {
+  fsSync.mkdirSync(TEMP_DIR, { recursive: true });
+}
 
-// Configuração do Multer com armazenamento customizado
-const storage = multer.memoryStorage();
+// Configuração do Multer com armazenamento temporário em disco para evitar OOM no Render
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, TEMP_DIR);
+  },
+  filename: (_req, file, cb) => {
+    const cleanName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    cb(null, `${Date.now()}-${cleanName}`);
+  },
+});
 
 const upload = multer({
   storage,
   limits: {
-    fileSize: 100 * 1024 * 1024, // Limite máximo de 100MB
+    fileSize: 1024 * 1024 * 1024, // Limite máximo de 1GB (1024MB)
   },
 });
 
@@ -203,6 +215,21 @@ router.post(
     { name: "recordedVideo", maxCount: 1 },
   ]),
   async (req: Request, res: Response): Promise<void> => {
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+    const tempFilesToClean: string[] = [];
+
+    // Rastreia todos os arquivos gravados temporariamente no disco para limpeza garantida
+    if (files?.media) {
+      for (const file of files.media) {
+        if (file.path) tempFilesToClean.push(file.path);
+      }
+    }
+    if (files?.recordedVideo) {
+      for (const file of files.recordedVideo) {
+        if (file.path) tempFilesToClean.push(file.path);
+      }
+    }
+
     try {
       const user = req.user!;
       const {
@@ -235,26 +262,24 @@ router.post(
         return;
       }
 
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-
-      // Processar mídias adicionais
+      // Processar mídias adicionais via streaming do disco para o R2 (RAM constante)
       const mediaPaths: string[] = [];
       if (files?.media) {
         for (const file of files.media) {
           const cleanName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
           const key = `uploads/${Date.now()}-${cleanName}`;
-          await uploadBuffer(file.buffer, key, file.mimetype || "application/octet-stream");
+          await uploadFileFromDisk(file.path, key, file.mimetype || "application/octet-stream");
           mediaPaths.push(`/${key}`);
         }
       }
 
-      // Processar vídeo gravado
+      // Processar vídeo gravado via streaming do disco para o R2 (RAM constante)
       let savedRecordingPath: string | null = null;
       if (files?.recordedVideo && files.recordedVideo[0]) {
         const videoFile = files.recordedVideo[0];
         const cleanName = videoFile.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
         const key = `storage/recordings/${Date.now()}-${cleanName}`;
-        await uploadBuffer(videoFile.buffer, key, videoFile.mimetype || "video/webm");
+        await uploadFileFromDisk(videoFile.path, key, videoFile.mimetype || "video/webm");
         savedRecordingPath = key;
       }
 
@@ -299,7 +324,7 @@ router.post(
         if (videoMedia) {
           const cleanName = videoMedia.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
           const key = `storage/recordings/${Date.now()}-${cleanName}`;
-          await uploadBuffer(videoMedia.buffer, key, videoMedia.mimetype || "video/webm");
+          await uploadFileFromDisk(videoMedia.path, key, videoMedia.mimetype || "video/webm");
           savedRecordingPath = key;
         }
       }
@@ -356,6 +381,17 @@ router.post(
       res.status(500).json({
         error: error instanceof Error ? error.message : "Erro interno ao salvar atendimento.",
       });
+    } finally {
+      // Limpeza imediata de todos os arquivos temporários no disco do servidor
+      for (const tempPath of tempFilesToClean) {
+        try {
+          if (fsSync.existsSync(tempPath)) {
+            fsSync.unlinkSync(tempPath);
+          }
+        } catch (cleanupErr) {
+          console.warn(`[WorkLogs] Falha ao limpar arquivo temporário ${tempPath}:`, cleanupErr);
+        }
+      }
     }
   }
 );

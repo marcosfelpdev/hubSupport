@@ -95,7 +95,25 @@ export default function WorkLogForm({
     }
   }
 
+  const MAX_FILE_SIZE_BYTES = 1024 * 1024 * 1024; // 1GB (1024 MB)
+
+  function formatBytes(bytes: number) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  }
+
   function addFiles(newFiles: File[]) {
+    const oversizedFiles = newFiles.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
+    if (oversizedFiles.length > 0) {
+      setMessage({
+        type: "error",
+        text: `O arquivo "${oversizedFiles[0].name}" (${formatBytes(oversizedFiles[0].size)}) excede o limite máximo permitido de 1GB.`,
+      });
+      return;
+    }
+
     setMediaFiles((prev) => {
       const existingKeys = new Set(prev.map((f) => `${f.name}_${f.size}`));
       const unique = newFiles.filter((f) => !existingKeys.has(`${f.name}_${f.size}`));
@@ -145,12 +163,6 @@ export default function WorkLogForm({
     if (e.target) e.target.value = "";
   }
 
-  function formatBytes(bytes: number) {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setMessage(null);
@@ -159,6 +171,14 @@ export default function WorkLogForm({
       setMessage({
         type: "error",
         text: "Por favor, selecione uma tag de plataforma obrigatória.",
+      });
+      return;
+    }
+
+    if (activeRecordedVideo && activeRecordedVideo.size > MAX_FILE_SIZE_BYTES) {
+      setMessage({
+        type: "error",
+        text: `A gravação de tela (${formatBytes(activeRecordedVideo.size)}) excede o limite máximo permitido de 1GB.`,
       });
       return;
     }
@@ -612,7 +632,7 @@ export default function WorkLogForm({
                 )}
               </p>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                Imagens, documentos ou vídeos (até 100MB por arquivo)
+                Imagens, documentos ou vídeos (até 1GB por arquivo)
               </p>
             </div>
           </div>

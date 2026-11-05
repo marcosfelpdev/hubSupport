@@ -304,11 +304,12 @@ export async function analyzeRecordingWithGemini(
   // 5. Aguarda o arquivo ficar no estado ACTIVE na infraestrutura do Google
   let fileInfo = await ai.files.get({ name: remoteFileName });
   let attempts = 0;
-  const maxAttempts = 30; // Até 60 segundos aguardando processamento
+  const maxAttempts = 120; // Até 360 segundos (6 minutos) para vídeos de até 1GB
+  const pollIntervalMs = 3000;
 
   while (fileInfo.state === "PROCESSING" && attempts < maxAttempts) {
     console.log(`[Gemini] Processando vídeo na nuvem... tentativa ${attempts + 1}/${maxAttempts}`);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
     fileInfo = await ai.files.get({ name: remoteFileName });
     attempts++;
   }

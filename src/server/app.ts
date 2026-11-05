@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
 import fs from "fs";
+import multer from "multer";
 
 import authRoutes from "./routes/auth.routes";
 import worklogsRoutes from "./routes/worklogs.routes";
@@ -85,6 +86,21 @@ app.use("/api", (req: Request, res: Response) => {
 
 // Handler central de erros
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      res.status(413).json({
+        error: "O arquivo enviado é muito grande. O limite máximo permitido é de 1GB por arquivo.",
+        code: "LIMIT_FILE_SIZE",
+      });
+      return;
+    }
+    res.status(400).json({
+      error: `Erro no upload do arquivo: ${err.message}`,
+      code: err.code,
+    });
+    return;
+  }
+
   console.error("[ServerError]", err);
   const message = err instanceof Error ? err.message : "Erro interno no servidor.";
   res.status(500).json({ error: message });
