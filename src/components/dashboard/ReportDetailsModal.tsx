@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import {
+  Copy,
+  Check,
   X,
   Download,
   FileText,
@@ -12,6 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { WorkLogItem, api } from "@/services/api";
+import { formatReportAsText, copyToClipboard } from "@/lib/report-formatter";
 import WorkLogDetailContent, {
   StructuredReportData,
 } from "@/components/dashboard/WorkLogDetailContent";
@@ -39,6 +42,32 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
   const [pdfLoading, setPdfLoading] = useState<boolean>(true);
   const [viewingMedia, setViewingMedia] = useState<boolean>(false);
   const [mediaCurrentIndex, setMediaCurrentIndex] = useState<number>(0);
+
+  const [copiedPdfText, setCopiedPdfText] = useState(false);
+
+  const handleCopyPdfText = async () => {
+    if (!log) return;
+    let parsed: any = null;
+    if (log.aiReport?.structuredData) {
+      try {
+        parsed = JSON.parse(log.aiReport.structuredData);
+      } catch {}
+    }
+    const text = formatReportAsText(parsed, {
+      title: log.title,
+      requester: log.requester,
+      clientOrOffice: log.clientOrOffice,
+      reportedProblem: log.reportedProblem,
+      actionTaken: log.actionTaken,
+      status: log.status,
+      createdAt: log.createdAt,
+    });
+    const success = await copyToClipboard(text);
+    if (success) {
+      setCopiedPdfText(true);
+      setTimeout(() => setCopiedPdfText(false), 2000);
+    }
+  };
 
   // Extrai lista de mídias anexadas
   const mediaPaths: string[] = useMemo(() => {
@@ -155,6 +184,27 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
 
               {/* Ações da barra superior */}
               <div className="flex items-center gap-2 shrink-0">
+                {/* Botão Copiar Texto do Relatório */}
+                <button
+                  type="button"
+                  onClick={handleCopyPdfText}
+                  id="btn-modal-copy-report-text"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#161f33] hover:bg-slate-50 dark:hover:bg-[#1c273e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  title="Copiar texto do relatório para a área de transferência"
+                >
+                  {copiedPdfText ? (
+                    <>
+                      <Check size={13} className="text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400">Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={13} className="text-slate-500 dark:text-slate-400" />
+                      <span>Copiar Texto</span>
+                    </>
+                  )}
+                </button>
+
                 {/* Botão Exportar (baixa o PDF oficial) */}
                 <a
                   href={api.worklogs.getDownloadReportUrl(log.id)}

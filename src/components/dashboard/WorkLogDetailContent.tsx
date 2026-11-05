@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useTransition, useRef } from "react";
 import {
+  Copy,
   CheckCircle2,
   FileText,
   Sparkles,
@@ -27,6 +28,7 @@ import {
 import { WorkLogItem, WorkLogStatusHistoryItem, EmployeeItem, api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import TagBadge from "@/components/TagBadge";
+import { formatReportAsText, copyToClipboard } from "@/lib/report-formatter";
 
 export interface StructuredReportData {
   title?: string;
@@ -325,6 +327,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
 
     const currentUserRole = currentUser?.role?.toUpperCase();
   const isAdmin = currentUserRole === "ADMIN";
+  const canDelete = currentUserRole === "ADMIN" || currentUserRole === "TECHNICIAN";
   const canAssign =
     currentUserRole === "ADMIN" ||
     currentUserRole === "MANAGER" ||
@@ -334,6 +337,26 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  // Estado e handler para copiar texto do relatório
+  const [copiedReport, setCopiedReport] = useState<boolean>(false);
+
+  const handleCopyReportText = async () => {
+    const textToCopy = formatReportAsText(structured, {
+      title: log.title,
+      requester: log.requester,
+      clientOrOffice: log.clientOrOffice,
+      reportedProblem: log.reportedProblem,
+      actionTaken: log.actionTaken,
+      status: currentStatus,
+      createdAt: log.createdAt,
+    });
+    const success = await copyToClipboard(textToCopy);
+    if (success) {
+      setCopiedReport(true);
+      setTimeout(() => setCopiedReport(false), 2000);
+    }
+  };
+
 
   const handleDelete = async () => {
     try {
@@ -845,7 +868,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
         </div>
 
         <div className="shrink-0 flex items-center gap-2 self-start sm:self-center">
-          {isAdmin && (
+          {canDelete && (
             <button
               type="button"
               id="btn-delete-worklog"
@@ -854,7 +877,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 setShowDeleteModal(true);
               }}
               disabled={isDeleting}
-              title="Excluir este atendimento permanentemente (Apenas Administrador)"
+              title="Excluir este atendimento permanentemente"
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900/60 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 disabled:opacity-50"
             >
               <Trash2 size={13} className="shrink-0" />
@@ -1186,7 +1209,28 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
             </div>
 
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
-              {/* Botão Vídeo gravado */}
+                            {/* Botão Copiar Texto do Relatório */}
+              <button
+                type="button"
+                onClick={handleCopyReportText}
+                id="btn-copy-report-text"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-[#161f33] hover:bg-slate-50 dark:hover:bg-[#1c273e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
+                title="Copiar texto formatado do relatório para a área de transferência"
+              >
+                {copiedReport ? (
+                  <>
+                    <Check size={13} className="text-emerald-500" />
+                    <span className="text-emerald-600 dark:text-emerald-400">Copiado!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={13} className="text-slate-500 dark:text-slate-400" />
+                    <span>Copiar Relatório</span>
+                  </>
+                )}
+              </button>
+
+{/* Botão Vídeo gravado */}
               {hasVideo && (
                 <a
                   href={api.worklogs.getDownloadRecordingUrl(log.id)}
@@ -1537,6 +1581,26 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
+                                <button
+                  type="button"
+                  onClick={handleCopyReportText}
+                  id="btn-copy-fallback-report"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-[#161f33] hover:bg-slate-50 dark:hover:bg-[#1c273e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
+                  title="Copiar dados do relatório"
+                >
+                  {copiedReport ? (
+                    <>
+                      <Check size={13} className="text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400">Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={13} className="text-slate-500 dark:text-slate-400" />
+                      <span>Copiar Texto</span>
+                    </>
+                  )}
+                </button>
+
                 {hasVideo && (
                   <a
                     href={api.worklogs.getDownloadRecordingUrl(log.id)}

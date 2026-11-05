@@ -693,11 +693,11 @@ router.post(
 );
 
 
-// DELETE /api/worklogs/:id (Apenas Administradores)
+// DELETE /api/worklogs/:id (Administradores e Técnicos)
 router.delete(
   "/:id",
   authenticateToken,
-  requireAdmin,
+  requireTechnicianOrAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;

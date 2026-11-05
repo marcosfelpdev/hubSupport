@@ -1,8 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { Sparkles, Download, RotateCw, Clock, AlertTriangle, FileText, Loader2, Video } from "lucide-react";
+import {
+  Copy,
+  Check,
+  Sparkles, Download, RotateCw, Clock, AlertTriangle, FileText, Loader2, Video } from "lucide-react";
 import { api } from "@/services/api";
+import { formatReportAsText, copyToClipboard } from "@/lib/report-formatter";
 
 interface AiReportData {
   id: string;
@@ -32,6 +36,23 @@ export default function AiReportSection({
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
   const [downloadFeedback, setDownloadFeedback] = useState<string | null>(null);
+  const [copiedSectionText, setCopiedSectionText] = useState(false);
+
+  const handleCopySectionText = async () => {
+    let parsed: any = null;
+    if (report?.structuredData) {
+      try {
+        parsed = JSON.parse(report.structuredData);
+      } catch {}
+    }
+    const text = formatReportAsText(parsed);
+    const success = await copyToClipboard(text);
+    if (success) {
+      setCopiedSectionText(true);
+      setTimeout(() => setCopiedSectionText(false), 2000);
+    }
+  };
+
 
   const handleDownloadPdf = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -339,6 +360,26 @@ export default function AiReportSection({
                 <span>Baixar gravação</span>
               </button>
             )}
+
+                        <button
+              type="button"
+              onClick={handleCopySectionText}
+              id="btn-copy-ai-section-text"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
+              title="Copiar texto do relatório"
+            >
+              {copiedSectionText ? (
+                <>
+                  <Check size={13} className="text-emerald-500" />
+                  <span className="text-emerald-600 dark:text-emerald-400">Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={13} className="text-slate-500 dark:text-slate-400" />
+                  <span>Copiar Texto</span>
+                </>
+              )}
+            </button>
 
             <button
               type="button"
