@@ -24,6 +24,8 @@ import {
   Search,
   UserCheck,
   Trash2,
+  ShieldCheck,
+  RotateCcw,
 } from "lucide-react";
 import { WorkLogItem, WorkLogStatusHistoryItem, EmployeeItem, api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -123,6 +125,7 @@ export interface WorkLogDetailContentProps {
 export const WORKLOG_STATUS_OPTIONS = [
   "Realizado",
   "Em andamento",
+  "Validação",
   "Solucionado",
   "Aguardando reunião",
   "Não foi possível realizar",
@@ -144,6 +147,20 @@ export function getStatusPill(status: string): StatusPillConfig {
       badgeClass:
         "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
       dotClass: "bg-emerald-500",
+    };
+  }
+
+  if (
+    norm === "validação" ||
+    norm === "validacao" ||
+    norm === "em validação" ||
+    norm === "em validacao"
+  ) {
+    return {
+      label: "Validação",
+      badgeClass:
+        "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800",
+      dotClass: "bg-purple-500",
     };
   }
 
@@ -380,6 +397,10 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   const [isRetrying, startRetryTransition] = useTransition();
   const [retryFeedback, setRetryFeedback] = useState<string | null>(null);
 
+  // Estados para ações rápidas de validação
+  const [isValidatingAction, setIsValidatingAction] = useState<boolean>(false);
+  const [validationActionError, setValidationActionError] = useState<string | null>(null);
+
   // Estados locais para alteração interativa de status e auditoria
   const [currentStatus, setCurrentStatus] = useState<string>(log.status);
   const [currentHistory, setCurrentHistory] = useState<WorkLogStatusHistoryItem[]>(
@@ -413,6 +434,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
     setAssignError(null);
     setAssignDropdownOpen(false);
     setEmployeeSearch("");
+    setValidationActionError(null);
   }, [log.id, log.status, log.statusHistory, log.aiReport, log.assignedTo]);
 
   // Carrega lista de funcionários para o dropdown de atribuição
@@ -559,6 +581,54 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
     }
   };
 
+  const handleApproveSolution = async () => {
+    setIsValidatingAction(true);
+    setValidationActionError(null);
+    try {
+      const res = await api.worklogs.resolve(log.id);
+      if (res.success) {
+        setCurrentStatus(res.status || "Solucionado");
+        if (res.history) {
+          setCurrentHistory(res.history);
+        }
+        onRefresh?.();
+      } else {
+        setValidationActionError(res.error || "Não foi possível aprovar a solução.");
+      }
+    } catch (err) {
+      console.error("Erro ao aprovar solução:", err);
+      setValidationActionError(
+        err instanceof Error ? err.message : "Erro ao aprovar a solução do chamado."
+      );
+    } finally {
+      setIsValidatingAction(false);
+    }
+  };
+
+  const handleRejectValidation = async () => {
+    setIsValidatingAction(true);
+    setValidationActionError(null);
+    try {
+      const res = await api.worklogs.updateStatus(log.id, "Em progresso");
+      if (res.success) {
+        setCurrentStatus(res.status || "Em progresso");
+        if (res.history) {
+          setCurrentHistory(res.history);
+        }
+        onRefresh?.();
+      } else {
+        setValidationActionError(res.error || "Não foi possível retornar o atendimento.");
+      }
+    } catch (err) {
+      console.error("Erro ao reprovar validação:", err);
+      setValidationActionError(
+        err instanceof Error ? err.message : "Erro ao retornar chamado para Em progresso."
+      );
+    } finally {
+      setIsValidatingAction(false);
+    }
+  };
+
   // Polling leve enquanto o relatório estiver pendente ou em processamento
   useEffect(() => {
     const status = currentAiReport?.status;
@@ -616,6 +686,21 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
       norm === "ja realizado"
     );
   }, [currentStatus]);
+
+  const isValidating = useMemo(() => {
+    const norm = (currentStatus || "").toLowerCase().trim();
+    return (
+      norm === "validação" ||
+      norm === "validacao" ||
+      norm === "em validação" ||
+      norm === "em validacao"
+    );
+  }, [currentStatus]);
+
+  const canApproveOrRejectValidation =
+    currentUserRole === "ADMIN" ||
+    currentUserRole === "TECHNICIAN" ||
+    currentUserRole === "MANAGER";
 
   const statusPill = useMemo(() => getStatusPill(currentStatus), [currentStatus]);
   const hasPdf = !!currentAiReport?.pdfPath;
@@ -719,10 +804,18 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
             className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
               isSolved
                 ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80 text-emerald-600 dark:text-emerald-400"
+                : isValidating
+                ? "bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/80 text-purple-600 dark:text-purple-400"
                 : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
             }`}
           >
-            {isSolved ? <CheckCircle2 size={20} /> : <FileText size={20} />}
+            {isSolved ? (
+              <CheckCircle2 size={20} />
+            ) : isValidating ? (
+              <ShieldCheck size={20} />
+            ) : (
+              <FileText size={20} />
+            )}
           </div>
 
           <div className="min-w-0 flex-1">
@@ -1147,6 +1240,72 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
         <div className="flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl px-3.5 py-2 animate-in fade-in duration-200">
           <AlertTriangle size={15} className="shrink-0 text-rose-600 dark:text-rose-400" />
           <span className="font-medium">{statusError}</span>
+        </div>
+      )}
+
+      {/* Banner de Validação com Ações Rápidas */}
+      {isValidating && (
+        <div className="relative overflow-hidden rounded-xl border border-purple-200/80 dark:border-purple-900/60 bg-gradient-to-r from-purple-50/90 via-purple-50/40 to-indigo-50/60 dark:from-purple-950/40 dark:via-purple-950/20 dark:to-indigo-950/30 p-3.5 sm:p-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0 border border-purple-200 dark:border-purple-800 shadow-2xs">
+                <ShieldCheck size={18} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-xs sm:text-sm font-bold text-purple-900 dark:text-purple-200">
+                    Chamado em Fase de Validação
+                  </h4>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 dark:bg-purple-900/70 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    Aguardando homologação
+                  </span>
+                </div>
+                <p className="text-xs text-purple-900/80 dark:text-purple-300/80 mt-0.5 leading-relaxed">
+                  Este atendimento está em fase de avaliação e validação antes da finalização definitiva.
+                </p>
+              </div>
+            </div>
+
+            {canApproveOrRejectValidation && (
+              <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                <button
+                  type="button"
+                  onClick={handleRejectValidation}
+                  disabled={isValidatingAction || isUpdatingStatus}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 dark:text-rose-300 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-rose-200 dark:border-rose-900/70 shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-wait"
+                  title="Reprovar e retornar o atendimento para Em progresso"
+                >
+                  {isValidatingAction ? (
+                    <Loader2 size={13} className="animate-spin text-rose-600 shrink-0" />
+                  ) : (
+                    <RotateCcw size={13} className="shrink-0" />
+                  )}
+                  <span>Reprovar / Retornar</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleApproveSolution}
+                  disabled={isValidatingAction || isUpdatingStatus}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 shadow-xs hover:shadow transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-wait"
+                  title="Aprovar a solução e marcar este chamado como Solucionado"
+                >
+                  {isValidatingAction ? (
+                    <Loader2 size={13} className="animate-spin text-white shrink-0" />
+                  ) : (
+                    <CheckCircle2 size={13} className="shrink-0" />
+                  )}
+                  <span>Aprovar Solução</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {validationActionError && (
+            <div className="mt-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
+              {validationActionError}
+            </div>
+          )}
         </div>
       )}
 
