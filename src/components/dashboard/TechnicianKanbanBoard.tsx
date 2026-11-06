@@ -8,12 +8,13 @@ import {
   AlertCircle,
   Inbox,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { WorkLogItem, api } from "@/services/api";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
 
-export type ColumnId = "backlog" | "pendencias" | "em_progresso" | "finalizadas";
+export type ColumnId = "backlog" | "pendencias" | "em_progresso" | "validacao" | "finalizadas";
 
 interface ColumnDef {
   id: ColumnId;
@@ -25,7 +26,7 @@ interface ColumnDef {
   isDefault?: boolean;
 }
 
-const COLUMNS: ColumnDef[] = [
+export const COLUMNS: ColumnDef[] = [
   {
     id: "backlog",
     title: "Backlog",
@@ -52,6 +53,14 @@ const COLUMNS: ColumnDef[] = [
     icon: Clock,
   },
   {
+    id: "validacao",
+    title: "Validação",
+    dotColor: "bg-purple-500",
+    headerBorder: "border-purple-500",
+    badgeClass: "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700",
+    icon: ShieldCheck,
+  },
+  {
     id: "finalizadas",
     title: "Finalizadas",
     dotColor: "bg-emerald-500",
@@ -61,7 +70,7 @@ const COLUMNS: ColumnDef[] = [
   },
 ];
 
-function getColumnForStatus(status: string): ColumnId {
+export function getColumnForStatus(status: string): ColumnId {
   const normalized = (status || "").toLowerCase().trim();
   if (
     normalized === "solucionado" ||
@@ -71,6 +80,14 @@ function getColumnForStatus(status: string): ColumnId {
     normalized === "concluido"
   ) {
     return "finalizadas";
+  }
+  if (
+    normalized === "validação" ||
+    normalized === "validacao" ||
+    normalized === "em validação" ||
+    normalized === "em validacao"
+  ) {
+    return "validacao";
   }
   if (normalized === "em progresso" || normalized === "em andamento") {
     return "em_progresso";
@@ -89,10 +106,12 @@ function getColumnForStatus(status: string): ColumnId {
   return "backlog";
 }
 
-function getStatusForColumn(colId: ColumnId): string {
+export function getStatusForColumn(colId: ColumnId): string {
   switch (colId) {
     case "finalizadas":
       return "Solucionado";
+    case "validacao":
+      return "Validação";
     case "em_progresso":
       return "Em progresso";
     case "pendencias":
@@ -246,6 +265,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
       backlog: [],
       pendencias: [],
       em_progresso: [],
+      validacao: [],
       finalizadas: [],
     };
 
@@ -454,8 +474,8 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
         </div>
       </div>
 
-      {/* Grid das 4 Colunas do Kanban */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start min-h-[calc(100vh-270px)]">
+      {/* Grid das 5 Colunas do Kanban */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5 items-start min-h-[calc(100vh-270px)]">
         {COLUMNS.map((col) => {
           const cardsInCol = columnsData[col.id];
           const isOver = dragOverColumn === col.id;
@@ -516,7 +536,11 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                       Nenhum chamado nesta etapa
                     </p>
                     <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      {col.id === "backlog" ? "Novos itens aparecerão aqui" : "Arraste um card para cá"}
+                      {col.id === "backlog"
+                        ? "Novos itens aparecerão aqui"
+                        : col.id === "validacao"
+                        ? "Aguardando validação da equipe ou solicitante"
+                        : "Arraste um card para cá"}
                     </p>
                   </div>
                 ) : (

@@ -57,7 +57,7 @@ interface StatusPillConfig {
   dotClass: string;
 }
 
-function getStatusPill(status: string): StatusPillConfig {
+export function getStatusPill(status: string): StatusPillConfig {
   const norm = (status || "").toLowerCase().trim();
 
   if (
@@ -73,6 +73,20 @@ function getStatusPill(status: string): StatusPillConfig {
       label: "Solucionado",
       badgeClass: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
       dotClass: "bg-emerald-500",
+    };
+  }
+
+  if (
+    norm === "validação" ||
+    norm === "validacao" ||
+    norm === "em validação" ||
+    norm === "em validacao"
+  ) {
+    return {
+      label: "Validação",
+      badgeClass:
+        "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800",
+      dotClass: "bg-purple-500",
     };
   }
 
