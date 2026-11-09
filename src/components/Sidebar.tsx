@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Building2 } from "lucide-react";
 
 interface User {
   id?: string | null;
@@ -86,6 +86,12 @@ export default function Sidebar({ user }: { user: User }) {
               },
             ]
           : []),
+        {
+          href: "/dashboard/clientes",
+          label: "Clientes",
+          exact: false,
+          icon: <Building2 className="w-5 h-5 shrink-0" />,
+        },
         ...(isAdmin
           ? [
               {

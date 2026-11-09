@@ -79,6 +79,11 @@ export interface WorkLogItem {
     email: string;
     role?: string | null;
   } | null;
+  clientId?: string | null;
+  client?: {
+    id: string;
+    name: string;
+  } | null;
   aiReport?: {
     id: string;
     status: string;
@@ -140,6 +145,11 @@ export interface AgendaEventItem {
     id: string;
     name: string;
   } | null;
+  clientId?: string | null;
+  client?: {
+    id: string;
+    name: string;
+  } | null;
   notificationSent?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -154,6 +164,29 @@ export interface EmployeeItem {
   createdAt: string;
   _count?: {
     workLogs: number;
+  };
+}
+
+export interface ClientItem {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt?: string;
+  _count?: {
+    workLogs: number;
+    events: number;
+  };
+}
+
+export interface ClientProfileData {
+  client: ClientItem;
+  events: AgendaEventItem[];
+  workLogs: WorkLogItem[];
+  stats: {
+    totalWorkLogs: number;
+    totalEvents: number;
+    solvedWorkLogs: number;
+    pendingWorkLogs: number;
   };
 }
 
@@ -486,6 +519,27 @@ export const api = {
     },
     async delete(id: string): Promise<{ success: boolean }> {
       return request<{ success: boolean }>(`/api/employees/${id}`, {
+        method: "DELETE",
+      });
+    },
+  },
+
+  // Gestão de Clientes
+  clients: {
+    async getAll(): Promise<ClientItem[]> {
+      return request<ClientItem[]>("/api/clients");
+    },
+    async getById(id: string): Promise<ClientProfileData> {
+      return request<ClientProfileData>(`/api/clients/${id}`);
+    },
+    async create(data: { name: string }): Promise<{ success: boolean; client: ClientItem }> {
+      return request<{ success: boolean; client: ClientItem }>("/api/clients", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    async delete(id: string): Promise<{ success: boolean; message?: string }> {
+      return request<{ success: boolean; message?: string }>(`/api/clients/${id}`, {
         method: "DELETE",
       });
     },

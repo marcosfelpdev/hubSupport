@@ -10,6 +10,8 @@ import DashboardOverviewPage from "./pages/DashboardOverviewPage";
 import DashboardPage from "./pages/DashboardPage";
 import TechnicianPage from "./pages/TechnicianPage";
 import EmployeesPage from "./pages/EmployeesPage";
+import ClientsPage from "./pages/ClientsPage";
+import ClientProfilePage from "./pages/ClientProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 
 export default function App() {
@@ -55,6 +57,10 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Menu Clientes */}
+            <Route path="/dashboard/clientes" element={<ClientsPage />} />
+            <Route path="/dashboard/clientes/:id" element={<ClientProfilePage />} />
 
             {/* Menu Configurações */}
             <Route path="/dashboard/configuracoes" element={<SettingsPage />} />
