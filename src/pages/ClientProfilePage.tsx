@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { api, ClientProfileData, WorkLogItem, AgendaEventItem } from "@/services/api";
+import { api, ClientProfileData, WorkLogItem, AgendaEventItem, resolveApiUrl } from "@/services/api";
 import {
   ArrowLeft,
   Building2,
@@ -12,15 +12,56 @@ import {
   AlertCircle,
   FileText,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Loader2,
   ExternalLink,
   ShieldCheck,
   RefreshCw,
   Sparkles,
+  FileCheck,
+  Eye,
+  Paperclip,
+  Download,
+  Video,
 } from "lucide-react";
 import TagBadge from "@/components/TagBadge";
 import { getStatusPill } from "@/components/ReportCardMinimized";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
+import MediaGalleryModal from "@/components/MediaGalleryModal";
+import { MeetingCompletionModal } from "@/components/dashboard/MeetingCompletionModal";
+
+function parseMediaList(mediaRaw?: string | null): string[] {
+  if (!mediaRaw) return [];
+  try {
+    const parsed = JSON.parse(mediaRaw);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item): item is string => typeof item === "string");
+    }
+    if (typeof parsed === "string") {
+      return [parsed];
+    }
+  } catch {
+    if (typeof mediaRaw === "string" && mediaRaw.trim()) {
+      return mediaRaw.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+  }
+  return [];
+}
+
+const isImageFile = (url: string) => /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(url);
+const isVideoFile = (url: string) => /\.(mp4|webm|ogg|mov)$/i.test(url);
+const isPdfFile = (url: string) => /\.pdf$/i.test(url);
+
+function getFileName(url: string) {
+  try {
+    const cleaned = url.split("?")[0].split("#")[0];
+    const name = cleaned.substring(cleaned.lastIndexOf("/") + 1);
+    return decodeURIComponent(name.replace(/^\d+-/, ""));
+  } catch {
+    return "arquivo";
+  }
+}
 
 function formatDate(dateValue?: string) {
   if (!dateValue) return "—";
@@ -81,6 +122,33 @@ export default function ClientProfilePage() {
 
   // Modal de Detalhes do Relatório / Atendimento
   const [selectedLog, setSelectedLog] = useState<WorkLogItem | null>(null);
+
+  // Estados de Ata de Reunião
+  const [expandedMeetingIds, setExpandedMeetingIds] = useState<Set<string>>(new Set());
+  const [completingMeeting, setCompletingMeeting] = useState<AgendaEventItem | null>(null);
+
+  // Galeria de Mídias
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+
+  const toggleMeetingExpanded = (meetingId: string) => {
+    setExpandedMeetingIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(meetingId)) {
+        next.delete(meetingId);
+      } else {
+        next.add(meetingId);
+      }
+      return next;
+    });
+  };
+
+  const openGalleryForMedia = (urls: string[], index = 0) => {
+    setGalleryUrls(urls.map((u) => resolveApiUrl(u)));
+    setGalleryIndex(index);
+    setGalleryOpen(true);
+  };
 
   const fetchClientProfile = useCallback(async () => {
     if (!id) return;
@@ -290,75 +358,266 @@ export default function ClientProfilePage() {
                   <th className="px-6 py-3.5">Título da Reunião</th>
                   <th className="px-6 py-3.5">Responsável</th>
                   <th className="px-6 py-3.5">Categoria</th>
-                  <th className="px-6 py-3.5 text-right">Status</th>
+                  <th className="px-6 py-3.5">Status</th>
+                  <th className="px-6 py-3.5 text-right">Ata da Reunião</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {events.map((evt) => {
                   const isCompleted = evt.completed;
                   const employeeName = evt.employee?.name || evt.createdBy?.name || "Não atribuído";
+                  const mediaList = parseMediaList(evt.media);
+                  const hasAta = Boolean(evt.notes || mediaList.length > 0);
+                  const isExpanded = expandedMeetingIds.has(evt.id);
 
                   return (
-                    <tr
-                      key={evt.id}
-                      className="hover:bg-slate-50/60 dark:hover:bg-[#161f33]/40 transition-colors"
-                    >
-                      {/* Data & Hora */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
-                            {formatDate(evt.date)}
+                    <React.Fragment key={evt.id}>
+                      <tr
+                        className={`hover:bg-slate-50/60 dark:hover:bg-[#161f33]/40 transition-colors ${
+                          isExpanded ? "bg-slate-50/50 dark:bg-[#161f33]/30" : ""
+                        }`}
+                      >
+                        {/* Data & Hora */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
+                              {formatDate(evt.date)}
+                            </span>
+                            {evt.time && (
+                              <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                                <Clock className="w-3 h-3 text-slate-400" />
+                                <span>{evt.time}</span>
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Título da Reunião */}
+                        <td className="px-6 py-4">
+                          <span className="text-xs sm:text-sm font-medium text-slate-900 dark:text-white">
+                            {evt.title}
                           </span>
-                          {evt.time && (
-                            <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                              <Clock className="w-3 h-3 text-slate-400" />
-                              <span>{evt.time}</span>
+                        </td>
+
+                        {/* Responsável */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center shrink-0">
+                              {getInitials(employeeName)}
+                            </div>
+                            <span className="text-xs text-slate-700 dark:text-slate-300">
+                              {employeeName}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Categoria */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+                            {evt.category || "Reunião"}
+                          </span>
+                        </td>
+
+                        {/* Badge de Status: Concluída ou Pendente */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {isCompleted ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <span>Concluída</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                              <span>Pendente</span>
                             </span>
                           )}
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Título da Reunião */}
-                      <td className="px-6 py-4">
-                        <span className="text-xs sm:text-sm font-medium text-slate-900 dark:text-white">
-                          {evt.title}
-                        </span>
-                      </td>
+                        {/* Ação: Ver Ata da Reunião */}
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          {isCompleted ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleMeetingExpanded(evt.id)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium text-xs transition-all cursor-pointer shadow-2xs ${
+                                isExpanded
+                                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                  : hasAta
+                                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                              }`}
+                              title={isExpanded ? "Ocultar detalhes da ata" : "Visualizar ata e evidências"}
+                            >
+                              <FileCheck className="w-3.5 h-3.5" />
+                              <span>{isExpanded ? "Ocultar Ata" : "Ver Ata da Reunião"}</span>
+                              {mediaList.length > 0 && (
+                                <span
+                                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                                    isExpanded
+                                      ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
+                                      : "bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200"
+                                  }`}
+                                  title={`${mediaList.length} arquivo(s) anexado(s)`}
+                                >
+                                  {mediaList.length}
+                                </span>
+                              )}
+                              {isExpanded ? (
+                                <ChevronUp className="w-3.5 h-3.5 ml-0.5" />
+                              ) : (
+                                <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setCompletingMeeting(evt)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 text-slate-700 dark:text-slate-200 font-medium text-xs transition-colors cursor-pointer shadow-2xs"
+                              title="Registrar ata e concluir reunião"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                              <span>Concluir Reunião</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
 
-                      {/* Responsável */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center shrink-0">
-                            {getInitials(employeeName)}
-                          </div>
-                          <span className="text-xs text-slate-700 dark:text-slate-300">
-                            {employeeName}
-                          </span>
-                        </div>
-                      </td>
+                      {/* Linha Expansível da Ata */}
+                      {isExpanded && (
+                        <tr className="bg-slate-50/70 dark:bg-[#0c101b]/70 border-b border-slate-200 dark:border-slate-800 animate-fade-in">
+                          <td colSpan={6} className="px-6 py-5">
+                            <div className="bg-white dark:bg-[#111726] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+                              {/* Header do Card da Ata */}
+                              <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/80">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-800/70 flex items-center justify-center shrink-0">
+                                    <FileCheck className="w-4 h-4" />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                                        Ata Oficial da Reunião
+                                      </h4>
+                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                        Concluída
+                                      </span>
+                                    </div>
+                                    {evt.completedAt && (
+                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                                        <Clock className="w-3 h-3 text-slate-400" />
+                                        <span>Registrada em {formatDateTime(evt.completedAt)}</span>
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
 
-                      {/* Categoria */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
-                          {evt.category || "Reunião"}
-                        </span>
-                      </td>
+                                {mediaList.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openGalleryForMedia(mediaList, 0)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs transition-colors cursor-pointer"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-indigo-500" />
+                                    <span>Ver Galeria ({mediaList.length})</span>
+                                  </button>
+                                )}
+                              </div>
 
-                      {/* Badge de Status: Concluída ou Pendente */}
-                      <td className="px-6 py-4 text-right whitespace-nowrap">
-                        {isCompleted ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            <span>Concluída</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            <span>Pendente</span>
-                          </span>
-                        )}
-                      </td>
-                    </tr>
+                              {/* Resumo / O que foi realizado */}
+                              <div className="space-y-1.5">
+                                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                  Resumo dos Tópicos & Decisões Tomadas:
+                                </span>
+                                {evt.notes ? (
+                                  <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-[#0b0f19] border border-slate-200/80 dark:border-slate-800/80 text-xs sm:text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed font-normal">
+                                    {evt.notes}
+                                  </div>
+                                ) : (
+                                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 dark:text-slate-500 italic">
+                                    Nenhum texto de ata foi registrado para esta reunião.
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Mídias e Arquivos Anexados */}
+                              {mediaList.length > 0 && (
+                                <div className="space-y-2 pt-1">
+                                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                    Arquivos & Mídias Anexadas ({mediaList.length}):
+                                  </span>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                    {mediaList.map((mediaUrl, mIdx) => {
+                                      const fullUrl = resolveApiUrl(mediaUrl);
+                                      const isImg = isImageFile(mediaUrl);
+                                      const fileName = getFileName(mediaUrl);
+
+                                      return (
+                                        <div
+                                          key={mIdx}
+                                          className="group relative bg-slate-50/80 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2.5 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-2xs"
+                                        >
+                                          <div
+                                            className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+                                            onClick={() => openGalleryForMedia(mediaList, mIdx)}
+                                          >
+                                            {isImg ? (
+                                              <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-800 shrink-0 border border-slate-200/80 dark:border-slate-700">
+                                                <img
+                                                  src={fullUrl}
+                                                  alt={fileName}
+                                                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                                  loading="lazy"
+                                                />
+                                              </div>
+                                            ) : (
+                                              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0 border border-slate-200/80 dark:border-slate-700">
+                                                {isVideoFile(mediaUrl) ? (
+                                                  <Video className="w-4 h-4 text-indigo-500" />
+                                                ) : isPdfFile(mediaUrl) ? (
+                                                  <FileText className="w-4 h-4 text-rose-500" />
+                                                ) : (
+                                                  <Paperclip className="w-4 h-4 text-slate-500" />
+                                                )}
+                                              </div>
+                                            )}
+
+                                            <div className="min-w-0 flex-1">
+                                              <p
+                                                className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate"
+                                                title={fileName}
+                                              >
+                                                {fileName}
+                                              </p>
+                                              <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                                                <Eye className="w-2.5 h-2.5" />
+                                                Clique para visualizar
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          <a
+                                            href={fullUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            download
+                                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                                            title="Baixar arquivo original"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <Download className="w-3.5 h-3.5" />
+                                          </a>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
@@ -519,6 +778,25 @@ export default function ClientProfilePage() {
           onRefresh={fetchClientProfile}
         />
       )}
+
+      {/* ================= MODAL: GALERIA DE MÍDIAS DA ATA ================= */}
+      <MediaGalleryModal
+        isOpen={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
+        mediaUrls={galleryUrls}
+        initialIndex={galleryIndex}
+      />
+
+      {/* ================= MODAL: CONCLUSÃO DE REUNIÃO & REGISTRO DE ATA ================= */}
+      <MeetingCompletionModal
+        event={completingMeeting}
+        isOpen={!!completingMeeting}
+        onClose={() => setCompletingMeeting(null)}
+        onCompleted={() => {
+          fetchClientProfile();
+          setCompletingMeeting(null);
+        }}
+      />
     </main>
   );
 }

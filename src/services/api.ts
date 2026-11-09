@@ -150,6 +150,9 @@ export interface AgendaEventItem {
     id: string;
     name: string;
   } | null;
+  notes?: string | null;
+  media?: string | null;
+  completedAt?: string | null;
   notificationSent?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -468,6 +471,7 @@ export const api = {
       time?: string;
       category?: string;
       employeeId?: string | null;
+      clientId?: string | null;
     }): Promise<{ success: boolean; event: AgendaEventItem }> {
       return request<{ success: boolean; event: AgendaEventItem }>("/api/agenda", {
         method: "POST",
@@ -483,11 +487,24 @@ export const api = {
         category: string;
         completed: boolean;
         employeeId: string | null;
+        clientId: string | null;
+        notes: string | null;
+        media: string | null;
+        completedAt: string | null;
       }>
     ): Promise<{ success: boolean; event: AgendaEventItem }> {
       return request<{ success: boolean; event: AgendaEventItem }>(`/api/agenda/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
+      });
+    },
+    async completeWithNotes(
+      id: string,
+      formData: FormData
+    ): Promise<{ success: boolean; event: AgendaEventItem }> {
+      return request<{ success: boolean; event: AgendaEventItem }>(`/api/agenda/${id}/complete`, {
+        method: "POST",
+        body: formData,
       });
     },
     async delete(id: string): Promise<{ success: boolean }> {

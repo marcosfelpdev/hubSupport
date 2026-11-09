@@ -102,6 +102,9 @@ model AgendaEvent {
   notificationSent Boolean   @default(false)
   clientId         String?
   client           Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  notes            String?   @db.Text
+  media            String    @default("[]") @db.Text
+  completedAt      DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 }

@@ -1,8 +1,35 @@
 import { Router, Request, Response } from "express";
+import multer from "multer";
+import path from "path";
+import fsSync from "fs";
 import { prisma } from "../../lib/prisma";
 import { authenticateToken } from "../auth";
+import { uploadFileFromDisk } from "../services/r2Storage";
 
 const router = Router();
+
+const TEMP_DIR = path.join(process.cwd(), "storage", "temp");
+if (!fsSync.existsSync(TEMP_DIR)) {
+  fsSync.mkdirSync(TEMP_DIR, { recursive: true });
+}
+
+// Configuração do Multer com armazenamento temporário em disco para evitar OOM
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, TEMP_DIR);
+  },
+  filename: (_req, file, cb) => {
+    const cleanName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    cb(null, `${Date.now()}-${cleanName}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 1024 * 1024 * 1024, // Limite de 1GB
+  },
+});
 
 // GET /api/agenda - Lista todos os compromissos compartilhados
 router.get("/", authenticateToken, async (req: Request, res: Response): Promise<void> => {
@@ -117,12 +144,29 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
 router.patch("/:id", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const { completed, title, date, time, category, employeeId, clientId } = req.body;
+    const { completed, title, date, time, category, employeeId, clientId, notes, media, completedAt } = req.body;
 
     const dataToUpdate: Record<string, unknown> = {};
 
     if (typeof completed === "boolean") {
       dataToUpdate.completed = completed;
+      if (completed && completedAt === undefined) {
+        dataToUpdate.completedAt = new Date();
+      } else if (!completed && completedAt === undefined) {
+        dataToUpdate.completedAt = null;
+      }
+    }
+
+    if (completedAt !== undefined) {
+      dataToUpdate.completedAt = completedAt ? new Date(completedAt) : null;
+    }
+
+    if (notes !== undefined) {
+      dataToUpdate.notes = typeof notes === "string" ? notes.trim() : null;
+    }
+
+    if (media !== undefined) {
+      dataToUpdate.media = typeof media === "string" ? media : JSON.stringify(media);
     }
 
     if (title && typeof title === "string" && title.trim()) {
@@ -184,6 +228,108 @@ router.patch("/:id", authenticateToken, async (req: Request, res: Response): Pro
     res.status(500).json({ error: "Erro ao atualizar compromisso." });
   }
 });
+
+// POST /api/agenda/:id/complete - Registra ata/notas e mídias de conclusão da reunião
+router.post(
+  "/:id/complete",
+  authenticateToken,
+  upload.array("media", 10),
+  async (req: Request, res: Response): Promise<void> => {
+    const files = req.files as Express.Multer.File[] | undefined;
+    const tempFilesToClean: string[] = [];
+
+    if (files) {
+      for (const file of files) {
+        if (file.path) tempFilesToClean.push(file.path);
+      }
+    }
+
+    try {
+      const id = req.params.id as string;
+      const { notes } = req.body;
+
+      const existingEvent = await prisma.agendaEvent.findUnique({
+        where: { id },
+      });
+
+      if (!existingEvent) {
+        res.status(404).json({ error: "Compromisso não encontrado na agenda." });
+        return;
+      }
+
+      // Processar mídias existentes
+      const mediaPaths: string[] = [];
+      if (existingEvent.media) {
+        try {
+          const parsed = JSON.parse(existingEvent.media);
+          if (Array.isArray(parsed)) {
+            mediaPaths.push(...parsed);
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      // Upload de novos arquivos via streaming para o R2 / disco
+      if (files && files.length > 0) {
+        for (const file of files) {
+          const cleanName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const key = `uploads/agenda/${Date.now()}-${cleanName}`;
+          await uploadFileFromDisk(file.path, key, file.mimetype || "application/octet-stream");
+          mediaPaths.push(`/${key}`);
+        }
+      }
+
+      const updatedEvent = await prisma.agendaEvent.update({
+        where: { id },
+        data: {
+          completed: true,
+          completedAt: new Date(),
+          notes: notes && typeof notes === "string" ? notes.trim() : (existingEvent.notes || null),
+          media: JSON.stringify(mediaPaths),
+        },
+        include: {
+          employee: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          client: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      res.json({ success: true, event: updatedEvent });
+    } catch (error) {
+      console.error("[Agenda] Erro ao concluir compromisso com ata:", error);
+      res.status(500).json({ error: "Erro ao registrar ata e concluir reunião." });
+    } finally {
+      // Limpeza de arquivos temporários do Multer
+      for (const tempPath of tempFilesToClean) {
+        try {
+          if (fsSync.existsSync(tempPath)) {
+            fsSync.unlinkSync(tempPath);
+          }
+        } catch (cleanupErr) {
+          console.warn(`[Agenda] Falha ao limpar arquivo temporário ${tempPath}:`, cleanupErr);
+        }
+      }
+    }
+  }
+);
 
 // DELETE /api/agenda/:id - Remoção de compromisso
 router.delete("/:id", authenticateToken, async (req: Request, res: Response): Promise<void> => {

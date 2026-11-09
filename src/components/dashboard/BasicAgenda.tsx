@@ -9,9 +9,11 @@ import {
   Trash2,
   AlertCircle,
   User,
+  Building2,
   RotateCw,
 } from "lucide-react";
-import { api, AgendaEventItem, EmployeeItem } from "../../services/api";
+import { api, AgendaEventItem, EmployeeItem, ClientItem } from "../../services/api";
+import { MeetingCompletionModal } from "./MeetingCompletionModal";
 
 export type AgendaEvent = AgendaEventItem;
 
@@ -49,9 +51,13 @@ export const BasicAgenda: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [events, setEvents] = useState<AgendaEventItem[]>([]);
   const [employees, setEmployees] = useState<EmployeeItem[]>([]);
+  const [clients, setClients] = useState<ClientItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  // Modal de conclusão de reunião / ata
+  const [completingEvent, setCompletingEvent] = useState<AgendaEventItem | null>(null);
 
   // Form State
   const [showAddForm, setShowAddForm] = useState(false);
@@ -59,6 +65,7 @@ export const BasicAgenda: React.FC = () => {
   const [newTime, setNewTime] = useState("10:00");
   const [newCategory, setNewCategory] = useState<string>("Reunião");
   const [newEmployeeId, setNewEmployeeId] = useState<string>("");
+  const [newClientId, setNewClientId] = useState<string>("");
 
   // Buscar eventos da agenda compartilhada
   const fetchAgenda = useCallback(async (silent = false) => {
@@ -85,17 +92,28 @@ export const BasicAgenda: React.FC = () => {
     }
   }, []);
 
+  // Buscar clientes cadastrados para o seletor
+  const fetchClients = useCallback(async () => {
+    try {
+      const data = await api.clients.getAll();
+      setClients(data);
+    } catch (err) {
+      console.error("[BasicAgenda] Erro ao carregar clientes:", err);
+    }
+  }, []);
+
   // Carga inicial e sincronização periódica (polling a cada 20s)
   useEffect(() => {
     fetchAgenda();
     fetchEmployees();
+    fetchClients();
 
     const intervalId = setInterval(() => {
       fetchAgenda(true);
     }, 20000);
 
     return () => clearInterval(intervalId);
-  }, [fetchAgenda, fetchEmployees]);
+  }, [fetchAgenda, fetchEmployees, fetchClients]);
 
   // Funções de navegação do calendário
   const nextMonth = () => {
@@ -191,6 +209,7 @@ export const BasicAgenda: React.FC = () => {
         time: newTime || "10:00",
         category: newCategory,
         employeeId: newEmployeeId || null,
+        clientId: newClientId || null,
       });
 
       if (res?.event) {
@@ -205,6 +224,7 @@ export const BasicAgenda: React.FC = () => {
 
       setNewTitle("");
       setNewEmployeeId("");
+      setNewClientId("");
       setShowAddForm(false);
     } catch (err) {
       console.error("[BasicAgenda] Erro ao salvar compromisso:", err);
@@ -436,7 +456,7 @@ export const BasicAgenda: React.FC = () => {
                 <option value="Lembrete">Lembrete</option>
               </select>
 
-              {/* NOVO Dropdown de Funcionário */}
+              {/* Dropdown de Funcionário */}
               <select
                 value={newEmployeeId}
                 onChange={(e) => setNewEmployeeId(e.target.value)}
@@ -446,6 +466,20 @@ export const BasicAgenda: React.FC = () => {
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Dropdown de Cliente */}
+              <select
+                value={newClientId}
+                onChange={(e) => setNewClientId(e.target.value)}
+                className="flex-1 min-w-[125px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
+              >
+                <option value="">Selecionar Cliente (opcional)</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>
@@ -495,13 +529,19 @@ export const BasicAgenda: React.FC = () => {
                 >
                   {/* Checkbox */}
                   <button
-                    onClick={() => handleToggleComplete(evt.id, evt.completed)}
+                    onClick={() => {
+                      if (!evt.completed) {
+                        setCompletingEvent(evt);
+                      } else {
+                        handleToggleComplete(evt.id, true);
+                      }
+                    }}
                     className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer mt-0.5 shrink-0 transition-colors ${
                       evt.completed
                         ? "bg-emerald-600 border-emerald-600 text-white"
                         : "border-slate-300 dark:border-slate-600 bg-white dark:bg-[#0b0f19] hover:border-slate-400 dark:hover:border-slate-500"
                     }`}
-                    title={evt.completed ? "Marcar como pendente" : "Marcar como concluído"}
+                    title={evt.completed ? "Reabrir compromisso (marcar como pendente)" : "Concluir reunião e registrar ata"}
                   >
                     {evt.completed && <Check size={11} strokeWidth={3} />}
                   </button>
@@ -517,6 +557,15 @@ export const BasicAgenda: React.FC = () => {
                       >
                         {evt.category}
                       </span>
+                      {evt.client && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/70 dark:border-blue-800/70 shrink-0"
+                          title={`Cliente vinculado: ${evt.client.name}`}
+                        >
+                          <Building2 size={10} className="text-blue-500 shrink-0" />
+                          <span className="truncate max-w-[110px]">{evt.client.name}</span>
+                        </span>
+                      )}
                       {evt.employee && (
                         <span
                           className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0"
@@ -569,6 +618,19 @@ export const BasicAgenda: React.FC = () => {
           <RotateCw size={12} className={isRefreshing ? "animate-spin text-sky-600 dark:text-sky-400" : ""} />
         </button>
       </div>
+
+      {/* Modal de Conclusão de Reunião & Registro de Ata */}
+      <MeetingCompletionModal
+        event={completingEvent}
+        isOpen={!!completingEvent}
+        onClose={() => setCompletingEvent(null)}
+        onCompleted={(updatedEvent) => {
+          setEvents((prev) =>
+            prev.map((e) => (e.id === updatedEvent.id ? updatedEvent : e))
+          );
+          setCompletingEvent(null);
+        }}
+      />
     </div>
   );
 };
