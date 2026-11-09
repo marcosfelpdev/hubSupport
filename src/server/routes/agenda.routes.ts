@@ -27,6 +27,12 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
             name: true,
           },
         },
+        client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -40,7 +46,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
 // POST /api/agenda - Criação de novo compromisso na agenda compartilhada
 router.post("/", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, date, time = "10:00", category = "Reunião", employeeId } = req.body;
+    const { title, date, time = "10:00", category = "Reunião", employeeId, clientId } = req.body;
 
     if (!title || typeof title !== "string" || !title.trim()) {
       res.status(400).json({ error: "O título do compromisso é obrigatório." });
@@ -54,6 +60,15 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
 
     const user = req.user!;
 
+    let resolvedClientId = clientId && typeof clientId === "string" && clientId.trim() ? clientId.trim() : null;
+    if (!resolvedClientId && title) {
+      const allClients = await prisma.client.findMany({ select: { id: true, name: true } });
+      const matched = allClients.find((c) => title.toLowerCase().includes(c.name.toLowerCase()));
+      if (matched) {
+        resolvedClientId = matched.id;
+      }
+    }
+
     // Cria o evento na agenda
     const newEvent = await prisma.agendaEvent.create({
       data: {
@@ -64,6 +79,7 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
         completed: false,
         employeeId: employeeId && typeof employeeId === "string" && employeeId.trim() ? employeeId.trim() : null,
         createdById: user.id,
+        clientId: resolvedClientId,
         notificationSent: false,
       },
       include: {
@@ -76,6 +92,12 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
           },
         },
         createdBy: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        client: {
           select: {
             id: true,
             name: true,
@@ -95,7 +117,7 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
 router.patch("/:id", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const { completed, title, date, time, category, employeeId } = req.body;
+    const { completed, title, date, time, category, employeeId, clientId } = req.body;
 
     const dataToUpdate: Record<string, unknown> = {};
 
@@ -125,6 +147,10 @@ router.patch("/:id", authenticateToken, async (req: Request, res: Response): Pro
       dataToUpdate.notificationSent = false;
     }
 
+    if (clientId !== undefined) {
+      dataToUpdate.clientId = clientId && typeof clientId === "string" && clientId.trim() ? clientId.trim() : null;
+    }
+
     const updatedEvent = await prisma.agendaEvent.update({
       where: { id },
       data: dataToUpdate,
@@ -138,6 +164,12 @@ router.patch("/:id", authenticateToken, async (req: Request, res: Response): Pro
           },
         },
         createdBy: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        client: {
           select: {
             id: true,
             name: true,

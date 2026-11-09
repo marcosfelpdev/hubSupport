@@ -12,6 +12,7 @@ import notificationsRoutes from "./routes/notifications.routes";
 import employeesRoutes from "./routes/employees.routes";
 import tagsRoutes from "./routes/tags.routes";
 import agendaRoutes from "./routes/agenda.routes";
+import clientsRoutes from "./routes/clients.routes";
 import { getFileStream } from "./services/r2Storage";
 
 export const app = express();
@@ -63,6 +64,7 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/api/employees", employeesRoutes);
 app.use("/api/tags", tagsRoutes);
 app.use("/api/agenda", agendaRoutes);
+app.use("/api/clients", clientsRoutes);
 
 // Servir frontend SPA compilado se existir (Modo Produção ou Build Estática)
 const DIST_DIR = path.join(process.cwd(), "dist");

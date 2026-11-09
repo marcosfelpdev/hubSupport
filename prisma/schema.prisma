@@ -57,6 +57,8 @@ model WorkLog {
   statusHistory   WorkLogStatusHistory[]
   assignedToId    String?
   assignedTo      User?                  @relation("AssignedWorkLogs", fields: [assignedToId], references: [id], onDelete: SetNull)
+  clientId        String?
+  client          Client?                @relation(fields: [clientId], references: [id], onDelete: SetNull)
 }
 
 model Notification {
@@ -98,6 +100,8 @@ model AgendaEvent {
   createdById      String?
   createdBy        User?     @relation("CreatedAgendaEvents", fields: [createdById], references: [id], onDelete: SetNull)
   notificationSent Boolean   @default(false)
+  clientId         String?
+  client           Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 }
@@ -111,4 +115,13 @@ model WorkLogStatusHistory {
   changedById String
   changedBy   User     @relation(fields: [changedById], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
+}
+
+model Client {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  workLogs  WorkLog[]
+  events    AgendaEvent[]
 }

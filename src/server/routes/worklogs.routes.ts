@@ -19,6 +19,9 @@ const defaultWorkLogInclude = {
   },
   tag: true,
   aiReport: true,
+  client: {
+    select: { id: true, name: true },
+  },
   statusHistory: {
     include: {
       changedBy: {
@@ -243,6 +246,7 @@ router.post(
         technicalAction,
         implementation,
         tagId,
+        clientId,
       } = req.body;
 
       const finalTitle = (title || "").trim();
@@ -292,6 +296,18 @@ router.post(
       // e deve obrigatoriamente iniciar na coluna "Backlog" do Kanban
       const finalStatus = isTechnicalAction || isImplementation ? "Backlog" : status.trim();
 
+      // Resolve clientId caso fornecido diretamente ou correspondente ao nome do cliente
+      let resolvedClientId = clientId && typeof clientId === "string" && clientId.trim() ? clientId.trim() : null;
+      if (!resolvedClientId && clientOrOffice && clientOrOffice.trim()) {
+        const matchedClient = await prisma.client.findFirst({
+          where: { name: { equals: clientOrOffice.trim(), mode: "insensitive" } },
+          select: { id: true },
+        });
+        if (matchedClient) {
+          resolvedClientId = matchedClient.id;
+        }
+      }
+
       const newLog = await prisma.workLog.create({
         data: {
           title: finalTitle,
@@ -305,6 +321,7 @@ router.post(
           media: JSON.stringify(mediaPaths),
           userId: user.id,
           tagId: cleanTagId,
+          clientId: resolvedClientId,
         },
       });
 
@@ -375,7 +392,7 @@ router.post(
         }
       }
 
-      res.status(201).json({ success: true, logId: newLog.id });
+      res.status(201).json({ success: true, id: newLog.id, logId: newLog.id });
     } catch (error) {
       console.error("[WorkLogs] Erro ao criar atendimento:", error);
       res.status(500).json({
