@@ -13,7 +13,10 @@ export const DashboardLayout: React.FC = () => {
   return (
     <ScreenRecordingProvider>
       <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#090d16] flex transition-colors">
-        {/* Barra lateral à esquerda */}
+        {/* Trilho estático reservando o espaço da barra recolhida para evitar saltos de layout */}
+        <div className="w-[72px] shrink-0 pointer-events-none" aria-hidden="true" />
+
+        {/* Barra lateral retrátil sobreposta com hover */}
         <Sidebar user={user} />
 
         {/* Área de conteúdo principal à direita */}
