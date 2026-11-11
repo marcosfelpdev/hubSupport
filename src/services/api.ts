@@ -468,10 +468,10 @@ export const api = {
     async create(data: {
       title: string;
       date: string;
-      time?: string;
-      category?: string;
-      employeeId?: string | null;
-      clientId?: string | null;
+      time: string;
+      category: string;
+      employeeId: string;
+      clientId: string;
     }): Promise<{ success: boolean; event: AgendaEventItem }> {
       return request<{ success: boolean; event: AgendaEventItem }>("/api/agenda", {
         method: "POST",

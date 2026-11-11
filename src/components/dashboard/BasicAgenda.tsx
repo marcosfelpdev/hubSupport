@@ -199,17 +199,28 @@ export const BasicAgenda: React.FC = () => {
   // Criar novo compromisso na API REST
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || isSaving) return;
+    if (isSaving) return;
+
+    const title = newTitle.trim();
+    const time = newTime.trim();
+    const category = newCategory.trim();
+    const employeeId = newEmployeeId.trim();
+    const clientId = newClientId.trim();
+
+    if (!title || !time || !category || !employeeId || !clientId) {
+      alert("Todos os campos são obrigatórios (título, horário, categoria, colaborador e cliente).");
+      return;
+    }
 
     try {
       setIsSaving(true);
       const res = await api.agenda.create({
-        title: newTitle.trim(),
+        title,
         date: selectedDate,
-        time: newTime || "10:00",
-        category: newCategory,
-        employeeId: newEmployeeId || null,
-        clientId: newClientId || null,
+        time,
+        category,
+        employeeId,
+        clientId,
       });
 
       if (res?.event) {
@@ -226,9 +237,9 @@ export const BasicAgenda: React.FC = () => {
       setNewEmployeeId("");
       setNewClientId("");
       setShowAddForm(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("[BasicAgenda] Erro ao salvar compromisso:", err);
-      alert("Não foi possível salvar o compromisso na agenda. Tente novamente.");
+      alert(err?.message || "Não foi possível salvar o compromisso na agenda. Tente novamente.");
     } finally {
       setIsSaving(false);
     }
@@ -442,12 +453,14 @@ export const BasicAgenda: React.FC = () => {
                 type="time"
                 value={newTime}
                 onChange={(e) => setNewTime(e.target.value)}
+                required
                 className="w-20 px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none shrink-0"
               />
 
               <select
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
+                required
                 className="flex-1 min-w-[90px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
               >
                 <option value="Reunião">Reunião</option>
@@ -460,9 +473,10 @@ export const BasicAgenda: React.FC = () => {
               <select
                 value={newEmployeeId}
                 onChange={(e) => setNewEmployeeId(e.target.value)}
+                required
                 className="flex-1 min-w-[125px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
               >
-                <option value="">Selecionar Funcionário</option>
+                <option value="">Selecionar Funcionário *</option>
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.name}
@@ -474,9 +488,10 @@ export const BasicAgenda: React.FC = () => {
               <select
                 value={newClientId}
                 onChange={(e) => setNewClientId(e.target.value)}
+                required
                 className="flex-1 min-w-[125px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
               >
-                <option value="">Selecionar Cliente (opcional)</option>
+                <option value="">Selecionar Cliente *</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
