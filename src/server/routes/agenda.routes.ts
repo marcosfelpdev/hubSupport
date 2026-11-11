@@ -73,7 +73,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
 // POST /api/agenda - Criação de novo compromisso na agenda compartilhada
 router.post("/", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, date, time = "10:00", category = "Reunião", employeeId, clientId } = req.body;
+    const { title, date, time, category, employeeId, clientId } = req.body;
 
     if (!title || typeof title !== "string" || !title.trim()) {
       res.status(400).json({ error: "O título do compromisso é obrigatório." });
@@ -85,28 +85,57 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
       return;
     }
 
-    const user = req.user!;
-
-    let resolvedClientId = clientId && typeof clientId === "string" && clientId.trim() ? clientId.trim() : null;
-    if (!resolvedClientId && title) {
-      const allClients = await prisma.client.findMany({ select: { id: true, name: true } });
-      const matched = allClients.find((c) => title.toLowerCase().includes(c.name.toLowerCase()));
-      if (matched) {
-        resolvedClientId = matched.id;
-      }
+    if (!time || typeof time !== "string" || !time.trim()) {
+      res.status(400).json({ error: "O horário do compromisso é obrigatório." });
+      return;
     }
 
-    // Cria o evento na agenda
+    if (!category || typeof category !== "string" || !category.trim()) {
+      res.status(400).json({ error: "A categoria do compromisso é obrigatória." });
+      return;
+    }
+
+    if (!employeeId || typeof employeeId !== "string" || !employeeId.trim()) {
+      res.status(400).json({ error: "O colaborador responsável é obrigatório." });
+      return;
+    }
+
+    if (!clientId || typeof clientId !== "string" || !clientId.trim()) {
+      res.status(400).json({ error: "O cliente é obrigatório." });
+      return;
+    }
+
+    const cleanEmployeeId = employeeId.trim();
+    const cleanClientId = clientId.trim();
+
+    const [employeeExists, clientExists] = await Promise.all([
+      prisma.user.findUnique({ where: { id: cleanEmployeeId }, select: { id: true } }),
+      prisma.client.findUnique({ where: { id: cleanClientId }, select: { id: true } }),
+    ]);
+
+    if (!employeeExists) {
+      res.status(400).json({ error: "O colaborador selecionado não foi encontrado." });
+      return;
+    }
+
+    if (!clientExists) {
+      res.status(400).json({ error: "O cliente selecionado não foi encontrado." });
+      return;
+    }
+
+    const user = req.user!;
+
+    // Cria o evento na agenda com todos os campos obrigatórios vinculados
     const newEvent = await prisma.agendaEvent.create({
       data: {
         title: title.trim(),
         date: date.trim(),
-        time: (time && typeof time === "string" ? time.trim() : "10:00"),
-        category: (category && typeof category === "string" ? category.trim() : "Reunião"),
+        time: time.trim(),
+        category: category.trim(),
         completed: false,
-        employeeId: employeeId && typeof employeeId === "string" && employeeId.trim() ? employeeId.trim() : null,
+        employeeId: cleanEmployeeId,
         createdById: user.id,
-        clientId: resolvedClientId,
+        clientId: cleanClientId,
         notificationSent: false,
       },
       include: {

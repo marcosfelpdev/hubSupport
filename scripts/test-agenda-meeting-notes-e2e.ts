@@ -147,11 +147,119 @@ async function runE2ETests() {
     assert(foundInDropdown, "AGENDA_DROPDOWN", "Disponibilidade do Cliente na lista para Dropdown", `Cliente ${clientId} presente na listagem GET /api/clients`);
 
     // -------------------------------------------------------------
+    // FASE 1.5: Validação Estrita de Campos Obrigatórios (HTTP 400)
+    // -------------------------------------------------------------
+    console.log("\n--> [FASE 1.5] Validação de Campos Obrigatórios na Agenda (HTTP 400)...");
+
+    const todayDateStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const validTime = "14:30";
+    const validCategory = "Reunião";
+
+    // Cenário A: Ausência de título
+    const resNoTitle = await fetch(`${baseUrl}/api/agenda`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: todayDateStr,
+        time: validTime,
+        category: validCategory,
+        employeeId: adminUser.id,
+        clientId: clientId,
+      }),
+    });
+    assert(resNoTitle.status === 400, "AGENDA_VALIDATION", "Rejeitar criação sem título (HTTP 400)", `Status: ${resNoTitle.status}`);
+
+    // Cenário B: Ausência de horário
+    const resNoTime = await fetch(`${baseUrl}/api/agenda`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Reunião sem horário",
+        date: todayDateStr,
+        category: validCategory,
+        employeeId: adminUser.id,
+        clientId: clientId,
+      }),
+    });
+    assert(resNoTime.status === 400, "AGENDA_VALIDATION", "Rejeitar criação sem horário (HTTP 400)", `Status: ${resNoTime.status}`);
+
+    // Cenário C: Ausência de categoria
+    const resNoCat = await fetch(`${baseUrl}/api/agenda`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Reunião sem categoria",
+        date: todayDateStr,
+        time: validTime,
+        employeeId: adminUser.id,
+        clientId: clientId,
+      }),
+    });
+    assert(resNoCat.status === 400, "AGENDA_VALIDATION", "Rejeitar criação sem categoria (HTTP 400)", `Status: ${resNoCat.status}`);
+
+    // Cenário D: Ausência de funcionário responsável
+    const resNoEmp = await fetch(`${baseUrl}/api/agenda`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Reunião sem funcionário",
+        date: todayDateStr,
+        time: validTime,
+        category: validCategory,
+        clientId: clientId,
+      }),
+    });
+    assert(resNoEmp.status === 400, "AGENDA_VALIDATION", "Rejeitar criação sem funcionário (HTTP 400)", `Status: ${resNoEmp.status}`);
+
+    // Cenário E: Ausência de cliente
+    const resNoClient = await fetch(`${baseUrl}/api/agenda`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Reunião sem cliente",
+        date: todayDateStr,
+        time: validTime,
+        category: validCategory,
+        employeeId: adminUser.id,
+      }),
+    });
+    assert(resNoClient.status === 400, "AGENDA_VALIDATION", "Rejeitar criação sem cliente (HTTP 400)", `Status: ${resNoClient.status}`);
+
+    // Cenário F: Colaborador inexistente
+    const resInvalidEmp = await fetch(`${baseUrl}/api/agenda`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Reunião com funcionário inválido",
+        date: todayDateStr,
+        time: validTime,
+        category: validCategory,
+        employeeId: "id-inexistente-123",
+        clientId: clientId,
+      }),
+    });
+    assert(resInvalidEmp.status === 400, "AGENDA_VALIDATION", "Rejeitar criação com funcionário inexistente (HTTP 400)", `Status: ${resInvalidEmp.status}`);
+
+    // Cenário G: Cliente inexistente
+    const resInvalidClient = await fetch(`${baseUrl}/api/agenda`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Reunião com cliente inválido",
+        date: todayDateStr,
+        time: validTime,
+        category: validCategory,
+        employeeId: adminUser.id,
+        clientId: "id-cliente-inexistente-999",
+      }),
+    });
+    assert(resInvalidClient.status === 400, "AGENDA_VALIDATION", "Rejeitar criação com cliente inexistente (HTTP 400)", `Status: ${resInvalidClient.status}`);
+
+    // -------------------------------------------------------------
     // FASE 2: Criação de Reunião na Agenda vinculada ao Cliente
     // -------------------------------------------------------------
     console.log("\n--> [FASE 2] Criação de Evento na Agenda com Vinculação ao Cliente (Dropdown)...");
 
-    const todayDateStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
     const meetingTitle = "Reunião de Alinhamento Técnico";
     const meetingTime = "14:30";
 
