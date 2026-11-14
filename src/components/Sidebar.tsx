@@ -205,7 +205,7 @@ export default function Sidebar({ user }: { user: User }) {
           {/* Header da Marca */}
           <div className="flex items-center min-h-[40px]">
             <div
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xs text-white shrink-0 mx-auto"
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xs text-white shrink-0"
               title={!isHovered ? "HubSupport - Portal da Equipe" : undefined}
             >
               <svg
@@ -236,13 +236,13 @@ export default function Sidebar({ user }: { user: User }) {
           {isRecording && (
             <div className="mt-3">
               {isHovered ? (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs font-semibold shadow-xs animate-pulse">
+                <div className="h-10 flex items-center gap-2 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs font-semibold shadow-xs animate-pulse">
                   <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 animate-ping" />
                   <span className="truncate">Gravando tela: navegação travada</span>
                 </div>
               ) : (
                 <div
-                  className="w-10 h-10 mx-auto rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-xs cursor-help"
+                  className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-xs cursor-help"
                   title="Gravando tela: navegação travada"
                 >
                   <span className="relative flex h-3 w-3">
@@ -258,13 +258,22 @@ export default function Sidebar({ user }: { user: User }) {
           <div className="mt-5 space-y-4 overflow-y-auto flex-1 pr-0.5">
             {navGroups.map((group, groupIdx) => (
               <div key={group.title}>
-                {isHovered ? (
-                  <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-1.5 animate-fade-in">
-                    {group.title}
-                  </p>
-                ) : groupIdx > 0 ? (
-                  <div className="my-2.5 border-t border-slate-200/80 dark:border-slate-800 mx-1" />
-                ) : null}
+                {/* Contêiner de cabeçalho da seção com altura fixa estritamente idêntica para evitar qualquer pulo vertical */}
+                <div className="h-6 mb-1.5 flex items-center">
+                  {isHovered ? (
+                    <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 truncate animate-fade-in">
+                      {group.title}
+                    </p>
+                  ) : (
+                    <div className="w-10 flex items-center justify-center">
+                      {groupIdx === 0 ? (
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
+                      ) : (
+                        <span className="w-6 h-px bg-slate-200 dark:bg-slate-800" />
+                      )}
+                    </div>
+                  )}
+                </div>
                 <nav className="space-y-1.5">
                   {group.items.map((item) => {
                     const isActive = item.exact
@@ -292,10 +301,8 @@ export default function Sidebar({ user }: { user: User }) {
                             ? item.label
                             : undefined
                         }
-                        className={`transition-all ${
-                          isHovered
-                            ? "w-full rounded-xl px-3 py-2.5 flex items-center gap-3 text-sm font-medium"
-                            : "w-10 h-10 mx-auto rounded-xl flex items-center justify-center p-0"
+                        className={`h-10 rounded-xl flex items-center transition-all ${
+                          isHovered ? "w-full pr-3" : "w-10"
                         } ${
                           isBlocked
                             ? "opacity-40 cursor-not-allowed pointer-events-none text-slate-400 dark:text-slate-500"
@@ -305,7 +312,7 @@ export default function Sidebar({ user }: { user: User }) {
                         }`}
                       >
                         <span
-                          className={`shrink-0 transition-colors flex items-center justify-center ${
+                          className={`w-10 h-10 shrink-0 flex items-center justify-center transition-colors ${
                             isActive
                               ? "text-white dark:text-slate-900"
                               : isBlocked
@@ -315,10 +322,14 @@ export default function Sidebar({ user }: { user: User }) {
                         >
                           {item.icon}
                         </span>
-                        {isHovered && <span className="flex-1 truncate">{item.label}</span>}
+                        {isHovered && (
+                          <span className="flex-1 truncate text-sm font-medium ml-1 animate-fade-in">
+                            {item.label}
+                          </span>
+                        )}
                         {isHovered && isBlocked && (
                           <svg
-                            className="w-3.5 h-3.5 text-slate-400 opacity-70 shrink-0"
+                            className="w-3.5 h-3.5 text-slate-400 opacity-70 shrink-0 ml-2"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -346,7 +357,7 @@ export default function Sidebar({ user }: { user: User }) {
               id="btn-theme-toggle-compact"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               title={theme === "dark" ? "Alternar para modo claro" : "Alternar para modo escuro"}
-              className="w-10 h-10 mx-auto rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 mb-2.5 transition-all cursor-pointer shadow-2xs"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 mb-2.5 transition-all cursor-pointer shadow-2xs"
             >
               {theme === "dark" ? (
                 <Sun className="w-4 h-4 text-amber-400" />
@@ -389,7 +400,7 @@ export default function Sidebar({ user }: { user: User }) {
           {!isHovered ? (
             <div
               title={`${user.name || "Usuário"} (${getRoleLabel().replace(/^[^\s]+\s/, "")})`}
-              className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-xs mb-2 cursor-default ${
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-xs mb-2 cursor-default ${
                 user.role === "ADMIN"
                   ? "bg-gradient-to-br from-amber-500 to-amber-600"
                   : user.role === "MANAGER"
@@ -444,10 +455,10 @@ export default function Sidebar({ user }: { user: User }) {
             id="btn-sidebar-logout"
             onClick={handleLogout}
             disabled={loggingOut || isRecording}
-            className={`flex items-center justify-center transition-all cursor-pointer border border-transparent disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`h-10 flex items-center transition-all cursor-pointer border border-transparent disabled:opacity-40 disabled:cursor-not-allowed ${
               isHovered
-                ? "w-full gap-2 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 rounded-xl hover:border-slate-200 dark:hover:border-slate-800"
-                : "w-10 h-10 mx-auto text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 rounded-xl"
+                ? "w-full text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 rounded-xl hover:border-slate-200 dark:hover:border-slate-800 pr-3"
+                : "w-10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 rounded-xl"
             }`}
             title={
               isRecording
@@ -458,23 +469,27 @@ export default function Sidebar({ user }: { user: User }) {
             }
           >
             {loggingOut ? (
-              <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-slate-700 dark:border-t-slate-300 rounded-full animate-spin" />
+              <div className="w-10 h-10 shrink-0 flex items-center justify-center">
+                <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-slate-700 dark:border-t-slate-300 rounded-full animate-spin" />
+              </div>
             ) : (
               <>
-                <svg
-                  className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                {isHovered && <span>Sair da conta</span>}
+                <span className="w-10 h-10 shrink-0 flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 text-slate-500 dark:text-slate-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                </span>
+                {isHovered && <span className="truncate ml-1 animate-fade-in">Sair da conta</span>}
               </>
             )}
           </button>
