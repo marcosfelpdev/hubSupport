@@ -41,8 +41,9 @@ model WorkLog {
   title           String                 @default("") // Título do atendimento/relatório
   requester       String                 // Solicitante
   clientOrOffice  String                 // Escritório/Cliente
-  reportedProblem String                 @db.Text // Descrição do atendimento (antigo problema relatado)
-  actionTaken     String                 @default("") @db.Text // Ação realizada (integrada na descrição)
+  reportedProblem        String                 @db.Text // Descrição do atendimento (antigo problema relatado)
+  descriptionInterleaved String?                @db.Text // JSON estruturado alternando blocos de texto e referências de mídia
+  actionTaken            String                 @default("") @db.Text // Ação realizada (integrada na descrição)
   status          String                 @default("Realizado") // Realizado, Em andamento, Aguardando reunião, Não foi possível realizar, Solucionado
   technicalAction Boolean                @default(false) // Ação técnica (envio para equipe de programadores)
   implementation  Boolean                @default(false) // Implementação (sugestão de melhoria)
