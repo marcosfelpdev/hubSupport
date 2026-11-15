@@ -236,3 +236,45 @@ export function parseEditorDomToInterleaved(
     insertedMediaIds,
   };
 }
+
+/**
+ * Trunca nomes de arquivos no padrão clássico de meio, preservando o início,
+ * o final do nome e a extensão original.
+ *
+ * Exemplos:
+ * truncateMiddle("Captura de tela 2026-10-15 003713.png", 16) -> "Captu...3713.png"
+ * truncateMiddle("Captura de tela 2026-10-15 003713.png", 18) -> "Captura...3713.png"
+ * truncateMiddle("relatorio_mensal_de_vendas_consolidado", 16) -> "relato...didado"
+ */
+export function truncateMiddle(filename: string, maxLength: number = 16): string {
+  if (!filename) return "";
+  if (maxLength <= 0) return "";
+  if (filename.length <= maxLength) return filename;
+  if (maxLength <= 3) return filename.slice(0, maxLength);
+
+  const lastDot = filename.lastIndexOf(".");
+  const hasExtension = lastDot > 0 && lastDot < filename.length - 1;
+
+  if (hasExtension) {
+    const ext = filename.slice(lastDot);
+    const base = filename.slice(0, lastDot);
+    const avail = maxLength - 3;
+    const nameAvail = avail - ext.length;
+
+    if (nameAvail >= 1) {
+      const frontChars = Math.max(1, Math.round(nameAvail * 0.6));
+      const backChars = nameAvail - frontChars;
+      const front = base.slice(0, frontChars);
+      const back = backChars > 0 ? base.slice(-backChars) : "";
+      return `${front}...${back}${ext}`;
+    }
+  }
+
+  // Se não tem extensão ou se a extensão é muito longa para caber
+  const avail = maxLength - 3;
+  const frontChars = Math.ceil(avail / 2);
+  const backChars = avail - frontChars;
+  const front = filename.slice(0, frontChars);
+  const back = backChars > 0 ? filename.slice(-backChars) : "";
+  return `${front}...${back}`;
+}
