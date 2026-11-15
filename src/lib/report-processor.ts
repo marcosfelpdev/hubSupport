@@ -59,6 +59,7 @@ export async function processAiReportJob(workLogId: string) {
       platform: workLog.tag?.name,
       authorName: workLog.user.name,
       createdAt: workLog.createdAt,
+      tagColor: workLog.tag?.color || "#3b82f6",
     };
 
     let structuredData;
@@ -119,6 +120,7 @@ export async function processAiReportJob(workLogId: string) {
       workLogId,
       data: structuredData,
       context,
+      mediaUrls,
     });
 
     // 3. Atualiza registro como concluído
