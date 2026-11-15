@@ -5,6 +5,7 @@ import {
   formatMediaTag,
   generateMediaId,
   parseEditorDomToInterleaved,
+  truncateMiddle,
 } from "../src/lib/inline-media-parser";
 import WorkLogForm from "../src/components/WorkLogForm";
 import { InlineMediaEditor } from "../src/components/common/InlineMediaEditor";
@@ -79,6 +80,8 @@ async function runTests() {
   assert(typeof InlineMediaEditor === "object" || typeof InlineMediaEditor === "function", "InlineMediaEditor é exportado corretamente");
   assert(typeof createAttachedMediaItem === "function", "createAttachedMediaItem está acessível");
   assert(typeof parseEditorDomToInterleaved === "function", "parseEditorDomToInterleaved está acessível");
+  assert(typeof truncateMiddle === "function", "truncateMiddle está acessível");
+  assert(truncateMiddle("Captura de tela 2026-10-15 003713.png", 14) === "Capt...713.png", "truncateMiddle trunca com precisão 14 para o card quadrado");
 
   // 2. Serialização e Desserialização de Blocos Intercalados
   console.log("\n🔄 2. Teste de Serialização de descriptionInterleaved:");
