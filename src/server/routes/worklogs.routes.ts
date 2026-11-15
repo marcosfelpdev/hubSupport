@@ -32,6 +32,16 @@ const defaultWorkLogInclude = {
   },
 };
 
+interface InterleavedBlock {
+  type: "text" | "media";
+  content?: string;
+  mediaId?: string;
+  filename?: string;
+  mimeType?: string;
+  fileIndex?: number;
+  storagePath?: string;
+  mediaUrl?: string;
+}
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const RECORDINGS_DIR = path.join(process.cwd(), "storage", "recordings");
@@ -209,6 +219,27 @@ router.get("/dashboard-summary", authenticateToken, async (req: Request, res: Re
   }
 });
 
+// GET /api/worklogs/:id
+router.get("/:id", authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const workLog = await prisma.workLog.findUnique({
+      where: { id },
+      include: defaultWorkLogInclude,
+    });
+
+    if (!workLog) {
+      res.status(404).json({ error: "Atendimento não encontrado." });
+      return;
+    }
+
+    res.json(workLog);
+  } catch (error) {
+    console.error("[WorkLogs] Erro ao buscar atendimento por ID:", error);
+    res.status(500).json({ error: "Erro ao carregar dados do atendimento." });
+  }
+});
+
 // POST /api/worklogs
 router.post(
   "/",
@@ -241,6 +272,7 @@ router.post(
         clientOrOffice,
         reportedProblem,
         description,
+        descriptionInterleaved,
         actionTaken,
         status = "Realizado",
         technicalAction,
@@ -250,7 +282,30 @@ router.post(
       } = req.body;
 
       const finalTitle = (title || "").trim();
-      const finalDescription = (reportedProblem || description || "").trim();
+      let finalDescription = (reportedProblem || description || "").trim();
+
+      // Se reportedProblem não foi fornecido mas descriptionInterleaved sim, extrai o texto base
+      if (!finalDescription && descriptionInterleaved) {
+        try {
+          const parsed =
+            typeof descriptionInterleaved === "string"
+              ? JSON.parse(descriptionInterleaved)
+              : descriptionInterleaved;
+          if (Array.isArray(parsed)) {
+            finalDescription = parsed
+              .map((b: any) =>
+                b.type === "text"
+                  ? b.content || ""
+                  : b.filename
+                  ? `[Arquivo: ${b.filename}]`
+                  : ""
+              )
+              .join("")
+              .trim();
+          }
+        } catch {}
+      }
+
       const cleanTagId = tagId && typeof tagId === "string" && tagId.trim() !== "" ? tagId.trim() : null;
 
       if (
@@ -269,11 +324,105 @@ router.post(
       // Processar mídias adicionais via streaming do disco para o R2 (RAM constante)
       const mediaPaths: string[] = [];
       if (files?.media) {
-        for (const file of files.media) {
+        for (let i = 0; i < files.media.length; i++) {
+          const file = files.media[i];
           const cleanName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const key = `uploads/${Date.now()}-${cleanName}`;
+          const key = `uploads/${Date.now()}-${i}-${cleanName}`;
           await uploadFileFromDisk(file.path, key, file.mimetype || "application/octet-stream");
           mediaPaths.push(`/${key}`);
+        }
+      }
+
+      // Mapeia mídias salvas para os blocos de descriptionInterleaved (se presentes)
+      let finalDescriptionInterleaved: string | null = null;
+      if (
+        descriptionInterleaved &&
+        (typeof descriptionInterleaved !== "string" || descriptionInterleaved.trim() !== "")
+      ) {
+        try {
+          const parsed =
+            typeof descriptionInterleaved === "string"
+              ? JSON.parse(descriptionInterleaved)
+              : descriptionInterleaved;
+
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const matchedFileIndices = new Set<number>();
+            let mediaBlockIndex = 0;
+
+            const mappedBlocks = parsed.map((block: any) => {
+              if (block && block.type === "media") {
+                let matchedPath: string | undefined = undefined;
+
+                // 1. Tentar por fileIndex explícito
+                if (
+                  typeof block.fileIndex === "number" &&
+                  block.fileIndex >= 0 &&
+                  block.fileIndex < mediaPaths.length
+                ) {
+                  matchedPath = mediaPaths[block.fileIndex];
+                  matchedFileIndices.add(block.fileIndex);
+                }
+
+                // 2. Tentar por correspondência de filename com arquivo ainda não vinculado
+                if (!matchedPath && block.filename && files?.media) {
+                  const fileIdx = files.media.findIndex(
+                    (f, idx) => !matchedFileIndices.has(idx) && f.originalname === block.filename
+                  );
+                  if (fileIdx !== -1) {
+                    matchedPath = mediaPaths[fileIdx];
+                    matchedFileIndices.add(fileIdx);
+                  }
+                }
+
+                // 3. Tentar por correspondência de filename mesmo se já vinculado (duplicatas)
+                if (!matchedPath && block.filename && files?.media) {
+                  const fileIdx = files.media.findIndex(
+                    (f) => f.originalname === block.filename
+                  );
+                  if (fileIdx !== -1) {
+                    matchedPath = mediaPaths[fileIdx];
+                  }
+                }
+
+                // 4. Fallback por ordem sequencial de arquivos de mídia não vinculados
+                if (!matchedPath && files?.media) {
+                  const nextUnusedIdx = files.media.findIndex(
+                    (_, idx) => !matchedFileIndices.has(idx)
+                  );
+                  if (nextUnusedIdx !== -1) {
+                    matchedPath = mediaPaths[nextUnusedIdx];
+                    matchedFileIndices.add(nextUnusedIdx);
+                  }
+                }
+
+                // 5. Fallback por mediaBlockIndex se dentro dos limites
+                if (!matchedPath && mediaBlockIndex < mediaPaths.length) {
+                  matchedPath = mediaPaths[mediaBlockIndex];
+                }
+
+                // 6. Preservar storagePath ou mediaUrl pré-existente se houver
+                if (!matchedPath && (block.storagePath || block.mediaUrl)) {
+                  matchedPath = block.storagePath || block.mediaUrl;
+                }
+
+                mediaBlockIndex++;
+
+                if (matchedPath) {
+                  return {
+                    ...block,
+                    storagePath: matchedPath,
+                    mediaUrl: matchedPath,
+                  };
+                }
+              }
+              return block;
+            });
+
+            finalDescriptionInterleaved = JSON.stringify(mappedBlocks);
+          }
+        } catch (err) {
+          console.warn("[WorkLogs] Falha ao analisar descriptionInterleaved:", err);
+          finalDescriptionInterleaved = null;
         }
       }
 
@@ -314,6 +463,7 @@ router.post(
           requester: requester.trim(),
           clientOrOffice: clientOrOffice.trim(),
           reportedProblem: finalDescription,
+          descriptionInterleaved: finalDescriptionInterleaved,
           actionTaken: (actionTaken || "").trim(),
           status: finalStatus,
           technicalAction: isTechnicalAction,

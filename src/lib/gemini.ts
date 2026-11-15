@@ -2,6 +2,7 @@ import { GoogleGenAI, createPartFromUri } from "@google/genai";
 import fs from "fs/promises";
 import path from "path";
 import { getFileBuffer } from "../server/services/r2Storage";
+import { InterleavedBlock } from "./inline-media-parser";
 
 export interface ProposalItem {
   item: string;
@@ -44,6 +45,7 @@ export interface WorkLogContext {
   platform?: string;
   authorName: string;
   createdAt: Date | string;
+  descriptionInterleaved?: string | null;
 }
 
 const REPORT_SCHEMA = {
@@ -234,9 +236,302 @@ const CANDIDATE_MODELS = Array.from(
   )
 );
 
+export const SUPPORTED_GEMINI_INLINE_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+]);
+
+export function isSupportedGeminiInlineMimeType(mimeType: string): boolean {
+  return SUPPORTED_GEMINI_INLINE_MIME_TYPES.has(mimeType.toLowerCase());
+}
+
+export function detectMimeType(filePathOrFilename: string, declaredMimeType?: string): string {
+  if (declaredMimeType && declaredMimeType !== "application/octet-stream") {
+    const lower = declaredMimeType.toLowerCase();
+    if (lower === "image/jpg") return "image/jpeg";
+    return lower;
+  }
+  const ext = path.extname(filePathOrFilename).toLowerCase();
+  if (ext === ".png") return "image/png";
+  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+  if (ext === ".webp") return "image/webp";
+  if (ext === ".gif") return "image/gif";
+  if (ext === ".pdf") return "application/pdf";
+  if (ext === ".xlsx") return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  if (ext === ".xls") return "application/vnd.ms-excel";
+  if (ext === ".docx") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (ext === ".doc") return "application/msword";
+  if (ext === ".csv") return "text/csv";
+  if (ext === ".txt") return "text/plain";
+  return declaredMimeType || "application/octet-stream";
+}
+
+export interface InterleavedPartText {
+  text: string;
+}
+
+export interface InterleavedPartInlineData {
+  inlineData: {
+    mimeType: string;
+    data: string;
+  };
+}
+
+export type GeminiPartItem = InterleavedPartText | InterleavedPartInlineData;
+
+export interface BuildInterleavedPartsResult {
+  hasInterleaved: boolean;
+  interleavedParts: GeminiPartItem[];
+  complementaryParts: GeminiPartItem[];
+  allParts: GeminiPartItem[];
+  inlineImageParts: InterleavedPartInlineData[];
+  usedMediaPaths: Set<string>;
+}
+
+function normalizeStoragePath(p: string): string {
+  return p.replace(/\\/g, "/").replace(/^\/+/, "");
+}
+
+function markUsedPath(
+  used: Set<string>,
+  resolvedPath: string,
+  block: InterleavedBlock
+) {
+  const clean = normalizeStoragePath(resolvedPath);
+  used.add(clean);
+  used.add(`/${clean}`);
+  if (block.storagePath) {
+    const cleanStorage = normalizeStoragePath(block.storagePath);
+    used.add(cleanStorage);
+    used.add(`/${cleanStorage}`);
+  }
+  if (block.mediaUrl) {
+    const cleanUrl = normalizeStoragePath(block.mediaUrl);
+    used.add(cleanUrl);
+    used.add(`/${cleanUrl}`);
+  }
+}
+
+function isPathUsed(used: Set<string>, cleanPath: string, rawUrl: string): boolean {
+  const clean = normalizeStoragePath(cleanPath);
+  return (
+    used.has(clean) ||
+    used.has(`/${clean}`) ||
+    used.has(rawUrl) ||
+    used.has(normalizeStoragePath(rawUrl))
+  );
+}
+
+/**
+ * Constrói as partes multimodais do Gemini intercalando texto e imagens na ordem da narrativa,
+ * além de incluir mídias complementares que não foram citadas diretamente no corpo do texto.
+ */
+export async function buildInterleavedGeminiParts(
+  descriptionInterleaved: string | null | undefined,
+  mediaUrls?: string[]
+): Promise<BuildInterleavedPartsResult> {
+  const result: BuildInterleavedPartsResult = {
+    hasInterleaved: false,
+    interleavedParts: [],
+    complementaryParts: [],
+    allParts: [],
+    inlineImageParts: [],
+    usedMediaPaths: new Set<string>(),
+  };
+
+  if (
+    !descriptionInterleaved ||
+    typeof descriptionInterleaved !== "string" ||
+    !descriptionInterleaved.trim()
+  ) {
+    return result;
+  }
+
+  let blocks: InterleavedBlock[];
+  try {
+    const parsed = JSON.parse(descriptionInterleaved);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return result;
+    }
+    blocks = parsed;
+  } catch (err) {
+    console.warn("[Gemini] Falha ao analisar descriptionInterleaved como JSON:", err);
+    return result;
+  }
+
+  result.hasInterleaved = true;
+
+  // 1. Processar blocos intercalados na sequência narrativa
+  for (const block of blocks) {
+    if (!block) continue;
+
+    if (block.type === "text") {
+      const content = typeof block.content === "string" ? block.content : "";
+      if (content.length > 0) {
+        result.interleavedParts.push({ text: content });
+      }
+    } else if (block.type === "media") {
+      // Resolução do caminho da mídia
+      let resolvedPath: string | null = null;
+      if (block.storagePath && typeof block.storagePath === "string") {
+        resolvedPath = normalizeStoragePath(block.storagePath);
+      } else if (block.mediaUrl && typeof block.mediaUrl === "string") {
+        resolvedPath = normalizeStoragePath(block.mediaUrl);
+      } else if (
+        typeof block.fileIndex === "number" &&
+        mediaUrls &&
+        mediaUrls[block.fileIndex]
+      ) {
+        resolvedPath = normalizeStoragePath(mediaUrls[block.fileIndex]);
+      } else if (block.filename && mediaUrls && mediaUrls.length > 0) {
+        // Tenta encontrar em mediaUrls
+        const found = mediaUrls.find((u) => {
+          const norm = normalizeStoragePath(u);
+          return (
+            norm.endsWith(block.filename!) ||
+            path.basename(norm) === block.filename
+          );
+        });
+        if (found) {
+          resolvedPath = normalizeStoragePath(found);
+        }
+      }
+
+      if (!resolvedPath && block.filename) {
+        resolvedPath = normalizeStoragePath(block.filename);
+      }
+
+      const mime = detectMimeType(
+        resolvedPath || block.filename || "",
+        block.mimeType
+      );
+
+      if (isSupportedGeminiInlineMimeType(mime)) {
+        let loaded = false;
+        if (resolvedPath) {
+          try {
+            const buffer = await getFileBuffer(resolvedPath);
+            if (buffer && buffer.length > 0) {
+              const inlinePart: InterleavedPartInlineData = {
+                inlineData: {
+                  mimeType: mime === "image/jpg" ? "image/jpeg" : mime,
+                  data: buffer.toString("base64"),
+                },
+              };
+              result.interleavedParts.push(inlinePart);
+              result.inlineImageParts.push(inlinePart);
+              markUsedPath(result.usedMediaPaths, resolvedPath, block);
+              console.log(
+                `[Gemini] Mídia inline incluída: ${path.basename(
+                  resolvedPath
+                )} (${(buffer.length / 1024).toFixed(1)} KB)`
+              );
+              loaded = true;
+            }
+          } catch (err) {
+            console.warn(
+              `[Gemini] Aviso: não foi possível carregar mídia inline "${resolvedPath}":`,
+              err
+            );
+          }
+        }
+
+        if (!loaded) {
+          result.interleavedParts.push({
+            text: `\n[Imagem anexada: ${
+              block.filename || path.basename(resolvedPath || "imagem")
+            }]\n`,
+          });
+          if (resolvedPath) {
+            markUsedPath(result.usedMediaPaths, resolvedPath, block);
+          }
+        }
+      } else {
+        // Formato binário não suportado para inlineData (ex: .xlsx, .docx)
+        result.interleavedParts.push({
+          text: `\n[Arquivo anexado no texto: ${
+            block.filename || "documento"
+          }]\n`,
+        });
+        if (resolvedPath) {
+          markUsedPath(result.usedMediaPaths, resolvedPath, block);
+        }
+      }
+    }
+  }
+
+  // 2. Processar Mídias Complementares (arquivos anexados que não foram inseridos inline)
+  if (mediaUrls && Array.isArray(mediaUrls) && mediaUrls.length > 0) {
+    const complementaryItems: GeminiPartItem[] = [];
+
+    for (const rawUrl of mediaUrls) {
+      if (!rawUrl || typeof rawUrl !== "string") continue;
+      const cleanPath = normalizeStoragePath(rawUrl);
+      if (!cleanPath) continue;
+
+      if (isPathUsed(result.usedMediaPaths, cleanPath, rawUrl)) {
+        continue;
+      }
+
+      const mime = detectMimeType(cleanPath);
+      if (isSupportedGeminiInlineMimeType(mime)) {
+        try {
+          const buffer = await getFileBuffer(cleanPath);
+          if (buffer && buffer.length > 0) {
+            complementaryItems.push({
+              inlineData: {
+                mimeType: mime === "image/jpg" ? "image/jpeg" : mime,
+                data: buffer.toString("base64"),
+              },
+            });
+            result.usedMediaPaths.add(cleanPath);
+            result.usedMediaPaths.add(`/${cleanPath}`);
+            result.usedMediaPaths.add(rawUrl);
+            console.log(
+              `[Gemini] Mídia complementar incluída: ${path.basename(
+                cleanPath
+              )} (${(buffer.length / 1024).toFixed(1)} KB)`
+            );
+          }
+        } catch (err) {
+          console.warn(
+            `[Gemini] Aviso: não foi possível carregar mídia complementar "${rawUrl}":`,
+            err
+          );
+        }
+      } else {
+        // Arquivo complementar não-imagem (ex: planilha anexada)
+        complementaryItems.push({
+          text: `\n[Arquivo complementar anexado: ${path.basename(
+            cleanPath
+          )}]\n`,
+        });
+        result.usedMediaPaths.add(cleanPath);
+        result.usedMediaPaths.add(`/${cleanPath}`);
+        result.usedMediaPaths.add(rawUrl);
+      }
+    }
+
+    if (complementaryItems.length > 0) {
+      result.complementaryParts.push({
+        text: "\n### Mídias Complementares em Anexo:\nAs seguintes mídias foram anexadas ao chamado pelo atendente como evidências complementares:\n",
+      });
+      result.complementaryParts.push(...complementaryItems);
+    }
+  }
+
+  result.allParts = [...result.interleavedParts, ...result.complementaryParts];
+  return result;
+}
+
 export async function analyzeRecordingWithGemini(
   videoFilePath: string,
-  context: WorkLogContext
+  context: WorkLogContext,
+  mediaUrls?: string[]
 ): Promise<StructuredReportData> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
 
@@ -271,6 +566,7 @@ export async function analyzeRecordingWithGemini(
     requester: context.requester?.trim() || "Não informado",
     clientOrOffice: context.clientOrOffice?.trim() || "Não informado",
     reportedProblem: context.reportedProblem?.trim() || "Não informado",
+    descriptionInterleaved: context.descriptionInterleaved || null,
     actionTaken: context.actionTaken?.trim() || "",
     status: context.status?.trim() || "Pendente",
     technicalAction: !!context.technicalAction,
@@ -346,10 +642,27 @@ export async function analyzeRecordingWithGemini(
     // 6. Construção da Parte de Mídia (fileData com fileUri e mimeType)
     const videoPart = createPartFromUri(fileUri, mimeType);
 
+    // 6.1. Carrega imagens inline da descrição (se houver)
+    let inlineImageParts: Array<{ inlineData: { mimeType: string; data: string } }> = [];
+    if (context.descriptionInterleaved) {
+      try {
+        const interleavedResult = await buildInterleavedGeminiParts(
+          context.descriptionInterleaved,
+          mediaUrls
+        );
+        inlineImageParts = interleavedResult.inlineImageParts;
+        if (inlineImageParts.length > 0) {
+          console.log(`[Gemini] ${inlineImageParts.length} imagem(ns) inline da descrição incluídas na análise de gravação.`);
+        }
+      } catch (err) {
+        console.warn("[Gemini] Aviso: falha ao extrair imagens inline para gravação:", err);
+      }
+    }
+
     // 7. Montagem do prompt com instruções e dados do formulário
     const prompt = `
 Você é um assistente sênior especialista em suporte técnico corporativo e documentação executiva de atendimentos e reuniões.
-Analise detalhadamente a gravação de tela em anexo (áudio com as falas e vídeo com as interações de tela) juntamente com as informações do formulário de atendimento fornecido abaixo.
+Analise detalhadamente a gravação de tela em anexo (áudio com as falas e vídeo com as interações de tela)${inlineImageParts.length > 0 ? " juntamente com as imagens e prints de tela anexados na descrição" : ""} juntamente com as informações do formulário de atendimento fornecido abaixo.
 
 Gere um relatório executivo técnico e formal, estritamente no formato JSON definido, seguindo o padrão padrão de relatório corporativo da empresa:
 
@@ -358,6 +671,7 @@ ${safeContext.title ? `- Título: ${safeContext.title}` : ""}
 - Solicitante: ${safeContext.requester}
 - Escritório / Cliente: ${safeContext.clientOrOffice}
 - Descrição: ${safeContext.reportedProblem}
+${inlineImageParts.length > 0 ? `- Imagens na Descrição: Foram incluídas ${inlineImageParts.length} imagem(ns)/prints no texto da descrição detalhando o problema.` : ""}
 ${safeContext.actionTaken ? `- Ação Realizada: ${safeContext.actionTaken}` : ""}
 - Status Atual: ${safeContext.status}
 - Classificação: ${safeContext.technicalAction ? "Ação Técnica (Dev)" : ""} ${safeContext.implementation ? "Implementação/Sugestão de Melhoria" : ""}
@@ -403,7 +717,7 @@ ${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.p
         try {
           const response = await ai.models.generateContent({
             model,
-            contents: [videoPart, prompt],
+            contents: [videoPart, ...inlineImageParts, prompt],
             config: {
               responseMimeType: "application/json",
               responseSchema: REPORT_SCHEMA,
@@ -508,6 +822,7 @@ export async function analyzeFormWithGemini(
     requester: context.requester?.trim() || "Não informado",
     clientOrOffice: context.clientOrOffice?.trim() || "Não informado",
     reportedProblem: context.reportedProblem?.trim() || "Não informado",
+    descriptionInterleaved: context.descriptionInterleaved || null,
     actionTaken: context.actionTaken?.trim() || "",
     status: context.status?.trim() || "Pendente",
     technicalAction: !!context.technicalAction,
@@ -521,45 +836,56 @@ export async function analyzeFormWithGemini(
 
   const ai = new GoogleGenAI({ apiKey });
 
-  // 2. Carrega imagens e mídias anexadas (se houver) via storage (R2 ou local)
-  const imageParts: Array<{ inlineData: { mimeType: string; data: string } }> = [];
+  // 2. Processa o conteúdo multimodal (intercalado ou legado)
+  const interleavedResult = await buildInterleavedGeminiParts(
+    context.descriptionInterleaved,
+    mediaUrls
+  );
 
-  if (mediaUrls && Array.isArray(mediaUrls)) {
-    for (const rawUrl of mediaUrls) {
-      try {
-        const cleanPath = typeof rawUrl === "string" ? rawUrl.replace(/^\/+/, "") : "";
-        if (!cleanPath) continue;
+  let legacyImageParts: Array<{ inlineData: { mimeType: string; data: string } }> = [];
+  let totalMediaCount = 0;
 
-        const ext = path.extname(cleanPath).toLowerCase();
-        let mime = "";
-        if (ext === ".png") mime = "image/png";
-        else if (ext === ".jpg" || ext === ".jpeg") mime = "image/jpeg";
-        else if (ext === ".webp") mime = "image/webp";
-        else if (ext === ".gif") mime = "image/gif";
-        else if (ext === ".pdf") mime = "application/pdf";
+  if (interleavedResult.hasInterleaved) {
+    totalMediaCount = interleavedResult.allParts.filter(
+      (p) => "inlineData" in p
+    ).length;
+  } else {
+    // Modo legado: se descriptionInterleaved for nulo ou vazio
+    if (mediaUrls && Array.isArray(mediaUrls)) {
+      for (const rawUrl of mediaUrls) {
+        try {
+          const cleanPath = normalizeStoragePath(rawUrl);
+          if (!cleanPath) continue;
 
-        if (mime) {
-          const fileBuffer = await getFileBuffer(cleanPath);
-          if (fileBuffer && fileBuffer.length > 0) {
-            imageParts.push({
-              inlineData: {
-                mimeType: mime,
-                data: fileBuffer.toString("base64"),
-              },
-            });
-            console.log(`[Gemini] Mídia/imagem anexada incluída na análise: ${path.basename(cleanPath)} (${(fileBuffer.length / 1024).toFixed(1)} KB)`);
+          const mime = detectMimeType(cleanPath);
+          if (isSupportedGeminiInlineMimeType(mime)) {
+            const fileBuffer = await getFileBuffer(cleanPath);
+            if (fileBuffer && fileBuffer.length > 0) {
+              legacyImageParts.push({
+                inlineData: {
+                  mimeType: mime === "image/jpg" ? "image/jpeg" : mime,
+                  data: fileBuffer.toString("base64"),
+                },
+              });
+              console.log(
+                `[Gemini] Mídia/imagem anexada incluída na análise: ${path.basename(
+                  cleanPath
+                )} (${(fileBuffer.length / 1024).toFixed(1)} KB)`
+              );
+            }
           }
+        } catch (err) {
+          console.warn(`[Gemini] Aviso: não foi possível carregar mídia "${rawUrl}":`, err);
         }
-      } catch (err) {
-        console.warn(`[Gemini] Aviso: não foi possível carregar mídia "${rawUrl}":`, err);
       }
     }
+    totalMediaCount = legacyImageParts.length;
   }
 
   // 3. Montagem do prompt executivo
   const prompt = `
 Você é um assistente sênior especialista em suporte técnico corporativo e documentação executiva de atendimentos e chamados de TI.
-Analise detalhadamente as informações registradas pelo atendimento técnico fornecidas abaixo${imageParts.length > 0 ? " juntamente com as imagens e prints de tela em anexo" : ""}.
+Analise detalhadamente as informações registradas pelo atendimento técnico fornecidas abaixo${totalMediaCount > 0 ? " juntamente com as imagens e prints de tela em anexo" : ""}.
 
 Gere um relatório executivo técnico e formal, estritamente no formato JSON definido, seguindo o padrão corporativo de relatório da empresa:
 
@@ -574,7 +900,8 @@ ${safeContext.actionTaken ? `- Ação Realizada pelo Suporte: ${safeContext.acti
 ${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.platform}` : ""}
 - Registrado por: ${safeContext.authorName}
 - Data de Registro: ${safeContext.createdAt}
-${imageParts.length > 0 ? `- Mídias anexadas: Foram anexadas ${imageParts.length} imagem(ns)/prints comprovando e detalhando a situação descrita.` : ""}
+${totalMediaCount > 0 ? `- Mídias anexadas: Foram anexadas ${totalMediaCount} imagem(ns)/prints comprovando e detalhando a situação descrita.` : ""}
+${interleavedResult.hasInterleaved ? "- Observação de Formato: A narrativa descritiva do atendimento foi estruturada de forma intercalada diretamente com as mídias e evidências no início desta solicitação." : ""}
 
 ### Diretrizes de Preenchimento dos Campos:
 1. **Título e Subtítulo**: Formais, claros e corporativos (ex: "Relatório de Atendimento Técnico e Diagnóstico", "Solicitação referente a ${safeContext.clientOrOffice}").
@@ -589,7 +916,9 @@ ${imageParts.length > 0 ? `- Mídias anexadas: Foram anexadas ${imageParts.lengt
   let lastError: unknown;
   let responseText: string | undefined;
 
-  const contents = [...imageParts, prompt];
+  const contents = interleavedResult.hasInterleaved
+    ? [...interleavedResult.allParts, prompt]
+    : [...legacyImageParts, prompt];
 
   for (const model of CANDIDATE_MODELS) {
     console.log(`[Gemini] Tentando gerar relatório estruturado de formulário com o modelo: ${model}...`);

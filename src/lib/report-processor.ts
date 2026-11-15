@@ -51,6 +51,7 @@ export async function processAiReportJob(workLogId: string) {
       requester: workLog.requester,
       clientOrOffice: workLog.clientOrOffice,
       reportedProblem: workLog.reportedProblem,
+      descriptionInterleaved: workLog.descriptionInterleaved,
       actionTaken: workLog.actionTaken,
       status: workLog.status,
       technicalAction: workLog.technicalAction,
@@ -94,7 +95,7 @@ export async function processAiReportJob(workLogId: string) {
       const tempVideoPath = path.join(os.tmpdir(), `gemini-${workLogId}-${Date.now()}${ext}`);
       try {
         await downloadToTempFile(videoKeyToProcess, tempVideoPath);
-        structuredData = await analyzeRecordingWithGemini(tempVideoPath, context);
+        structuredData = await analyzeRecordingWithGemini(tempVideoPath, context, mediaUrls);
       } catch (videoErr) {
         console.warn(`[ReportProcessor] Falha ao processar gravação com IA. Tentando fallback para dados do formulário e mídias:`, videoErr);
         // Fallback resiliente: se a gravação de vídeo falhar, analisa o formulário e as mídias anexadas
