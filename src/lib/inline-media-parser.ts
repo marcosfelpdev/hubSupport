@@ -14,6 +14,8 @@ export interface InterleavedBlock {
   filename?: string;
   mimeType?: string;
   fileIndex?: number;
+  storagePath?: string;
+  mediaUrl?: string;
 }
 
 const BLOCK_TAGS = new Set([
