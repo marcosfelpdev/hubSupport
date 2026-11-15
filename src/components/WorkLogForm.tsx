@@ -3,6 +3,7 @@ import { api, TagItem } from "@/services/api";
 import { hexToRgba } from "@/components/TagBadge";
 import {
   Video,
+  FileText,
   Trash2,
   Sparkles,
   Eye,
@@ -24,6 +25,7 @@ import {
   AttachedMediaItem,
   InterleavedBlock,
   createAttachedMediaItem,
+  truncateMiddle,
 } from "@/lib/inline-media-parser";
 
 const STATUS_OPTIONS = [
@@ -553,6 +555,173 @@ export default function WorkLogForm({
           />
         </div>
 
+        {/* Anexo de Mídia - Drag and Drop e Sincronização */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              Anexar Mídia <span className="text-slate-400 dark:text-slate-500 lowercase font-normal">(opcional)</span>
+            </label>
+            {attachedMedia.length > 0 && (
+              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                {attachedMedia.length} {attachedMedia.length === 1 ? "arquivo selecionado" : "arquivos selecionados"}
+              </span>
+            )}
+          </div>
+
+          <input
+            ref={fileInputRef}
+            id="media"
+            type="file"
+            multiple
+            accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx"
+            disabled={isPending}
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
+
+          <div
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer select-none flex flex-col items-center justify-center gap-2 ${
+              isDraggingOver
+                ? "border-slate-900 dark:border-slate-400 bg-slate-100/80 dark:bg-slate-800/80 shadow-xs"
+                : "border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-[#0b0f19]/40 hover:bg-slate-50 dark:hover:bg-[#0b0f19]/70"
+            } ${isPending ? "opacity-60 cursor-not-allowed" : ""}`}
+          >
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-2xs ${
+                isDraggingOver ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+              }`}
+            >
+              <UploadCloud className="w-5 h-5" />
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {isDraggingOver ? (
+                  <span className="text-slate-900 dark:text-white font-semibold">Solte os arquivos para anexar</span>
+                ) : (
+                  <>
+                    Arraste e solte arquivos aqui ou{" "}
+                    <span className="text-slate-900 dark:text-white font-semibold underline underline-offset-2">
+                      procure no dispositivo
+                    </span>
+                  </>
+                )}
+              </p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                Imagens, documentos ou vídeos (até 1GB por arquivo)
+              </p>
+            </div>
+          </div>
+
+          {/* Lista de arquivos selecionados em Grid Quadrado */}
+          {attachedMedia.length > 0 && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between px-1 mb-2">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  Arquivos prontos para envio: ({attachedMedia.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeAllMediaItems();
+                  }}
+                  className="text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors cursor-pointer"
+                >
+                  Remover todos
+                </button>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+                {attachedMedia.map((item) => {
+                  const ext = item.name.lastIndexOf(".") !== -1
+                    ? item.name.slice(item.name.lastIndexOf(".") + 1).toUpperCase()
+                    : "";
+
+                  return (
+                    <div
+                      key={item.id}
+                      draggable={!isPending}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("application/x-hubsupport-media-id", item.id);
+                        e.dataTransfer.effectAllowed = "copyMove";
+                      }}
+                      className={`aspect-square rounded-xl overflow-hidden relative border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/60 shadow-2xs group transition-all select-none ${
+                        isPending
+                          ? "cursor-not-allowed opacity-60"
+                          : "cursor-grab active:cursor-grabbing hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-xs"
+                      }`}
+                      title={
+                        isPending
+                          ? undefined
+                          : `${item.name} (${formatBytes(item.size)}) - Arraste para o campo de descrição`
+                      }
+                    >
+                      {/* Miniatura ou Ícone */}
+                      {item.mimeType.startsWith("image/") && item.previewUrl ? (
+                        <img
+                          src={item.previewUrl}
+                          alt={item.name}
+                          className="w-full h-full object-cover pointer-events-none"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-2 text-slate-400 dark:text-slate-500 pointer-events-none pb-6">
+                          {item.mimeType.startsWith("video/") ? (
+                            <Video className="w-6 h-6 text-slate-500 dark:text-slate-400 mb-1" />
+                          ) : (
+                            <FileText className="w-6 h-6 text-slate-500 dark:text-slate-400 mb-1" />
+                          )}
+                          {ext && (
+                            <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider bg-slate-200/80 dark:bg-slate-800/80 px-1.5 py-0.5 rounded">
+                              {ext}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Floating badge No texto */}
+                      {insertedMediaIds.has(item.id) && (
+                        <div className="absolute top-1.5 left-1.5 z-10 bg-indigo-600/90 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-md shadow-xs flex items-center gap-1 backdrop-blur-xs select-none">
+                          <span>✓</span>
+                          <span>No texto</span>
+                        </div>
+                      )}
+
+                      {/* Floating remove button */}
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeMediaItem(item.id);
+                        }}
+                        disabled={isPending}
+                        title="Remover este arquivo"
+                        className="absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-md bg-black/60 hover:bg-rose-600 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Floating bottom gradient with truncated name and size */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent p-1.5 pt-4 text-left pointer-events-none">
+                        <p className="text-[10px] font-medium text-white truncate leading-tight" title={item.name}>
+                          {truncateMiddle(item.name, 14)}
+                        </p>
+                        <span className="text-[9px] text-white/75">{formatBytes(item.size)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Seleção de Tag Mestre (Contexto / Plataforma) - OBRIGATÓRIA */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
@@ -689,155 +858,6 @@ export default function WorkLogForm({
               {implementation && <Check className="w-3.5 h-3.5 stroke-[3]" />}
             </div>
           </button>
-        </div>
-
-        {/* Anexo de Mídia - Drag and Drop e Sincronização */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-              Anexar Mídia <span className="text-slate-400 dark:text-slate-500 lowercase font-normal">(opcional)</span>
-            </label>
-            {attachedMedia.length > 0 && (
-              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                {attachedMedia.length} {attachedMedia.length === 1 ? "arquivo selecionado" : "arquivos selecionados"}
-              </span>
-            )}
-          </div>
-
-          <input
-            ref={fileInputRef}
-            id="media"
-            type="file"
-            multiple
-            accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx"
-            disabled={isPending}
-            onChange={handleFileInputChange}
-            className="hidden"
-          />
-
-          <div
-            onDragEnter={handleDragEnter}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer select-none flex flex-col items-center justify-center gap-2 ${
-              isDraggingOver
-                ? "border-slate-900 dark:border-slate-400 bg-slate-100/80 dark:bg-slate-800/80 shadow-xs"
-                : "border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-[#0b0f19]/40 hover:bg-slate-50 dark:hover:bg-[#0b0f19]/70"
-            } ${isPending ? "opacity-60 cursor-not-allowed" : ""}`}
-          >
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-2xs ${
-                isDraggingOver ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
-              }`}
-            >
-              <UploadCloud className="w-5 h-5" />
-            </div>
-
-            <div>
-              <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                {isDraggingOver ? (
-                  <span className="text-slate-900 dark:text-white font-semibold">Solte os arquivos para anexar</span>
-                ) : (
-                  <>
-                    Arraste e solte arquivos aqui ou{" "}
-                    <span className="text-slate-900 dark:text-white font-semibold underline underline-offset-2">
-                      procure no dispositivo
-                    </span>
-                  </>
-                )}
-              </p>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                Imagens, documentos ou vídeos (até 1GB por arquivo)
-              </p>
-            </div>
-          </div>
-
-          {/* Lista de arquivos selecionados */}
-          {attachedMedia.length > 0 && (
-            <div className="mt-3 flex flex-col gap-2">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                  Arquivos prontos para envio:
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeAllMediaItems();
-                  }}
-                  className="text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors cursor-pointer"
-                >
-                  Remover todos
-                </button>
-              </div>
-
-              {attachedMedia.map((item) => (
-                <div
-                  key={item.id}
-                  draggable={!isPending}
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("application/x-hubsupport-media-id", item.id);
-                    e.dataTransfer.effectAllowed = "copyMove";
-                  }}
-                  className={`bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-3 shadow-2xs transition-all ${
-                    isPending
-                      ? "cursor-not-allowed opacity-60"
-                      : "cursor-grab active:cursor-grabbing hover:border-slate-300 dark:hover:border-slate-700"
-                  }`}
-                  title={
-                    isPending
-                      ? undefined
-                      : "Arraste para o campo de descrição para inserir no texto"
-                  }
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    {item.mimeType.startsWith("image/") && item.previewUrl ? (
-                      <img
-                        src={item.previewUrl}
-                        alt={item.name}
-                        className="w-6 h-6 rounded object-cover shrink-0 border border-slate-200 dark:border-slate-700 pointer-events-none"
-                      />
-                    ) : (
-                      <Paperclip className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p
-                          className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px] sm:max-w-xs"
-                          title={item.name}
-                        >
-                          {item.name}
-                        </p>
-                        {insertedMediaIds.has(item.id) && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 shadow-2xs shrink-0 select-none">
-                            <span>✓</span> No texto
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                        {formatBytes(item.size)}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeMediaItem(item.id);
-                    }}
-                    disabled={isPending}
-                    title="Remover este arquivo"
-                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1 rounded-md transition-colors cursor-pointer shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Submit */}
