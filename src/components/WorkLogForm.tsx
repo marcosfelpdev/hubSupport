@@ -1,4 +1,4 @@
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useEffect, useRef, useMemo, useCallback } from "react";
 import { api, TagItem } from "@/services/api";
 import { hexToRgba } from "@/components/TagBadge";
 import {
@@ -16,6 +16,15 @@ import {
   ChevronDown,
   PlusCircle,
 } from "lucide-react";
+import {
+  InlineMediaEditor,
+  InlineMediaEditorRef,
+} from "@/components/common/InlineMediaEditor";
+import {
+  AttachedMediaItem,
+  InterleavedBlock,
+  createAttachedMediaItem,
+} from "@/lib/inline-media-parser";
 
 const STATUS_OPTIONS = [
   { value: "Realizado", label: "Já realizado" },
@@ -41,7 +50,25 @@ export default function WorkLogForm({
   const [implementation, setImplementation] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("Realizado");
   const isTechnicalOrImplementation = technicalAction || implementation;
-  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+
+  // Mídias Anexadas e Sincronização Bidirecional
+  const [attachedMedia, setAttachedMedia] = useState<AttachedMediaItem[]>([]);
+  const [insertedMediaIds, setInsertedMediaIds] = useState<Set<string>>(new Set());
+  const [descriptionText, setDescriptionText] = useState<string>("");
+  const [interleavedBlocks, setInterleavedBlocks] = useState<InterleavedBlock[]>([]);
+  const editorRef = useRef<InlineMediaEditorRef>(null);
+
+  const mediaMap = useMemo(() => {
+    const map = new Map<string, AttachedMediaItem>();
+    for (const item of attachedMedia) {
+      map.set(item.id, item);
+    }
+    return map;
+  }, [attachedMedia]);
+
+  const attachedMediaRef = useRef<AttachedMediaItem[]>([]);
+  attachedMediaRef.current = attachedMedia;
+
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeRecordedVideo, setActiveRecordedVideo] = useState<File | null>(recordedVideo);
@@ -88,6 +115,17 @@ export default function WorkLogForm({
     }
   }, [activeRecordedVideo]);
 
+  // Limpeza de URLs de visualização ao desmontar o componente
+  useEffect(() => {
+    return () => {
+      attachedMediaRef.current.forEach((item) => {
+        if (item.previewUrl && typeof URL !== "undefined") {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
+    };
+  }, []);
+
   function handleDiscardVideo() {
     if (confirm("Deseja realmente remover esta gravação de tela?")) {
       setActiveRecordedVideo(null);
@@ -114,15 +152,66 @@ export default function WorkLogForm({
       return;
     }
 
-    setMediaFiles((prev) => {
+    setAttachedMedia((prev) => {
       const existingKeys = new Set(prev.map((f) => `${f.name}_${f.size}`));
-      const unique = newFiles.filter((f) => !existingKeys.has(`${f.name}_${f.size}`));
-      return [...prev, ...unique];
+      const newItems: AttachedMediaItem[] = [];
+      for (const file of newFiles) {
+        if (!existingKeys.has(`${file.name}_${file.size}`)) {
+          newItems.push(createAttachedMediaItem(file));
+        }
+      }
+      return [...prev, ...newItems];
     });
   }
 
-  function removeFile(indexToRemove: number) {
-    setMediaFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  const handleMediaAdded = useCallback((item: AttachedMediaItem) => {
+    if (item.size > MAX_FILE_SIZE_BYTES) {
+      setMessage({
+        type: "error",
+        text: `O arquivo "${item.name}" (${formatBytes(item.size)}) excede o limite máximo permitido de 1GB.`,
+      });
+      editorRef.current?.removeChip(item.id);
+      if (item.previewUrl && typeof URL !== "undefined") {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+      return;
+    }
+
+    setAttachedMedia((prev) => {
+      if (prev.some((m) => m.id === item.id)) return prev;
+      return [...prev, item];
+    });
+  }, []);
+
+  const handleEditorChange = useCallback(
+    (plainText: string, interleaved: InterleavedBlock[], ids: Set<string>) => {
+      setDescriptionText(plainText);
+      setInterleavedBlocks(interleaved);
+      setInsertedMediaIds(new Set(ids));
+    },
+    []
+  );
+
+  function removeMediaItem(idToRemove: string) {
+    const item = attachedMedia.find((m) => m.id === idToRemove);
+    if (item) {
+      editorRef.current?.removeChip(item.id);
+      if (item.previewUrl && typeof URL !== "undefined") {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+      setAttachedMedia((prev) => prev.filter((m) => m.id !== idToRemove));
+    }
+  }
+
+  function removeAllMediaItems() {
+    attachedMedia.forEach((item) => {
+      editorRef.current?.removeChip(item.id);
+      if (item.previewUrl && typeof URL !== "undefined") {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+    });
+    setAttachedMedia([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function handleDragEnter(e: React.DragEvent<HTMLDivElement>) {
@@ -149,6 +238,10 @@ export default function WorkLogForm({
     e.stopPropagation();
     setIsDraggingOver(false);
 
+    // Ignora drop interno de mídias já existentes na dropzone inferior
+    const internalMediaId = e.dataTransfer.getData("application/x-hubsupport-media-id");
+    if (internalMediaId) return;
+
     const droppedFiles = Array.from(e.dataTransfer.files || []);
     if (droppedFiles.length > 0) {
       addFiles(droppedFiles);
@@ -166,6 +259,18 @@ export default function WorkLogForm({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setMessage(null);
+
+    const plainText = (editorRef.current?.getPlainText() || descriptionText).trim();
+    const interleaved = editorRef.current?.getInterleaved() || interleavedBlocks;
+
+    if (!plainText && interleaved.length === 0) {
+      setMessage({
+        type: "error",
+        text: "Por favor, preencha a descrição do atendimento.",
+      });
+      editorRef.current?.focus();
+      return;
+    }
 
     if (!selectedTagId) {
       setMessage({
@@ -192,10 +297,12 @@ export default function WorkLogForm({
     formData.set("status", finalStatus);
     formData.set("tagId", selectedTagId);
     formData.set("actionTaken", "");
+    formData.set("reportedProblem", plainText);
+    formData.set("descriptionInterleaved", JSON.stringify(interleaved));
     formData.delete("media");
 
-    mediaFiles.forEach((file) => {
-      formData.append("media", file);
+    attachedMedia.forEach((item) => {
+      formData.append("media", item.file);
     });
 
     if (activeRecordedVideo) {
@@ -211,7 +318,16 @@ export default function WorkLogForm({
         setSelectedStatus("Realizado");
         setSelectedTagId(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
-        setMediaFiles([]);
+        attachedMedia.forEach((item) => {
+          if (item.previewUrl && typeof URL !== "undefined") {
+            URL.revokeObjectURL(item.previewUrl);
+          }
+        });
+        setAttachedMedia([]);
+        setInsertedMediaIds(new Set());
+        setDescriptionText("");
+        setInterleavedBlocks([]);
+        editorRef.current?.clear();
         setActiveRecordedVideo(null);
         onSuccess?.();
         setMessage({
@@ -420,19 +536,20 @@ export default function WorkLogForm({
           </div>
         </div>
 
-        {/* Descrição */}
+        {/* Descrição com Editor Multimodal Inline */}
         <div>
           <label htmlFor="reportedProblem" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
             Descrição <span className="text-rose-500">*</span>
           </label>
-          <textarea
+          <InlineMediaEditor
+            ref={editorRef}
             id="reportedProblem"
-            name="reportedProblem"
-            rows={4}
-            className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl p-3.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-y leading-relaxed disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:cursor-not-allowed"
-            placeholder="Descreva a solicitação, incidente e ações tomadas..."
-            required
+            mediaMap={mediaMap}
+            onMediaAdded={handleMediaAdded}
+            onChange={handleEditorChange}
             disabled={isPending}
+            placeholder="Descreva a solicitação, incidente e ações tomadas..."
+            minHeight="120px"
           />
         </div>
 
@@ -574,15 +691,15 @@ export default function WorkLogForm({
           </button>
         </div>
 
-        {/* Anexo de Mídia - Drag and Drop */}
+        {/* Anexo de Mídia - Drag and Drop e Sincronização */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Anexar Mídia <span className="text-slate-400 dark:text-slate-500 lowercase font-normal">(opcional)</span>
             </label>
-            {mediaFiles.length > 0 && (
+            {attachedMedia.length > 0 && (
               <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                {mediaFiles.length} {mediaFiles.length === 1 ? "arquivo selecionado" : "arquivos selecionados"}
+                {attachedMedia.length} {attachedMedia.length === 1 ? "arquivo selecionado" : "arquivos selecionados"}
               </span>
             )}
           </div>
@@ -638,7 +755,7 @@ export default function WorkLogForm({
           </div>
 
           {/* Lista de arquivos selecionados */}
-          {mediaFiles.length > 0 && (
+          {attachedMedia.length > 0 && (
             <div className="mt-3 flex flex-col gap-2">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -648,7 +765,7 @@ export default function WorkLogForm({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setMediaFiles([]);
+                    removeAllMediaItems();
                   }}
                   className="text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors cursor-pointer"
                 >
@@ -656,31 +773,64 @@ export default function WorkLogForm({
                 </button>
               </div>
 
-              {mediaFiles.map((file, idx) => (
+              {attachedMedia.map((item) => (
                 <div
-                  key={`${file.name}_${idx}`}
-                  className="bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-3 shadow-2xs"
+                  key={item.id}
+                  draggable={!isPending}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("application/x-hubsupport-media-id", item.id);
+                    e.dataTransfer.effectAllowed = "copyMove";
+                  }}
+                  className={`bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-3 shadow-2xs transition-all ${
+                    isPending
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-grab active:cursor-grabbing hover:border-slate-300 dark:hover:border-slate-700"
+                  }`}
+                  title={
+                    isPending
+                      ? undefined
+                      : "Arraste para o campo de descrição para inserir no texto"
+                  }
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <Paperclip className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                    {item.mimeType.startsWith("image/") && item.previewUrl ? (
+                      <img
+                        src={item.previewUrl}
+                        alt={item.name}
+                        className="w-6 h-6 rounded object-cover shrink-0 border border-slate-200 dark:border-slate-700 pointer-events-none"
+                      />
+                    ) : (
+                      <Paperclip className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                    )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate" title={file.name}>
-                        {file.name}
-                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p
+                          className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px] sm:max-w-xs"
+                          title={item.name}
+                        >
+                          {item.name}
+                        </p>
+                        {insertedMediaIds.has(item.id) && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 shadow-2xs shrink-0 select-none">
+                            <span>✓</span> No texto
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                        {formatBytes(file.size)}
+                        {formatBytes(item.size)}
                       </span>
                     </div>
                   </div>
                   <button
                     type="button"
+                    onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeFile(idx);
+                      removeMediaItem(item.id);
                     }}
                     disabled={isPending}
                     title="Remover este arquivo"
-                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1 rounded-md transition-colors cursor-pointer"
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1 rounded-md transition-colors cursor-pointer shrink-0"
                   >
                     <X className="w-4 h-4" />
                   </button>
