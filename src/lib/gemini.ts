@@ -20,17 +20,43 @@ export interface DialogueLine {
 
 export interface StructuredReportData {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   date?: string;
   department: string;
   participants: string;
   platformAnalyzed: string;
+  routeEnvironment?: string; // e.g. "Módulo de Documentos (Listagem)" or "casos/[codigo]/documentos"
+  documentNature?: string; // e.g. "Relato de QA e Investigação Técnica", "Especificação de Melhoria e Novas Features", "Relatório Técnico de Atendimento"
   executiveSummary: string;
-  proposals: ProposalItem[];
-  detailingTopic: string;
-  detailingParagraphs: string[];
-  referrals: string;
-  transcript: DialogueLine[];
+  currentBehavior?: string; // Comportamento Atual (Anomalia)
+  expectedBehavior?: string; // Comportamento Esperado
+  evidenceCaptions?: Array<{ filename: string; caption: string }>; // Legendas explicativas para as imagens
+  isTechnicalReport?: boolean;
+  investigativeNotice?: string; // "AVISO DE CONTEXTO INVESTIGATIVO..."
+  diagnosticHypothesis?: {
+    topic: string;
+    paragraphs: string[];
+  };
+  logicalDiagram?: {
+    title: string;
+    leftBoxTitle: string;
+    leftBoxContent: string;
+    operator: string; // e.g. "≠" or "--✕-->"
+    rightBoxTitle: string;
+    rightBoxContent: string;
+  };
+  codeSuggestion?: {
+    language: string;
+    title: string;
+    code: string;
+    explanation?: string;
+  };
+  investigationGuidelines?: string[];
+  proposals?: ProposalItem[];
+  detailingTopic?: string;
+  detailingParagraphs?: string[];
+  referrals?: string;
+  transcript?: DialogueLine[];
 }
 
 export interface WorkLogContext {
@@ -46,18 +72,19 @@ export interface WorkLogContext {
   authorName: string;
   createdAt: Date | string;
   descriptionInterleaved?: string | null;
+  tagColor?: string;
 }
 
-const REPORT_SCHEMA = {
+export const REPORT_SCHEMA = {
   type: "object",
   properties: {
     title: {
       type: "string",
-      description: "Título formal do relatório. Exemplo: 'Relatório de Sugestões de Melhoria no Sistema' ou 'Relatório de Atendimento Técnico e Diagnóstico'",
+      description: "Título formal do relatório. Deve ser o texto exato do título fornecido no contexto sem numeração 'Nota XX'.",
     },
     subtitle: {
       type: "string",
-      description: "Subtítulo objetivo resumindo a demanda. Exemplo: 'Solicitação de Exportação de Dados em Lote para Planilhamento'",
+      description: "Subtítulo objetivo resumindo a demanda ou identificando o cliente/escritório.",
     },
     date: {
       type: "string",
@@ -73,11 +100,135 @@ const REPORT_SCHEMA = {
     },
     platformAnalyzed: {
       type: "string",
-      description: "Nome da plataforma, software ou módulo analisado durante a gravação",
+      description: "Nome da plataforma, software ou módulo analisado durante o atendimento",
+    },
+    routeEnvironment: {
+      type: "string",
+      description: "Módulo, tela ou rota da URL onde a situação ocorre. Exemplo: 'Módulo de Documentos (Listagem)' ou '/casos/[codigo]/documentos'",
+    },
+    documentNature: {
+      type: "string",
+      description: "Natureza documental do relatório: 'Relato de QA e Investigação Técnica' (se Ação Técnica), 'Especificação de Melhoria e Novas Features' (se Implementação) ou 'Relatório Técnico de Atendimento' (caso padrão)",
     },
     executiveSummary: {
       type: "string",
-      description: "Resumo executivo formal em um parágrafo claro sobre o que foi tratado na reunião/atendimento",
+      description: "Resumo executivo formal em um parágrafo claro sobre o que foi tratado na reunião ou chamado",
+    },
+    currentBehavior: {
+      type: "string",
+      description: "Descrição da anomalia, erro ou comportamento atual observado na prática",
+    },
+    expectedBehavior: {
+      type: "string",
+      description: "Descrição do comportamento esperado ideal do sistema. Se a dedução for vaga ou sem base sólida, omita este campo.",
+    },
+    evidenceCaptions: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          filename: {
+            type: "string",
+            description: "Nome do arquivo ou identificador da imagem/print analisado",
+          },
+          caption: {
+            type: "string",
+            description: "Legenda descritiva curta e clara da evidência. Exemplo: '1. Estado com 2 documentos selecionados'",
+          },
+        },
+        required: ["filename", "caption"],
+      },
+      description: "Legendas explicativas para cada print ou imagem anexada como evidência",
+    },
+    isTechnicalReport: {
+      type: "boolean",
+      description: "Indica se o relatório possui caráter técnico investigativo (Ação Técnica ou Implementação)",
+    },
+    investigativeNotice: {
+      type: "string",
+      description: "Aviso de contexto investigativo para orientar equipe de desenvolvimento e agentes de IA",
+    },
+    diagnosticHypothesis: {
+      type: "object",
+      properties: {
+        topic: {
+          type: "string",
+          description: "Tópico central da hipótese diagnóstica. Exemplo: 'Divergência entre Estado Global e Mutação de UI'",
+        },
+        paragraphs: {
+          type: "array",
+          items: { type: "string" },
+          description: "Parágrafos detalhando a análise de causa raiz lógica, estado, DOM ou APIs",
+        },
+      },
+      required: ["topic", "paragraphs"],
+      description: "Hipótese diagnóstica e análise técnica da provável causa raiz",
+    },
+    logicalDiagram: {
+      type: "object",
+      properties: {
+        title: {
+          type: "string",
+          description: "Título do quadro comparativo lógico. Exemplo: 'Mapeamento do Gargalo Lógico'",
+        },
+        leftBoxTitle: {
+          type: "string",
+          description: "Título da caixa da esquerda. Exemplo: 'ESTADO GLOBAL [IDs]'",
+        },
+        leftBoxContent: {
+          type: "string",
+          description: "Conteúdo descritivo da caixa da esquerda",
+        },
+        operator: {
+          type: "string",
+          description: "Operador lógico ou símbolo comparativo de divergência (ex: '≠' ou '--✕-->')",
+        },
+        rightBoxTitle: {
+          type: "string",
+          description: "Título da caixa da direita. Exemplo: 'EVENTO ON_DRAG [Payload]'",
+        },
+        rightBoxContent: {
+          type: "string",
+          description: "Conteúdo descritivo da caixa da direita",
+        },
+      },
+      required: [
+        "title",
+        "leftBoxTitle",
+        "leftBoxContent",
+        "operator",
+        "rightBoxTitle",
+        "rightBoxContent",
+      ],
+      description: "Quadro comparativo lógico resumindo o gargalo ou divergência",
+    },
+    codeSuggestion: {
+      type: "object",
+      properties: {
+        language: {
+          type: "string",
+          description: "Linguagem de programação da sugestão técnica (ex: 'typescript', 'javascript', 'sql')",
+        },
+        title: {
+          type: "string",
+          description: "Título objetivo da implementação sugerida. Exemplo: 'Ajuste de Propagação do Array de IDs'",
+        },
+        code: {
+          type: "string",
+          description: "Trecho de código com a lógica de solução proposta",
+        },
+        explanation: {
+          type: "string",
+          description: "Explicação técnica sobre a resolução do gargalo",
+        },
+      },
+      required: ["language", "title", "code", "explanation"],
+      description: "Sugestão técnica de código com implementação de referência. Omita caso não haja base sólida ou aplicabilidade prática.",
+    },
+    investigationGuidelines: {
+      type: "array",
+      items: { type: "string" },
+      description: "Itens técnicos objetivos para verificação e auditoria pelos desenvolvedores",
     },
     proposals: {
       type: "array",
@@ -147,16 +298,13 @@ const REPORT_SCHEMA = {
   },
   required: [
     "title",
-    "subtitle",
     "department",
     "participants",
     "platformAnalyzed",
+    "routeEnvironment",
+    "documentNature",
     "executiveSummary",
-    "proposals",
-    "detailingTopic",
-    "detailingParagraphs",
-    "referrals",
-    "transcript",
+    "isTechnicalReport",
   ],
 };
 
@@ -528,6 +676,133 @@ export async function buildInterleavedGeminiParts(
   return result;
 }
 
+export interface SafeReportContext {
+  title: string;
+  requester: string;
+  clientOrOffice: string;
+  reportedProblem: string;
+  actionTaken: string;
+  status: string;
+  technicalAction: boolean;
+  implementation: boolean;
+  platform: string;
+  authorName: string;
+  createdAt: string;
+  tagColor?: string;
+}
+
+export function buildFinalStructuredReport(
+  parsedData: Partial<StructuredReportData>,
+  safeContext: SafeReportContext,
+  isVideo: boolean = false
+): StructuredReportData {
+  const todayFormatted = new Date().toLocaleDateString("pt-BR");
+
+  const defaultDocNature = safeContext.technicalAction
+    ? "Relato de QA e Investigação Técnica"
+    : safeContext.implementation
+    ? "Especificação de Melhoria e Novas Features"
+    : "Relatório Técnico de Atendimento";
+
+  const defaultRoute = safeContext.platform
+    ? `Módulo ${safeContext.platform}`
+    : "Ambiente Web";
+
+  const isTechnicalReport =
+    typeof parsedData.isTechnicalReport === "boolean"
+      ? parsedData.isTechnicalReport
+      : safeContext.technicalAction || safeContext.implementation;
+
+  const investigativeNotice =
+    parsedData.investigativeNotice ||
+    (isTechnicalReport
+      ? "AVISO DE CONTEXTO INVESTIGATIVO: As hipóteses e diretrizes a seguir têm caráter de investigação técnica preliminar e servem para orientar desenvolvedores e agentes de IA na identificação e correção de causas raiz."
+      : undefined);
+
+  let defaultTranscript: DialogueLine[] = [];
+  if (!isVideo) {
+    defaultTranscript = [
+      {
+        speaker: safeContext.requester,
+        role: "Solicitante",
+        timestamp: "00:00",
+        text: safeContext.reportedProblem,
+      },
+      ...(safeContext.actionTaken
+        ? [
+            {
+              speaker: safeContext.authorName,
+              role: "Suporte",
+              timestamp: "00:01",
+              text: safeContext.actionTaken,
+            },
+          ]
+        : []),
+    ];
+  }
+
+  return {
+    title: safeContext.title || parsedData.title || "Relatório de Atendimento Técnico e Diagnóstico",
+    subtitle:
+      parsedData.subtitle ||
+      (isVideo
+        ? `Solicitação referente a ${safeContext.clientOrOffice}`
+        : `Atendimento para ${safeContext.clientOrOffice}`),
+    date: parsedData.date || todayFormatted,
+    department: parsedData.department || safeContext.clientOrOffice,
+    participants:
+      parsedData.participants ||
+      `${safeContext.requester} (${isVideo ? "Operação" : "Solicitante"}), ${
+        safeContext.authorName
+      } (Suporte)`,
+    platformAnalyzed:
+      parsedData.platformAnalyzed || safeContext.platform || "Sistema Corporativo",
+    routeEnvironment: parsedData.routeEnvironment || defaultRoute,
+    documentNature: parsedData.documentNature || defaultDocNature,
+    executiveSummary: parsedData.executiveSummary || safeContext.reportedProblem,
+    currentBehavior: parsedData.currentBehavior || safeContext.reportedProblem,
+    expectedBehavior: parsedData.expectedBehavior,
+    evidenceCaptions: Array.isArray(parsedData.evidenceCaptions)
+      ? parsedData.evidenceCaptions
+      : undefined,
+    isTechnicalReport,
+    investigativeNotice,
+    diagnosticHypothesis: parsedData.diagnosticHypothesis,
+    logicalDiagram: parsedData.logicalDiagram,
+    codeSuggestion: parsedData.codeSuggestion,
+    investigationGuidelines: Array.isArray(parsedData.investigationGuidelines)
+      ? parsedData.investigationGuidelines
+      : undefined,
+    proposals:
+      Array.isArray(parsedData.proposals) && parsedData.proposals.length > 0
+        ? parsedData.proposals
+        : [
+            {
+              item: isVideo
+                ? "1. Melhoria no Fluxo Operacional"
+                : "1. Tratamento da Demanda",
+              description: safeContext.actionTaken || safeContext.reportedProblem,
+              category: safeContext.technicalAction ? "AÇÃO TÉCNICA" : "OPERAÇÃO",
+              priority: "Alta",
+            },
+          ],
+    detailingTopic:
+      parsedData.detailingTopic || "Detalhamento e Justificativa da Solicitação",
+    detailingParagraphs:
+      Array.isArray(parsedData.detailingParagraphs) &&
+      parsedData.detailingParagraphs.length > 0
+        ? parsedData.detailingParagraphs
+        : [safeContext.reportedProblem, safeContext.actionTaken].filter(Boolean),
+    referrals:
+      parsedData.referrals ||
+      `Demanda registrada no atendimento pelo suporte (${safeContext.authorName}) e encaminhada para acompanhamento.`,
+    transcript:
+      Array.isArray(parsedData.transcript) && parsedData.transcript.length > 0
+        ? parsedData.transcript
+        : defaultTranscript,
+  };
+}
+
 export async function analyzeRecordingWithGemini(
   videoFilePath: string,
   context: WorkLogContext,
@@ -573,6 +848,7 @@ export async function analyzeRecordingWithGemini(
     implementation: !!context.implementation,
     platform: context.platform?.trim() || "",
     authorName: context.authorName?.trim() || "Técnico do suporte",
+    tagColor: context.tagColor?.trim() || "#3b82f6",
     createdAt: context.createdAt
       ? new Date(context.createdAt).toLocaleString("pt-BR")
       : "Data não informada",
@@ -664,10 +940,10 @@ export async function analyzeRecordingWithGemini(
 Você é um assistente sênior especialista em suporte técnico corporativo e documentação executiva de atendimentos e reuniões.
 Analise detalhadamente a gravação de tela em anexo (áudio com as falas e vídeo com as interações de tela)${inlineImageParts.length > 0 ? " juntamente com as imagens e prints de tela anexados na descrição" : ""} juntamente com as informações do formulário de atendimento fornecido abaixo.
 
-Gere um relatório executivo técnico e formal, estritamente no formato JSON definido, seguindo o padrão padrão de relatório corporativo da empresa:
+Gere um relatório executivo técnico e formal, estritamente no formato JSON definido, seguindo o padrão de relatório corporativo da empresa:
 
 ### Informações do Atendimento:
-${safeContext.title ? `- Título: ${safeContext.title}` : ""}
+${safeContext.title ? `- Título do Chamado: ${safeContext.title}` : ""}
 - Solicitante: ${safeContext.requester}
 - Escritório / Cliente: ${safeContext.clientOrOffice}
 - Descrição: ${safeContext.reportedProblem}
@@ -680,30 +956,53 @@ ${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.p
 - Data de Registro: ${safeContext.createdAt}
 
 ### Regras de Extração e Estruturação:
-1. **Título e Subtítulo**:
-   - Defina um título formal adequado. Ex: "Relatório de Sugestões de Melhoria no Sistema" ou "Relatório de Atendimento Técnico e Diagnóstico".
-   - Defina um subtítulo conciso e descritivo da necessidade levantada. Ex: "Solicitação de Exportação de Dados em Lote para Planilhamento".
-2. **Metadados (Data, Departamento, Participantes, Plataforma)**:
+1. **TÍTULO (title)**:
+   - O título do documento deve ser o texto exato do campo título fornecido no contexto: "${safeContext.title || "Relatório de Atendimento Técnico e Diagnóstico"}". NUNCA adicionar numeração "Nota XX" ou alterar esse texto.
+   - Subtítulo (subtitle): Defina um subtítulo conciso e descritivo da necessidade levantada ou escritório atendido (ex: "${safeContext.clientOrOffice}").
+
+2. **NATUREZA DO DOCUMENTO (documentNature)**:
+   - Se for Ação Técnica (technicalAction: true): "Relato de QA e Investigação Técnica"
+   - Se for Implementação (implementation: true): "Especificação de Melhoria e Novas Features"
+   - Senão: "Relatório Técnico de Atendimento"
+   - O campo isTechnicalReport deve ser true se for Ação Técnica ou Implementação, e false caso contrário.
+
+3. **AMBIENTE DA ROTA (routeEnvironment)**:
+   - Identifique o módulo, tela ou rota da URL onde a situação ocorre (ex: "Módulo de Documentos (Listagem)" ou "/casos/[codigo]/documentos").
+
+4. **METADADOS (date, department, participants, platformAnalyzed)**:
    - Data no formato DD/MM/AAAA.
    - Departamento: inclua o setor e escritório/cliente, ex: "Cível Processual | ${safeContext.clientOrOffice}".
    - Participantes: liste cada pessoa identificada com seu papel entre parênteses, ex: "${safeContext.requester} (Operação), ${safeContext.authorName} (Suporte)".
    - Plataforma Analisada: identifique o nome do sistema ou software demonstrado no vídeo (ex: ERP Jurídico, Módulo de Protocolos, Sistema Web). Caso identificado no formulário (${safeContext.platform || "não especificado"}), dê preferência a esse contexto.
-3. **Resumo Executivo**:
-   - Um parágrafo formal e objetivo formalizando o que foi demandado ou analisado durante o atendimento e qual o objetivo para a operação.
-4. **Propostas de Melhoria de Fluxo de Trabalho (Tabela)**:
-   - Para cada funcionalidade ou melhoria discutida, gere um item com:
-     - item: nome numerado (ex: "1. Exportação de Dados em Lote (PDF/Excel)")
-     - description: descrição clara e precisa do que a funcionalidade deve fazer
-     - category: categoria em letras maiúsculas (ex: "UX / EXPORTAÇÃO", "INTEGRAÇÃO", "BANCO DE DADOS", "BUG / CORREÇÃO")
-     - priority: prioridade ("Alta", "Média" ou "Baixa")
-5. **Detalhamento e Justificativa da Sugestão**:
-   - detailingTopic: um subtítulo adequado (ex: "Necessidade Operacional de Planilhamento").
-   - detailingParagraphs: parágrafos que expliquem a rotina da equipe, o volume de dados demonstrado em tela (ex: número de protocolos/processos), as limitações da interface atual e como a solução eliminará trabalho manual e erros.
-6. **Encaminhamentos da Reunião**:
-   - Descreva a conclusão prática da interação, o que o suporte técnico avaliou na tela, a confirmação de que a demanda será documentada e os próximos passos com a equipe técnica/desenvolvimento.
-7. **Transcrição Integral do Áudio da Reunião**:
+
+5. **RESUMO EXECUTIVO (executiveSummary)**:
+   - Um parágrafo formal e objetivo sintetizando o que foi demandado ou analisado durante o atendimento e qual o objetivo para a operação.
+
+6. **ANÁLISE DE COMPORTAMENTO (currentBehavior e expectedBehavior)**:
+   - currentBehavior: Descreva o erro, falha, gargalo ou comportamento atual observado na prática.
+   - expectedBehavior: Descreva o comportamento esperado ideal do sistema.
+   - DIRETRIZ DE AUTOCENSURA: Se o comportamento esperado não estiver explícito, deduza-o fundamentadamente; porém, se a dedução for vaga ou carente de contexto suficiente, omita expectedBehavior para evitar suposições sem base.
+
+7. **EVIDÊNCIAS E LEGENDAS (evidenceCaptions)**:
+   - Para cada imagem ou print de tela anexado/identificado, forneça em evidenceCaptions o filename e uma legenda descritiva curta e clara (ex: "1. Estado com 2 documentos selecionados", "2. Arquivo alocado na aba Sem pasta").
+
+8. **SEÇÃO TÉCNICA INVESTIGATIVA (Somente para Ação Técnica ou Implementação - isTechnicalReport: true)**:
+   - investigativeNotice: "AVISO DE CONTEXTO INVESTIGATIVO: As hipóteses e diretrizes a seguir têm caráter de investigação técnica preliminar e servem para orientar desenvolvedores e agentes de IA na identificação e correção de causas raiz."
+   - diagnosticHypothesis: Objeto com topic (ex: "Divergência entre Estado Global e Mutação de UI") e paragraphs (parágrafos analisando provável causa raiz lógica: DOM, manipulação de estado, ciclo de vida, histórico ou APIs).
+   - logicalDiagram: Quadro comparativo lógico resumindo o gargalo (ex: title: "Mapeamento do Gargalo Lógico", leftBoxTitle: "ESTADO GLOBAL [IDs]", leftBoxContent: "...", operator: "≠", rightBoxTitle: "EVENTO ON_DRAG [Payload]", rightBoxContent: "...").
+   - codeSuggestion: Bloco de código com lógica sugerida de solução (JavaScript ou TypeScript) contendo language, title, code e explanation. Se não houver código aplicável ou base sólida, omita este campo.
+   - investigationGuidelines: Lista de itens técnicos objetivos para verificação pelos desenvolvedores (ex: auditar ouvintes de eventos, verificar payload da mutation).
+   - Se NÃO for Ação Técnica nem Implementação, omita estes campos técnicos.
+
+9. **PROPOSTAS DE MELHORIA E DETALHAMENTO (proposals, detailingTopic, detailingParagraphs, referrals)**:
+   - proposals: Tabela com propostas de melhoria de fluxo de trabalho ou itens técnicos levantados (item numerado, description, category em caixa alta, priority).
+   - detailingTopic: Subtítulo adequado (ex: "Necessidade Operacional de Planilhamento" ou "Diagnóstico e Justificativa da Falha").
+   - detailingParagraphs: Parágrafos detalhados explicando o contexto operacional, volume de dados e justificativa.
+   - referrals: Encaminhamentos práticos da reunião e próximos passos com a equipe técnica.
+
+10. **TRANSCRIÇÃO INTEGRAL DO ÁUDIO DA REUNIÃO (transcript)**:
    - Transcreva cronologicamente o diálogo com timestamps precisos no formato [MM:SS].
-   - Identifique quem está falando e seu papel (ex: speaker: "${safeContext.requester}", role: "Cível Processual", timestamp: "00:38", text: "...").
+   - Identifique quem está falando e seu papel (speaker, role, timestamp, text).
    - Inclua as falas do suporte técnico e do usuário com fidelidade ao áudio gravado.
 `;
 
@@ -760,34 +1059,7 @@ ${safeContext.platform ? `- Plataforma / Sistema do Atendimento: ${safeContext.p
     console.log("[Gemini] Resposta estruturada recebida com sucesso!");
     const parsedData = JSON.parse(responseText) as Partial<StructuredReportData>;
 
-    // Formata a data atual em DD/MM/AAAA se não vier
-    const todayFormatted = new Date().toLocaleDateString("pt-BR");
-
-    return {
-      title: parsedData.title || "Relatório de Sugestões de Melhoria no Sistema",
-      subtitle: parsedData.subtitle || `Solicitação referente a ${safeContext.clientOrOffice}`,
-      date: parsedData.date || todayFormatted,
-      department: parsedData.department || safeContext.clientOrOffice,
-      participants: parsedData.participants || `${safeContext.requester} (Operação), ${safeContext.authorName} (Suporte)`,
-      platformAnalyzed: parsedData.platformAnalyzed || safeContext.platform || "Sistema Corporativo",
-      executiveSummary: parsedData.executiveSummary || safeContext.reportedProblem,
-      proposals: Array.isArray(parsedData.proposals) && parsedData.proposals.length > 0
-        ? parsedData.proposals
-        : [
-            {
-              item: "1. Melhoria no Fluxo Operacional",
-              description: safeContext.actionTaken || safeContext.reportedProblem,
-              category: safeContext.technicalAction ? "AÇÃO TÉCNICA" : "OPERAÇÃO",
-              priority: "Alta",
-            },
-          ],
-      detailingTopic: parsedData.detailingTopic || "Detalhamento e Justificativa da Solicitação",
-      detailingParagraphs: Array.isArray(parsedData.detailingParagraphs) && parsedData.detailingParagraphs.length > 0
-        ? parsedData.detailingParagraphs
-        : [safeContext.reportedProblem, safeContext.actionTaken],
-      referrals: parsedData.referrals || `Demanda registrada no atendimento pelo suporte (${safeContext.authorName}) e encaminhada para acompanhamento.`,
-      transcript: Array.isArray(parsedData.transcript) ? parsedData.transcript : [],
-    };
+    return buildFinalStructuredReport(parsedData, safeContext, true);
   } finally {
     // 9. Limpeza: remove o arquivo temporário dos servidores do Google
     try {
@@ -829,6 +1101,7 @@ export async function analyzeFormWithGemini(
     implementation: !!context.implementation,
     platform: context.platform?.trim() || "",
     authorName: context.authorName?.trim() || "Técnico do suporte",
+    tagColor: context.tagColor?.trim() || "#3b82f6",
     createdAt: context.createdAt
       ? new Date(context.createdAt).toLocaleString("pt-BR")
       : "Data não informada",
@@ -890,7 +1163,7 @@ Analise detalhadamente as informações registradas pelo atendimento técnico fo
 Gere um relatório executivo técnico e formal, estritamente no formato JSON definido, seguindo o padrão corporativo de relatório da empresa:
 
 ### Informações do Atendimento:
-${safeContext.title ? `- Título: ${safeContext.title}` : ""}
+${safeContext.title ? `- Título do Chamado: ${safeContext.title}` : ""}
 - Solicitante: ${safeContext.requester}
 - Escritório / Cliente: ${safeContext.clientOrOffice}
 - Descrição Detalhada do Problema / Demanda: ${safeContext.reportedProblem}
@@ -904,12 +1177,56 @@ ${totalMediaCount > 0 ? `- Mídias anexadas: Foram anexadas ${totalMediaCount} i
 ${interleavedResult.hasInterleaved ? "- Observação de Formato: A narrativa descritiva do atendimento foi estruturada de forma intercalada diretamente com as mídias e evidências no início desta solicitação." : ""}
 
 ### Diretrizes de Preenchimento dos Campos:
-1. **Título e Subtítulo**: Formais, claros e corporativos (ex: "Relatório de Atendimento Técnico e Diagnóstico", "Solicitação referente a ${safeContext.clientOrOffice}").
-2. **Resumo Executivo (executiveSummary)**: Parágrafo formal e bem redigido sintetizando a solicitação, a relevância para o cliente e a intervenção técnica realizada ou necessária.
-3. **Propostas e Ações Recomendadas (proposals)**: Liste de 1 a 3 itens de melhoria técnica, correção ou procedimento preventivo aplicável, com título numerado, descrição clara, categoria (ex: "BUG / CORREÇÃO", "OPERAÇÃO", "UX", "INTEGRAÇÃO") e prioridade ("Alta", "Média", "Baixa").
-4. **Detalhamento Técnico (detailingParagraphs)**: 2 ou mais parágrafos detalhados aprofundando o diagnóstico, impacto na rotina do cliente/escritório e justificativa técnica da solução.
-5. **Encaminhamentos (referrals)**: Próximos passos formais, encaminhamento para equipe técnica ou acompanhamento pós-atendimento.
-6. **Transcrição / Registro de Contato (transcript)**: Como este atendimento foi documentado via formulário estruturado, crie um registro formal com os pontos de contato entre o solicitante e o suporte (ex: speaker: "${safeContext.requester}", role: "Solicitante", timestamp: "00:00", text: "${safeContext.reportedProblem}").
+1. **TÍTULO (title)**:
+   - O título do documento deve ser o texto exato do campo título fornecido no contexto: "${safeContext.title || "Relatório de Atendimento Técnico e Diagnóstico"}". NUNCA adicionar numeração "Nota XX" ou alterar o texto.
+   - Subtítulo (subtitle): Conciso e objetivo (ex: "Atendimento referente a ${safeContext.clientOrOffice}").
+
+2. **NATUREZA DO DOCUMENTO (documentNature)**:
+   - Se for Ação Técnica (technicalAction: true): "Relato de QA e Investigação Técnica"
+   - Se for Implementação (implementation: true): "Especificação de Melhoria e Novas Features"
+   - Senão: "Relatório Técnico de Atendimento"
+   - O campo isTechnicalReport deve ser true se for Ação Técnica ou Implementação, e false caso contrário.
+
+3. **AMBIENTE DA ROTA (routeEnvironment)**:
+   - Identifique o módulo, tela ou rota da URL onde a situação ocorre (ex: "Módulo de Documentos (Listagem)" ou "/casos/[codigo]/documentos"). Caso não especificado na descrição, deduza a partir da plataforma (${safeContext.platform || "Sistema Web"}).
+
+4. **METADADOS (date, department, participants, platformAnalyzed)**:
+   - Date no formato DD/MM/AAAA.
+   - Department: setor e escritório/cliente, ex: "${safeContext.clientOrOffice}".
+   - Participants: "${safeContext.requester} (Solicitante), ${safeContext.authorName} (Suporte)".
+   - PlatformAnalyzed: "${safeContext.platform || "Sistema Corporativo"}".
+
+5. **RESUMO EXECUTIVO (executiveSummary)**:
+   - Parágrafo formal e bem redigido sintetizando a solicitação, a relevância para o cliente e a intervenção técnica realizada ou necessária.
+
+6. **ANÁLISE DE COMPORTAMENTO (currentBehavior e expectedBehavior)**:
+   - currentBehavior: Descreva o erro, falha, gargalo ou anomalia ocorrida na prática.
+   - expectedBehavior: Descreva o comportamento esperado ideal do sistema.
+   - DIRETRIZ DE AUTOCENSURA: Se o comportamento esperado não estiver explícito, deduza-o fundamentadamente; porém, se a dedução for vaga ou carente de contexto suficiente, omita expectedBehavior para evitar suposições sem base.
+
+7. **EVIDÊNCIAS E LEGENDAS (evidenceCaptions)**:
+   - Para cada imagem/print anexado, forneça em evidenceCaptions o filename e uma legenda descritiva curta e clara (ex: "1. Estado com 2 documentos selecionados", "2. Arquivo alocado na aba Sem pasta").
+
+8. **SEÇÃO TÉCNICA INVESTIGATIVA (Somente para Ação Técnica ou Implementação - isTechnicalReport: true)**:
+   - investigativeNotice: "AVISO DE CONTEXTO INVESTIGATIVO: As hipóteses e diretrizes a seguir têm caráter de investigação técnica preliminar e servem para orientar desenvolvedores e agentes de IA na identificação e correção de causas raiz."
+   - diagnosticHypothesis: Tópico e parágrafos analisando provável causa raiz lógica (DOM, manipulação de estado, histórico, APIs).
+   - logicalDiagram: Quadro comparativo lógico resumindo o gargalo (ex: ESTADO GLOBAL ≠ EVENTO ON_DRAG).
+   - codeSuggestion: Bloco de código com lógica sugerida de solução (JavaScript ou TypeScript) contendo language, title, code e explanation. Se não houver código aplicável ou base sólida, omita este campo.
+   - investigationGuidelines: Itens técnicos objetivos para verificação pelos desenvolvedores.
+   - Se NÃO for Ação Técnica nem Implementação, omita estes campos técnicos.
+
+9. **PROPOSTAS E AÇÕES RECOMENDADAS (proposals)**:
+   - Liste de 1 a 3 itens de melhoria técnica, correção ou procedimento preventivo aplicável (item, description, category, priority).
+
+10. **DETALHAMENTO TÉCNICO (detailingTopic e detailingParagraphs)**:
+   - detailingTopic: Título do detalhamento.
+   - detailingParagraphs: 2 ou mais parágrafos detalhados aprofundando o diagnóstico, impacto na rotina e justificativa técnica.
+
+11. **ENCAMINHAMENTOS (referrals)**:
+   - Próximos passos formais, encaminhamento para equipe técnica ou acompanhamento pós-atendimento.
+
+12. **TRANSCRIÇÃO / REGISTRO DE CONTATO (transcript)**:
+   - Como este atendimento foi documentado via formulário estruturado, crie um registro formal com os pontos de contato entre o solicitante e o suporte (ex: speaker: "${safeContext.requester}", role: "Solicitante", timestamp: "00:00", text: "${safeContext.reportedProblem}").
 `;
 
   // 4. Chamada resiliente para os modelos candidatos
@@ -967,50 +1284,6 @@ ${interleavedResult.hasInterleaved ? "- Observação de Formato: A narrativa des
 
   console.log("[Gemini] Resposta estruturada de formulário recebida com sucesso!");
   const parsedData = JSON.parse(responseText) as Partial<StructuredReportData>;
-  const todayFormatted = new Date().toLocaleDateString("pt-BR");
 
-  return {
-    title: parsedData.title || safeContext.title || "Relatório de Atendimento Técnico e Diagnóstico",
-    subtitle: parsedData.subtitle || `Atendimento para ${safeContext.clientOrOffice}`,
-    date: parsedData.date || todayFormatted,
-    department: parsedData.department || safeContext.clientOrOffice,
-    participants: parsedData.participants || `${safeContext.requester} (Solicitante), ${safeContext.authorName} (Suporte)`,
-    platformAnalyzed: parsedData.platformAnalyzed || safeContext.platform || "Sistema Corporativo",
-    executiveSummary: parsedData.executiveSummary || safeContext.reportedProblem,
-    proposals: Array.isArray(parsedData.proposals) && parsedData.proposals.length > 0
-      ? parsedData.proposals
-      : [
-          {
-            item: "1. Tratamento da Demanda",
-            description: safeContext.actionTaken || safeContext.reportedProblem,
-            category: safeContext.technicalAction ? "AÇÃO TÉCNICA" : "OPERAÇÃO",
-            priority: "Alta",
-          },
-        ],
-    detailingTopic: parsedData.detailingTopic || "Detalhamento e Justificativa da Solicitação",
-    detailingParagraphs: Array.isArray(parsedData.detailingParagraphs) && parsedData.detailingParagraphs.length > 0
-      ? parsedData.detailingParagraphs
-      : [safeContext.reportedProblem, safeContext.actionTaken].filter(Boolean),
-    referrals: parsedData.referrals || `Demanda registrada no atendimento pelo suporte (${safeContext.authorName}) e encaminhada para acompanhamento.`,
-    transcript: Array.isArray(parsedData.transcript) && parsedData.transcript.length > 0
-      ? parsedData.transcript
-      : [
-          {
-            speaker: safeContext.requester,
-            role: "Solicitante",
-            timestamp: "00:00",
-            text: safeContext.reportedProblem,
-          },
-          ...(safeContext.actionTaken
-            ? [
-                {
-                  speaker: safeContext.authorName,
-                  role: "Suporte",
-                  timestamp: "00:01",
-                  text: safeContext.actionTaken,
-                },
-              ]
-            : []),
-        ],
-  };
+  return buildFinalStructuredReport(parsedData, safeContext, false);
 }
