@@ -120,6 +120,7 @@ export async function processAiReportJob(workLogId: string) {
       workLogId,
       data: structuredData,
       context,
+      mediaUrls,
     });
 
     // 3. Atualiza registro como concluído
