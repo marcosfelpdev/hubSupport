@@ -33,19 +33,19 @@
 - Create: `src/components/ClientCombobox.tsx`
 - Test: `scripts/test-client-combobox-logic.ts`
 
-- [ ] **Step 1: Write unit test script for combobox filter & state logic**
+- [x] **Step 1: Write unit test script for combobox filter & state logic**
   Create `scripts/test-client-combobox-logic.ts` checking case-insensitive filtering, substring matches, accent tolerance/normalization, and selection mapping.
-- [ ] **Step 2: Run test script to verify failure / initial requirements**
+- [x] **Step 2: Run test script to verify failure / initial requirements**
   Execute `npx tsx scripts/test-client-combobox-logic.ts` and confirm expected behaviors.
-- [ ] **Step 3: Implement `ClientCombobox.tsx`**
+- [x] **Step 3: Implement `ClientCombobox.tsx`**
   Build `src/components/ClientCombobox.tsx` with:
   - Props: `clients: ClientItem[]`, `selectedClient: ClientItem | null`, `onSelectClient: (client: ClientItem | null) => void`, `disabled?: boolean`, `error?: string`.
   - State: `searchQuery`, `isOpen`, `highlightedIndex`.
   - UI: Input with `Building2` leading icon, clear `X` button when selected, `ChevronDown` toggle, and floating dropdown with filtered list, empty state, and check icon on active selection.
   - Event handlers: `onKeyDown` (`ArrowDown`, `ArrowUp`, `Enter`, `Escape`), `useRef` + `useEffect` outside-click listener.
-- [ ] **Step 4: Run test script and verify passing**
+- [x] **Step 4: Run test script and verify passing**
   Execute `npx tsx scripts/test-client-combobox-logic.ts` and ensure all tests pass.
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
   `git add src/components/ClientCombobox.tsx scripts/test-client-combobox-logic.ts && git commit -m "feat(ui): add reusable ClientCombobox component"`
 
 ---
@@ -56,18 +56,18 @@
 - Modify: `src/components/WorkLogForm.tsx:50-130, 260-350, 520-545`
 - Test: `scripts/test-worklog-client-combobox.ts`
 
-- [ ] **Step 1: Add client state and fetching in `WorkLogForm.tsx`**
+- [x] **Step 1: Add client state and fetching in `WorkLogForm.tsx`**
   Import `api` and `ClientItem` type. Add `const [clients, setClients] = useState<ClientItem[]>([])` and `const [selectedClient, setSelectedClient] = useState<ClientItem | null>(null)`. Fetch clients via `api.clients.getAll()` in `useEffect`.
-- [ ] **Step 2: Replace text input with `ClientCombobox`**
+- [x] **Step 2: Replace text input with `ClientCombobox`**
   In line ~525 of `WorkLogForm.tsx`, replace the `<input id="clientOrOffice" ...>` with `<ClientCombobox clients={clients} selectedClient={selectedClient} onSelectClient={setSelectedClient} disabled={isPending} />`.
-- [ ] **Step 3: Update `handleSubmit` validation and FormData injection**
+- [x] **Step 3: Update `handleSubmit` validation and FormData injection**
   In `handleSubmit`:
   - Validate that `selectedClient` is not null (if null, set error message "Por favor, selecione um cliente cadastrado.").
   - In `formData`, set `formData.set("clientId", selectedClient.id)` and `formData.set("clientOrOffice", selectedClient.name)`.
   - On success, reset `setSelectedClient(null)`.
-- [ ] **Step 4: Run build check**
+- [x] **Step 4: Run build check**
   Execute `npx vite build` to ensure complete TypeScript typing correctness.
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
   `git add src/components/WorkLogForm.tsx && git commit -m "feat(worklogs): integrate ClientCombobox into WorkLogForm"`
 
 ---
@@ -78,15 +78,15 @@
 - Create: `scripts/test-worklog-client-combobox.ts`
 - Modify: `docs/superpowers/plans/2026-11-16-worklog-client-combobox.md`
 
-- [ ] **Step 1: Write integration test script**
+- [x] **Step 1: Write integration test script**
   Create `scripts/test-worklog-client-combobox.ts` to test:
   1. Fetching clients from API.
   2. Creating a WorkLog with `clientId` and `clientOrOffice`.
   3. Querying `/api/clients/:id` to verify the new worklog is in the client's history.
   4. Testing validation rejection when required client is missing.
-- [ ] **Step 2: Execute integration test suite**
+- [x] **Step 2: Execute integration test suite**
   Run `npx tsx scripts/test-worklog-client-combobox.ts` and inspect assertion results.
-- [ ] **Step 3: Execute `npx vite build`**
+- [x] **Step 3: Execute `npx vite build`**
   Verify production compilation succeeds without errors.
-- [ ] **Step 4: Commit changes and mark plan complete**
+- [x] **Step 4: Commit changes and mark plan complete**
   `git add scripts/test-worklog-client-combobox.ts && git commit -m "test: add integration test for worklog client combobox"`
