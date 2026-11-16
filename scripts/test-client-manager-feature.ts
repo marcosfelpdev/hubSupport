@@ -350,9 +350,9 @@ async function runTestSuite() {
       where: { id: tempClientData.client.id },
       include: { manager: true },
     });
-    assert(clientAfterUserDeleted !== null, "Suite 5", "5.1 Cliente continua existindo após exclusão do gestor");
-    assert(clientAfterUserDeleted?.managerId === null, "Suite 5", "5.2 managerId virou null automaticamente (SetNull)");
-    assert(clientAfterUserDeleted?.manager === null, "Suite 5", "5.3 manager é null");
+    assert(clientAfterUserDeleted !== null, "Suite 5", "5.1 Cliente continua existindo após exclusão do gestor", "Cliente encontrado no banco");
+    assert(clientAfterUserDeleted?.managerId === null, "Suite 5", "5.2 managerId virou null automaticamente (SetNull)", `managerId é ${clientAfterUserDeleted?.managerId}`);
+    assert(clientAfterUserDeleted?.manager === null, "Suite 5", "5.3 manager é null", "manager é null");
 
   } finally {
     console.log("\n--> Limpando dados de teste...");

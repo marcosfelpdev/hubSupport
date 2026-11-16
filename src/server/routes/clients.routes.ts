@@ -74,14 +74,20 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
     const cleanName = name.trim();
 
     let cleanManagerId: string | null = null;
-    if (managerId !== undefined && managerId !== null && typeof managerId === "string" && managerId.trim() !== "") {
-      cleanManagerId = managerId.trim();
-      const managerUser = await prisma.user.findUnique({
-        where: { id: cleanManagerId },
-      });
-      if (!managerUser) {
-        res.status(400).json({ error: "Gestor informado não encontrado." });
+    if (managerId !== undefined && managerId !== null) {
+      if (typeof managerId !== "string") {
+        res.status(400).json({ error: "O gestor informado é inválido." });
         return;
+      }
+      if (managerId.trim() !== "") {
+        cleanManagerId = managerId.trim();
+        const managerUser = await prisma.user.findUnique({
+          where: { id: cleanManagerId },
+        });
+        if (!managerUser) {
+          res.status(400).json({ error: "Gestor informado não encontrado." });
+          return;
+        }
       }
     }
 
