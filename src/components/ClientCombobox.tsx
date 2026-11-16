@@ -80,9 +80,14 @@ export function ClientCombobox({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
+  const isUserTypingRef = useRef(false);
 
   // Sincroniza o input com alterações externas do cliente selecionado (ex: reset do form)
   useEffect(() => {
+    if (isUserTypingRef.current) {
+      isUserTypingRef.current = false;
+      return;
+    }
     if (selectedClient) {
       setSearchQuery(selectedClient.name);
     } else {
@@ -120,6 +125,7 @@ export function ClientCombobox({
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
+        isUserTypingRef.current = false;
         setIsOpen(false);
         setHighlightedIndex(-1);
         // Se fechou sem selecionar, reverte o texto para o cliente atualmente selecionado (ou limpa)
@@ -139,6 +145,7 @@ export function ClientCombobox({
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    isUserTypingRef.current = true;
     setSearchQuery(value);
     setIsOpen(true);
     setHighlightedIndex(0);
@@ -150,6 +157,7 @@ export function ClientCombobox({
   };
 
   const handleSelect = (client: ClientItem) => {
+    isUserTypingRef.current = false;
     onSelectClient(client);
     setSearchQuery(client.name);
     setIsOpen(false);
@@ -160,6 +168,7 @@ export function ClientCombobox({
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (disabled) return;
+    isUserTypingRef.current = false;
     onSelectClient(null);
     setSearchQuery("");
     setIsOpen(false);
@@ -225,6 +234,7 @@ export function ClientCombobox({
       case "Escape": {
         if (isOpen) {
           e.preventDefault();
+          isUserTypingRef.current = false;
           setIsOpen(false);
           setHighlightedIndex(-1);
           setSearchQuery(selectedClient?.name || "");
@@ -233,6 +243,7 @@ export function ClientCombobox({
       }
       case "Tab": {
         if (isOpen) {
+          isUserTypingRef.current = false;
           setIsOpen(false);
           setHighlightedIndex(-1);
           setSearchQuery(selectedClient?.name || "");
@@ -262,6 +273,11 @@ export function ClientCombobox({
           aria-autocomplete="list"
           aria-controls={`${id}-listbox`}
           aria-haspopup="listbox"
+          aria-activedescendant={
+            isOpen && highlightedIndex >= 0 && filteredClients[highlightedIndex]
+              ? `${id}-option-${filteredClients[highlightedIndex].id}`
+              : undefined
+          }
           required={required && !selectedClient}
           disabled={disabled}
           placeholder={placeholder}
