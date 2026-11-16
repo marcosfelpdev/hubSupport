@@ -36,21 +36,21 @@
 - Modify: `src/services/api.ts:170-185, 510-530`
 - Test: `scripts/test-client-manager-feature.ts`
 
-- [ ] **Step 1: Update Prisma schema and sync database**
+- [x] **Step 1: Update Prisma schema and sync database**
   Add `managerId String?` and `manager User? @relation("ClientManager", fields: [managerId], references: [id], onDelete: SetNull)` to `model Client`. Add `managedClients Client[] @relation("ClientManager")` to `model User`. Run `npx prisma db push`.
-- [ ] **Step 2: Update Express client routes in `src/server/routes/clients.routes.ts`**
+- [x] **Step 2: Update Express client routes in `src/server/routes/clients.routes.ts`**
   - In `GET /api/clients`: include `manager: { select: { id: true, name: true, email: true, role: true } }`.
   - In `POST /api/clients`: accept optional `managerId` in `req.body`, validate existence if provided, and save.
   - In `GET /api/clients/:id`: include `manager: { select: { id: true, name: true, email: true, role: true } }`.
   - Add `PUT /api/clients/:id`: allow updating `name` (with uniqueness check excluding current client) and `managerId` (validate or set null).
-- [ ] **Step 3: Update `src/services/api.ts`**
+- [x] **Step 3: Update `src/services/api.ts`**
   - Update `ClientItem` interface to include `managerId?: string | null` and `manager?: { id: string; name: string; email: string; role?: string } | null`.
   - Add `api.clients.update(id: string, data: { name?: string; managerId?: string | null })`.
-- [ ] **Step 4: Create integration test script**
+- [x] **Step 4: Create integration test script**
   Create `scripts/test-client-manager-feature.ts` testing create client with manager, update manager, remove manager, fetch list, and fetch profile.
-- [ ] **Step 5: Run integration test and verify passing**
+- [x] **Step 5: Run integration test and verify passing**
   Execute `npx tsx scripts/test-client-manager-feature.ts` and confirm all tests pass.
-- [ ] **Step 6: Commit changes**
+- [x] **Step 6: Commit changes**
   `git add prisma/schema.prisma src/server/routes/clients.routes.ts src/services/api.ts scripts/test-client-manager-feature.ts && git commit -m "feat(backend): add manager relation to Client and update API routes"`
 
 ---
@@ -60,17 +60,17 @@
 **Files:**
 - Modify: `src/components/ClientsManager.tsx`
 
-- [ ] **Step 1: Fetch employees in `ClientsManager.tsx`**
+- [x] **Step 1: Fetch employees in `ClientsManager.tsx`**
   Fetch active employees via `api.employees.getAll()` on mount to populate the manager selector.
-- [ ] **Step 2: Add Gestor Pessoal selector to "Novo Cliente" modal**
+- [x] **Step 2: Add Gestor Pessoal selector to "Novo Cliente" modal**
   Add `<select>` in the create modal allowing the user to pick an employee as manager or choose "Nenhum gestor atribuído".
-- [ ] **Step 3: Implement "Editar Cliente" modal**
+- [x] **Step 3: Implement "Editar Cliente" modal**
   Add state `editingClient: ClientItem | null`, `editName`, `editManagerId`. Render an edit modal allowing the user to update the client's name and personal manager via `api.clients.update()`.
-- [ ] **Step 4: Add "Gestor Pessoal" column in client table and Edit action button**
+- [x] **Step 4: Add "Gestor Pessoal" column in client table and Edit action button**
   Add table header and cell for "Gestor Pessoal" showing an avatar with initials, manager name, and role tag. Add `Pencil` edit button in the actions column opening the edit modal.
-- [ ] **Step 5: Verify build with `npx vite build`**
+- [x] **Step 5: Verify build with `npx vite build`**
   Ensure clean compilation without TypeScript errors.
-- [ ] **Step 6: Commit changes**
+- [x] **Step 6: Commit changes**
   `git add src/components/ClientsManager.tsx && git commit -m "feat(clients): add personal manager selector and edit modal to ClientsManager"`
 
 ---
@@ -80,13 +80,13 @@
 **Files:**
 - Modify: `src/pages/ClientProfilePage.tsx`
 
-- [ ] **Step 1: Render Personal Manager card in top header**
+- [x] **Step 1: Render Personal Manager card in top header**
   In the header section of `ClientProfilePage.tsx` (below client title and info), render an elegant card showing the assigned Personal Manager (avatar, name, role) or "Sem gestor atribuído".
-- [ ] **Step 2: Add "Editar Cliente" button and modal to ClientProfilePage**
+- [x] **Step 2: Add "Editar Cliente" button and modal to ClientProfilePage**
   Add an "Editar Cliente" button (`Pencil`) in the top action area of the header. Clicking opens a client edit modal (name + manager selector), saving via `api.clients.update()` and refreshing profile data in place.
-- [ ] **Step 3: Verify build with `npx vite build`**
+- [x] **Step 3: Verify build with `npx vite build`**
   Confirm zero compilation or typing errors.
-- [ ] **Step 4: Commit changes**
+- [x] **Step 4: Commit changes**
   `git add src/pages/ClientProfilePage.tsx && git commit -m "feat(clients): display personal manager and edit action on ClientProfilePage"`
 
 ---
@@ -97,9 +97,9 @@
 - Modify: `scripts/test-client-manager-feature.ts`
 - Modify: `docs/superpowers/plans/2026-11-16-client-personal-manager.md`
 
-- [ ] **Step 1: Run comprehensive backend test suite**
+- [x] **Step 1: Run comprehensive backend test suite**
   Execute `npx tsx scripts/test-client-manager-feature.ts` and verify 100% pass rate.
-- [ ] **Step 2: Run frontend production build**
+- [x] **Step 2: Run frontend production build**
   Execute `npx vite build` and verify clean build.
-- [ ] **Step 3: Mark plan complete and commit**
+- [x] **Step 3: Mark plan complete and commit**
   Update all checkboxes in `docs/superpowers/plans/2026-11-16-client-personal-manager.md` to `[x]` and commit.
