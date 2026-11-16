@@ -1,5 +1,6 @@
 import { useState, useTransition, useEffect, useRef, useMemo, useCallback } from "react";
-import { api, TagItem } from "@/services/api";
+import { api, TagItem, ClientItem } from "@/services/api";
+import { ClientCombobox } from "@/components/ClientCombobox";
 import { hexToRgba } from "@/components/TagBadge";
 import {
   Video,
@@ -82,19 +83,35 @@ export default function WorkLogForm({
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [loadingTags, setLoadingTags] = useState(true);
 
+  // Clientes Cadastrados
+  const [clients, setClients] = useState<ClientItem[]>([]);
+  const [selectedClient, setSelectedClient] = useState<ClientItem | null>(null);
+
   useEffect(() => {
     let mounted = true;
-    async function loadTags() {
+    async function loadInitialData() {
       try {
-        const data = await api.tags.getAll();
-        if (mounted) setTags(data);
+        const [tagsData, clientsData] = await Promise.all([
+          api.tags.getAll().catch((err) => {
+            console.error("[WorkLogForm] Erro ao carregar tags:", err);
+            return [] as TagItem[];
+          }),
+          api.clients.getAll().catch((err) => {
+            console.error("[WorkLogForm] Erro ao carregar clientes:", err);
+            return [] as ClientItem[];
+          }),
+        ]);
+        if (mounted) {
+          setTags(tagsData);
+          setClients(clientsData);
+        }
       } catch (err) {
-        console.error("[WorkLogForm] Erro ao carregar tags:", err);
+        console.error("[WorkLogForm] Erro ao carregar dados iniciais:", err);
       } finally {
         if (mounted) setLoadingTags(false);
       }
     }
-    loadTags();
+    loadInitialData();
     return () => {
       mounted = false;
     };
@@ -262,6 +279,14 @@ export default function WorkLogForm({
     e.preventDefault();
     setMessage(null);
 
+    if (!selectedClient) {
+      setMessage({
+        type: "error",
+        text: "Por favor, selecione um escritório ou cliente cadastrado.",
+      });
+      return;
+    }
+
     const plainText = (editorRef.current?.getPlainText() || descriptionText).trim();
     const interleaved = editorRef.current?.getInterleaved() || interleavedBlocks;
 
@@ -298,6 +323,8 @@ export default function WorkLogForm({
     formData.set("implementation", implementation ? "on" : "off");
     formData.set("status", finalStatus);
     formData.set("tagId", selectedTagId);
+    formData.set("clientId", selectedClient.id);
+    formData.set("clientOrOffice", selectedClient.name);
     formData.set("actionTaken", "");
     formData.set("reportedProblem", plainText);
     formData.set("descriptionInterleaved", JSON.stringify(interleaved));
@@ -319,6 +346,7 @@ export default function WorkLogForm({
         setImplementation(false);
         setSelectedStatus("Realizado");
         setSelectedTagId(null);
+        setSelectedClient(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
         attachedMedia.forEach((item) => {
           if (item.previewUrl && typeof URL !== "undefined") {
@@ -526,14 +554,18 @@ export default function WorkLogForm({
             <label htmlFor="clientOrOffice" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Escritório / Cliente <span className="text-rose-500">*</span>
             </label>
-            <input
+            <ClientCombobox
               id="clientOrOffice"
-              name="clientOrOffice"
-              type="text"
-              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:cursor-not-allowed"
-              placeholder="Ex: Matriz SP / Filial RJ / Cliente X"
-              required
+              clients={clients}
+              selectedClient={selectedClient}
+              onSelectClient={(c) => {
+                setSelectedClient(c);
+                if (c && message?.text?.includes("cliente")) {
+                  setMessage(null);
+                }
+              }}
               disabled={isPending}
+              required
             />
           </div>
         </div>
