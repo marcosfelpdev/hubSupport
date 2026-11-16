@@ -1,7 +1,7 @@
 import { useState, useTransition, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
-import { api, ClientItem } from "@/services/api";
+import { api, ClientItem, EmployeeItem } from "@/services/api";
 import {
   Building2,
   Plus,
@@ -15,6 +15,9 @@ import {
   MessageSquare,
   ChevronRight,
   TrendingUp,
+  Pencil,
+  UserCheck,
+  User,
 } from "lucide-react";
 
 interface CurrentUser {
@@ -71,7 +74,16 @@ export default function ClientsManager({
   // Estados de Modais
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [clientName, setClientName] = useState("");
+  const [clientManagerId, setClientManagerId] = useState<string>("");
   const [deletingClient, setDeletingClient] = useState<ClientItem | null>(null);
+
+  // Modal de Edição
+  const [editingClient, setEditingClient] = useState<ClientItem | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editManagerId, setEditManagerId] = useState("");
+
+  // Colaboradores para atribuição de gestor
+  const [employees, setEmployees] = useState<EmployeeItem[]>([]);
 
   // Feedbacks
   const [actionError, setActionError] = useState<string | null>(null);
@@ -82,9 +94,35 @@ export default function ClientsManager({
     setClients(initialClients);
   }, [initialClients]);
 
+  // Carrega lista de colaboradores ativos para o seletor de gestor
+  useEffect(() => {
+    let isMounted = true;
+    api.employees
+      .getAll()
+      .then((data) => {
+        if (isMounted && Array.isArray(data)) {
+          const active = data.filter((emp) => emp.active !== false);
+          setEmployees(active);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao carregar colaboradores:", err);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   function showSuccess(msg: string) {
     setActionSuccess(msg);
     setTimeout(() => setActionSuccess(null), 3500);
+  }
+
+  function openEditModal(client: ClientItem) {
+    setEditingClient(client);
+    setEditName(client.name);
+    setEditManagerId(client.managerId || client.manager?.id || "");
+    setActionError(null);
   }
 
   // Filtragem em tempo real
@@ -103,7 +141,7 @@ export default function ClientsManager({
     return clients.reduce((acc, c) => acc + (c._count?.events || 0), 0);
   }, [clients]);
 
-  // Handler: Criar Cliente (Simples: apenas nome e salvar)
+  // Handler: Criar Cliente
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setActionError(null);
@@ -116,13 +154,48 @@ export default function ClientsManager({
 
     startTransition(async () => {
       try {
-        await api.clients.create({ name: cleanName });
+        await api.clients.create({
+          name: cleanName,
+          managerId: clientManagerId || null,
+        });
         setClientName("");
+        setClientManagerId("");
         setIsCreateOpen(false);
         showSuccess("Cliente cadastrado com sucesso!");
         onClientsChanged?.();
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Erro ao cadastrar cliente.");
+      }
+    });
+  }
+
+  // Handler: Editar Cliente
+  async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editingClient) return;
+    setActionError(null);
+
+    const cleanName = editName.trim();
+    if (!cleanName) {
+      setActionError("Por favor, digite o nome do cliente.");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const response = await api.clients.update(editingClient.id, {
+          name: cleanName,
+          managerId: editManagerId || null,
+        });
+        const updatedClient = response.client;
+        setClients((prev) =>
+          prev.map((c) => (c.id === editingClient.id ? { ...c, ...updatedClient } : c))
+        );
+        setEditingClient(null);
+        showSuccess("Cliente atualizado com sucesso!");
+        onClientsChanged?.();
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Erro ao atualizar cliente.");
       }
     });
   }
@@ -167,6 +240,7 @@ export default function ClientsManager({
           onClick={() => {
             setActionError(null);
             setClientName("");
+            setClientManagerId("");
             setIsCreateOpen(true);
           }}
           className="bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
@@ -240,6 +314,7 @@ export default function ClientsManager({
                 onClick={() => {
                   setActionError(null);
                   setClientName("");
+                  setClientManagerId("");
                   setIsCreateOpen(true);
                 }}
                 className="inline-flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-xs hover:bg-slate-800 dark:hover:bg-slate-100 transition-all cursor-pointer"
@@ -255,6 +330,7 @@ export default function ClientsManager({
               <thead>
                 <tr className="bg-slate-50/80 dark:bg-[#0b0f19]/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-[11px] font-semibold uppercase tracking-wider">
                   <th className="px-6 py-3.5">Cliente</th>
+                  <th className="px-6 py-3.5">Gestor Pessoal</th>
                   <th className="px-6 py-3.5 text-center">Atendimentos</th>
                   <th className="px-6 py-3.5 text-center">Reuniões</th>
                   <th className="px-6 py-3.5">Data de Cadastro</th>
@@ -290,7 +366,30 @@ export default function ClientsManager({
                         </div>
                       </td>
 
-                      {/* 2. Total de Atendimentos */}
+                      {/* 2. Gestor Pessoal */}
+                      <td className="px-6 py-4">
+                        {client.manager ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold text-[10px] flex items-center justify-center border border-indigo-200 dark:border-indigo-800 shrink-0">
+                              {getInitials(client.manager.name)}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-xs font-semibold text-slate-900 dark:text-white block truncate">
+                                {client.manager.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">
+                                {client.manager.role}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                            Não atribuído
+                          </span>
+                        )}
+                      </td>
+
+                      {/* 3. Total de Atendimentos */}
                       <td className="px-6 py-4 text-center">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800/60 shadow-2xs">
                           <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
@@ -298,7 +397,7 @@ export default function ClientsManager({
                         </span>
                       </td>
 
-                      {/* 3. Total de Reuniões */}
+                      {/* 4. Total de Reuniões */}
                       <td className="px-6 py-4 text-center">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200/70 dark:border-violet-800/60 shadow-2xs">
                           <Calendar className="w-3.5 h-3.5 text-violet-500" />
@@ -306,17 +405,29 @@ export default function ClientsManager({
                         </span>
                       </td>
 
-                      {/* 4. Data de Cadastro */}
+                      {/* 5. Data de Cadastro */}
                       <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">
                         {formatDate(client.createdAt)}
                       </td>
 
-                      {/* 5. Ações */}
+                      {/* 6. Ações */}
                       <td className="px-6 py-4 text-right">
                         <div
                           className="flex items-center justify-end gap-1.5"
                           onClick={(e) => e.stopPropagation()}
                         >
+                          <button
+                            type="button"
+                            title="Editar cliente e gestor"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(client);
+                            }}
+                            className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 p-2 rounded-xl transition-all cursor-pointer"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+
                           <button
                             type="button"
                             title="Ver perfil e histórico"
@@ -414,6 +525,29 @@ export default function ClientsManager({
                 />
               </div>
 
+              <div>
+                <label
+                  htmlFor="client-manager-select"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                >
+                  Gestor Pessoal <span className="text-xs text-slate-400 normal-case font-normal">(Opcional)</span>
+                </label>
+                <select
+                  id="client-manager-select"
+                  value={clientManagerId}
+                  onChange={(e) => setClientManagerId(e.target.value)}
+                  disabled={isPending}
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
+                >
+                  <option value="">Nenhum gestor atribuído</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} {emp.role ? `(${emp.role})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Botões de Ação */}
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
@@ -436,6 +570,124 @@ export default function ClientsManager({
                     </>
                   ) : (
                     <span>Salvar Cliente</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ================= MODAL: EDITAR CLIENTE ================= */}
+      {editingClient && typeof document !== "undefined" && createPortal(
+        <div
+          className="fixed inset-0 bg-slate-900/40 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in"
+          onClick={() => !isPending && setEditingClient(null)}
+        >
+          <div
+            className="bg-white dark:bg-[#111726] rounded-2xl shadow-2xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 max-w-md w-full animate-scale-in flex flex-col gap-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                    Editar Cliente
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Atualize as informações da empresa e o gestor pessoal.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => !isPending && setEditingClient(null)}
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {actionError && (
+              <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs rounded-xl p-3 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                <span>{actionError}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleEdit} className="flex flex-col gap-4">
+              <div>
+                <label
+                  htmlFor="edit-client-name-input"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                >
+                  Nome do Cliente <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  id="edit-client-name-input"
+                  type="text"
+                  autoFocus
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+                  placeholder="Nome do cliente"
+                  required
+                  disabled={isPending}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="edit-client-manager-select"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                >
+                  Gestor Pessoal <span className="text-xs text-slate-400 normal-case font-normal">(Opcional)</span>
+                </label>
+                <select
+                  id="edit-client-manager-select"
+                  value={editManagerId}
+                  onChange={(e) => setEditManagerId(e.target.value)}
+                  disabled={isPending}
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
+                >
+                  <option value="">Nenhum gestor atribuído</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} {emp.role ? `(${emp.role})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => setEditingClient(null)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 font-semibold text-xs sm:text-sm transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending || !editName.trim()}
+                  className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    <span>Salvar Alterações</span>
                   )}
                 </button>
               </div>
