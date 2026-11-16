@@ -10,6 +10,9 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
     const clients = await prisma.client.findMany({
       orderBy: { name: "asc" },
       include: {
+        manager: {
+          select: { id: true, name: true, email: true, role: true },
+        },
         _count: {
           select: {
             workLogs: true,
@@ -58,10 +61,10 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
   }
 });
 
-// POST /api/clients - Criação simples de cliente (apenas nome)
+// POST /api/clients - Criação de cliente (nome e gestor opcional)
 router.post("/", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name } = req.body;
+    const { name, managerId } = req.body;
 
     if (!name || typeof name !== "string" || !name.trim()) {
       res.status(400).json({ error: "Por favor, informe o nome do cliente." });
@@ -69,6 +72,18 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
     }
 
     const cleanName = name.trim();
+
+    let cleanManagerId: string | null = null;
+    if (managerId !== undefined && managerId !== null && typeof managerId === "string" && managerId.trim() !== "") {
+      cleanManagerId = managerId.trim();
+      const managerUser = await prisma.user.findUnique({
+        where: { id: cleanManagerId },
+      });
+      if (!managerUser) {
+        res.status(400).json({ error: "Gestor informado não encontrado." });
+        return;
+      }
+    }
 
     // Validação de unicidade case-insensitive
     const existing = await prisma.client.findFirst({
@@ -85,6 +100,12 @@ router.post("/", authenticateToken, async (req: Request, res: Response): Promise
     const newClient = await prisma.client.create({
       data: {
         name: cleanName,
+        ...(cleanManagerId ? { managerId: cleanManagerId } : {}),
+      },
+      include: {
+        manager: {
+          select: { id: true, name: true, email: true, role: true },
+        },
       },
     });
 
@@ -124,6 +145,11 @@ router.get("/:id", authenticateToken, async (req: Request, res: Response): Promi
 
     const client = await prisma.client.findUnique({
       where: { id },
+      include: {
+        manager: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
     });
 
     if (!client) {
@@ -193,6 +219,108 @@ router.get("/:id", authenticateToken, async (req: Request, res: Response): Promi
   } catch (error) {
     console.error("[Clients] Erro ao obter perfil do cliente:", error);
     res.status(500).json({ error: "Erro ao buscar histórico do cliente." });
+  }
+});
+
+// PUT /api/clients/:id - Atualiza dados do cliente (nome e/ou gestor pessoal)
+router.put("/:id", authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { name, managerId } = req.body;
+
+    const existingClient = await prisma.client.findUnique({
+      where: { id },
+    });
+
+    if (!existingClient) {
+      res.status(404).json({ error: "Cliente não encontrado." });
+      return;
+    }
+
+    let cleanName: string | undefined = undefined;
+    if (name !== undefined) {
+      if (typeof name !== "string" || !name.trim()) {
+        res.status(400).json({ error: "Nome do cliente inválido." });
+        return;
+      }
+      cleanName = name.trim();
+
+      // Valida duplicidade de nome excluindo o próprio cliente
+      if (cleanName !== existingClient.name) {
+        const duplicate = await prisma.client.findFirst({
+          where: {
+            id: { not: id },
+            name: { equals: cleanName, mode: "insensitive" },
+          },
+        });
+
+        if (duplicate) {
+          res.status(409).json({ error: "Já existe outro cliente cadastrado com este nome." });
+          return;
+        }
+      }
+    }
+
+    let cleanManagerId: string | null | undefined = undefined;
+    if (managerId !== undefined) {
+      if (managerId === null || (typeof managerId === "string" && managerId.trim() === "")) {
+        cleanManagerId = null;
+      } else if (typeof managerId === "string") {
+        const trimmedId = managerId.trim();
+        const user = await prisma.user.findUnique({
+          where: { id: trimmedId },
+        });
+        if (!user) {
+          res.status(400).json({ error: "Gestor informado não encontrado." });
+          return;
+        }
+        cleanManagerId = trimmedId;
+      } else {
+        res.status(400).json({ error: "ID do gestor inválido." });
+        return;
+      }
+    }
+
+    // Se o nome foi alterado, atualiza referências retroativas em atendimentos
+    if (cleanName && cleanName !== existingClient.name) {
+      await prisma.workLog.updateMany({
+        where: {
+          OR: [
+            { clientId: existingClient.id },
+            { clientOrOffice: { equals: existingClient.name, mode: "insensitive" } },
+          ],
+        },
+        data: {
+          clientOrOffice: cleanName,
+          clientId: existingClient.id,
+        },
+      });
+
+      await prisma.agendaEvent.updateMany({
+        where: { clientId: existingClient.id },
+        data: {
+          clientId: existingClient.id,
+        },
+      });
+    }
+
+    const updated = await prisma.client.update({
+      where: { id },
+      data: {
+        ...(cleanName !== undefined ? { name: cleanName } : {}),
+        ...(cleanManagerId !== undefined ? { managerId: cleanManagerId } : {}),
+      },
+      include: {
+        manager: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
+    });
+
+    res.json({ success: true, client: updated });
+  } catch (error) {
+    console.error("[Clients] Erro ao atualizar cliente:", error);
+    res.status(500).json({ error: "Erro interno ao atualizar cliente." });
   }
 });
 

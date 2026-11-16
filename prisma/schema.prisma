@@ -25,6 +25,7 @@ model User {
   createdEvents    AgendaEvent[]          @relation("CreatedAgendaEvents")
   statusChanges    WorkLogStatusHistory[]
   assignedWorkLogs WorkLog[]              @relation("AssignedWorkLogs")
+  managedClients   Client[]               @relation("ClientManager")
 }
 
 model Tag {
@@ -124,6 +125,8 @@ model WorkLogStatusHistory {
 model Client {
   id        String        @id @default(cuid())
   name      String        @unique
+  managerId String?
+  manager   User?         @relation("ClientManager", fields: [managerId], references: [id], onDelete: SetNull)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   workLogs  WorkLog[]

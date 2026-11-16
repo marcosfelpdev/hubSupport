@@ -175,6 +175,13 @@ export interface ClientItem {
   name: string;
   createdAt: string;
   updatedAt?: string;
+  managerId?: string | null;
+  manager?: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string;
+  } | null;
   _count?: {
     workLogs: number;
     events: number;
@@ -549,9 +556,15 @@ export const api = {
     async getById(id: string): Promise<ClientProfileData> {
       return request<ClientProfileData>(`/api/clients/${id}`);
     },
-    async create(data: { name: string }): Promise<{ success: boolean; client: ClientItem }> {
+    async create(data: { name: string; managerId?: string | null }): Promise<{ success: boolean; client: ClientItem }> {
       return request<{ success: boolean; client: ClientItem }>("/api/clients", {
         method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    async update(id: string, data: { name?: string; managerId?: string | null }): Promise<{ success: boolean; client: ClientItem }> {
+      return request<{ success: boolean; client: ClientItem }>(`/api/clients/${id}`, {
+        method: "PUT",
         body: JSON.stringify(data),
       });
     },
