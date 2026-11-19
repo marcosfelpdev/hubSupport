@@ -9,6 +9,8 @@ import {
   Inbox,
   X,
   ShieldCheck,
+  Sparkles,
+  Rocket,
 } from "lucide-react";
 import { WorkLogItem, api } from "@/services/api";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
@@ -142,7 +144,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<"" | "technical" | "implementation">("");
+  const [filterType, setFilterType] = useState<"" | "technical" | "implementation" | "prompt" | "idea">("");
   const [filterAuthor, setFilterAuthor] = useState("");
   const [filterTag, setFilterTag] = useState("");
 
@@ -234,6 +236,8 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
       }
       if (filterType === "technical" && !log.technicalAction) return false;
       if (filterType === "implementation" && !log.implementation) return false;
+      if (filterType === "prompt" && !log.isPrompt) return false;
+      if (filterType === "idea" && !log.isIdea) return false;
       if (filterAuthor && log.user?.name !== filterAuthor) return false;
       if (filterTag && log.tag?.name !== filterTag) return false;
       return true;
@@ -247,6 +251,14 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   );
   const implementationCount = useMemo(
     () => filteredLogs.filter((l) => l.implementation).length,
+    [filteredLogs]
+  );
+  const promptCount = useMemo(
+    () => filteredLogs.filter((l) => l.isPrompt).length,
+    [filteredLogs]
+  );
+  const ideaCount = useMemo(
+    () => filteredLogs.filter((l) => l.isIdea).length,
     [filteredLogs]
   );
 
@@ -385,11 +397,13 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
             <select
               className="bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 transition-all shadow-xs"
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value as "" | "technical" | "implementation")}
+              onChange={(e) => setFilterType(e.target.value as "" | "technical" | "implementation" | "prompt" | "idea")}
             >
               <option value="">Todos os tipos</option>
               <option value="technical">Ação Técnica</option>
               <option value="implementation">Implementação</option>
+              <option value="prompt">Prompt</option>
+              <option value="idea">Ideia</option>
             </select>
 
             {/* Dropdown: Tag */}
@@ -466,9 +480,39 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               }`}
               title="Filtrar por Implementação"
             >
-              <Lightbulb size={13} className={filterType === "implementation" ? "text-purple-600 dark:text-purple-400" : "text-slate-400 dark:text-slate-500"} />
+              <Rocket size={13} className={filterType === "implementation" ? "text-purple-600 dark:text-purple-400" : "text-slate-400 dark:text-slate-500"} />
               <span>Implementação:</span>
               <strong className="font-bold">{implementationCount}</strong>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterType(filterType === "prompt" ? "" : "prompt")}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                filterType === "prompt"
+                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-300 dark:ring-emerald-800"
+                  : "bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-300"
+              }`}
+              title="Filtrar por Prompt"
+            >
+              <Sparkles size={13} className={filterType === "prompt" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"} />
+              <span>Prompt:</span>
+              <strong className="font-bold">{promptCount}</strong>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterType(filterType === "idea" ? "" : "idea")}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                filterType === "idea"
+                  ? "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-300 dark:border-violet-800 ring-1 ring-violet-300 dark:ring-violet-800"
+                  : "bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-300"
+              }`}
+              title="Filtrar por Ideia"
+            >
+              <Lightbulb size={13} className={filterType === "idea" ? "text-violet-600 dark:text-violet-400" : "text-slate-400 dark:text-slate-500"} />
+              <span>Ideia:</span>
+              <strong className="font-bold">{ideaCount}</strong>
             </button>
           </div>
         </div>

@@ -60,6 +60,8 @@ export interface WorkLogItem {
   status: string;
   technicalAction: boolean;
   implementation: boolean;
+  isPrompt?: boolean;
+  isIdea?: boolean;
   media: string;
   userId: string;
   tagId?: string | null;
@@ -122,6 +124,8 @@ export interface NotificationItem {
     clientOrOffice: string;
     technicalAction: boolean;
     implementation: boolean;
+    isPrompt?: boolean;
+    isIdea?: boolean;
     status: string;
   } | null;
 }
@@ -320,6 +324,9 @@ export const api = {
     },
     async getTechnical(): Promise<WorkLogItem[]> {
       return request<WorkLogItem[]>("/api/worklogs?type=technical");
+    },
+    async getKanban(): Promise<WorkLogItem[]> {
+      return request<WorkLogItem[]>("/api/worklogs/kanban");
     },
     async create(formData: FormData): Promise<{ success: boolean; logId: string }> {
       return request<{ success: boolean; logId: string }>("/api/worklogs", {

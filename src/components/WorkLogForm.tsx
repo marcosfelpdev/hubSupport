@@ -17,6 +17,7 @@ import {
   Lock,
   ChevronDown,
   PlusCircle,
+  Rocket,
 } from "lucide-react";
 import {
   InlineMediaEditor,
@@ -51,8 +52,10 @@ export default function WorkLogForm({
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [technicalAction, setTechnicalAction] = useState(false);
   const [implementation, setImplementation] = useState(false);
+  const [isPrompt, setIsPrompt] = useState(false);
+  const [isIdea, setIsIdea] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("Realizado");
-  const isTechnicalOrImplementation = technicalAction || implementation;
+  const isTechnicalOrImplementation = technicalAction || implementation || isPrompt || isIdea;
 
   // Mídias Anexadas e Sincronização Bidirecional
   const [attachedMedia, setAttachedMedia] = useState<AttachedMediaItem[]>([]);
@@ -321,6 +324,8 @@ export default function WorkLogForm({
     const finalStatus = isTechnicalOrImplementation ? "Backlog" : selectedStatus;
     formData.set("technicalAction", technicalAction ? "on" : "off");
     formData.set("implementation", implementation ? "on" : "off");
+    formData.set("isPrompt", isPrompt ? "on" : "off");
+    formData.set("isIdea", isIdea ? "on" : "off");
     formData.set("status", finalStatus);
     formData.set("tagId", selectedTagId);
     formData.set("clientId", selectedClient.id);
@@ -344,6 +349,8 @@ export default function WorkLogForm({
         form.reset();
         setTechnicalAction(false);
         setImplementation(false);
+        setIsPrompt(false);
+        setIsIdea(false);
         setSelectedStatus("Realizado");
         setSelectedTagId(null);
         setSelectedClient(null);
@@ -821,8 +828,9 @@ export default function WorkLogForm({
           </div>
         </div>
 
-        {/* Checklist: Ação Técnica / Implementação */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50/70 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl">
+        {/* Checklist: Categorias de Chamado (Ação Técnica, Implementação, Prompt, Ideia) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3.5 bg-slate-50/70 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl">
+          {/* Card 1: Ação Técnica (Âmbar) */}
           <button
             type="button"
             onClick={() => setTechnicalAction((prev) => !prev)}
@@ -857,6 +865,7 @@ export default function WorkLogForm({
             </div>
           </button>
 
+          {/* Card 2: Implementação (Azul) */}
           <button
             type="button"
             onClick={() => setImplementation((prev) => !prev)}
@@ -873,7 +882,7 @@ export default function WorkLogForm({
                   implementation ? "bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                 }`}
               >
-                <Lightbulb className="w-4 h-4" />
+                <Rocket className="w-4 h-4" />
               </div>
               <div className="text-left">
                 <span className="block font-semibold text-xs text-slate-900 dark:text-white">Implementação</span>
@@ -883,11 +892,85 @@ export default function WorkLogForm({
             <div
               className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
                 implementation
-                  ? "bg-blue-600 border-blue-600 text-white"
+                  ? "bg-blue-500 border-blue-500 text-white"
                   : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
               }`}
             >
               {implementation && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+            </div>
+          </button>
+
+          {/* Card 3: Prompt (Esmeralda) */}
+          <button
+            type="button"
+            onClick={() => setIsPrompt((prev) => !prev)}
+            disabled={isPending}
+            className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer select-none ${
+              isPrompt
+                ? "bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 shadow-xs ring-1 ring-emerald-300 dark:ring-emerald-800"
+                : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  isPrompt
+                    ? "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <span className="block font-semibold text-xs text-slate-900 dark:text-white">Prompt</span>
+                <span className="block text-[11px] text-slate-500 dark:text-slate-400">Engenharia / Ajuste de prompt de IA</span>
+              </div>
+            </div>
+            <div
+              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                isPrompt
+                  ? "bg-emerald-500 border-emerald-500 text-white"
+                  : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+              }`}
+            >
+              {isPrompt && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+            </div>
+          </button>
+
+          {/* Card 4: Ideia (Violeta) */}
+          <button
+            type="button"
+            onClick={() => setIsIdea((prev) => !prev)}
+            disabled={isPending}
+            className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer select-none ${
+              isIdea
+                ? "bg-violet-50/90 dark:bg-violet-950/40 border-violet-300 dark:border-violet-800 text-violet-900 dark:text-violet-200 shadow-xs ring-1 ring-violet-300 dark:ring-violet-800"
+                : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  isIdea
+                    ? "bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                }`}
+              >
+                <Lightbulb className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <span className="block font-semibold text-xs text-slate-900 dark:text-white">Ideia</span>
+                <span className="block text-[11px] text-slate-500 dark:text-slate-400">Sugestão de melhoria / Inovação</span>
+              </div>
+            </div>
+            <div
+              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                isIdea
+                  ? "bg-violet-500 border-violet-500 text-white"
+                  : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+              }`}
+            >
+              {isIdea && <Check className="w-3.5 h-3.5 stroke-[3]" />}
             </div>
           </button>
         </div>
