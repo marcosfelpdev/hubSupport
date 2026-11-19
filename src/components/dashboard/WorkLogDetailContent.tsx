@@ -31,6 +31,7 @@ import {
 import { WorkLogItem, WorkLogStatusHistoryItem, EmployeeItem, api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import TagBadge from "@/components/TagBadge";
+import { getCategoryIconComponent } from "@/components/CategoryIconPicker";
 import { formatReportAsText, copyToClipboard } from "@/lib/report-formatter";
 
 export interface StructuredReportData {
@@ -75,6 +76,14 @@ export interface WorkLogDetailData {
   reportedProblem: string;
   actionTaken?: string | null;
   status: string;
+  categoryId?: string | null;
+  category?: {
+    id?: string;
+    slug?: string;
+    name: string;
+    color?: string;
+    icon?: string;
+  } | null;
   technicalAction?: boolean;
   implementation?: boolean;
   isPrompt?: boolean;
@@ -907,32 +916,48 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 <TagBadge name={log.tag.name} color={log.tag.color} size="sm" />
               )}
 
-              {log.technicalAction && (
-                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border border-orange-200/80 dark:border-orange-800 shrink-0">
-                  <Cog size={11} />
-                  Ação Técnica
+              {log.category ? (
+                <span
+                  className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md border shrink-0"
+                  style={{
+                    backgroundColor: `${log.category.color || "#3b82f6"}18`,
+                    borderColor: `${log.category.color || "#3b82f6"}50`,
+                    color: log.category.color || "#3b82f6",
+                  }}
+                >
+                  {React.createElement(getCategoryIconComponent(log.category.icon), { className: "w-3 h-3" })}
+                  {log.category.name}
                 </span>
-              )}
+              ) : (
+                <>
+                  {log.technicalAction && (
+                    <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border border-orange-200/80 dark:border-orange-800 shrink-0">
+                      <Cog size={11} />
+                      Ação Técnica
+                    </span>
+                  )}
 
-              {log.implementation && (
-                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 shrink-0">
-                  <Rocket size={11} />
-                  Implementação
-                </span>
-              )}
+                  {log.implementation && (
+                    <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 shrink-0">
+                      <Rocket size={11} />
+                      Implementação
+                    </span>
+                  )}
 
-              {log.isPrompt && (
-                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 shrink-0">
-                  <Sparkles size={11} />
-                  Prompt
-                </span>
-              )}
+                  {log.isPrompt && (
+                    <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 shrink-0">
+                      <Sparkles size={11} />
+                      Prompt
+                    </span>
+                  )}
 
-              {log.isIdea && (
-                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-300 border border-violet-200/80 dark:border-violet-800 shrink-0">
-                  <Lightbulb size={11} />
-                  Ideia
-                </span>
+                  {log.isIdea && (
+                    <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-300 border border-violet-200/80 dark:border-violet-800 shrink-0">
+                      <Lightbulb size={11} />
+                      Ideia
+                    </span>
+                  )}
+                </>
               )}
             </div>
 

@@ -15,6 +15,14 @@ export interface ReportCardMinimizedLog {
   implementation?: boolean;
   isPrompt?: boolean;
   isIdea?: boolean;
+  categoryId?: string | null;
+  category?: {
+    id?: string;
+    slug?: string;
+    name: string;
+    color?: string;
+    icon?: string;
+  } | null;
   media?: string;
   userId?: string;
   user?: {
@@ -139,15 +147,29 @@ export function getStatusPill(status: string): StatusPillConfig {
 
 interface FooterConfig {
   label: string;
-  badgeClass: string;
+  badgeClass?: string;
+  badgeStyle?: React.CSSProperties;
 }
 
 function getFooterConfig(
   technicalAction?: boolean,
   implementation?: boolean,
   isPrompt?: boolean,
-  isIdea?: boolean
+  isIdea?: boolean,
+  category?: { name: string; color?: string; icon?: string } | null
 ): FooterConfig {
+  if (category && category.name) {
+    const color = category.color || "#3b82f6";
+    return {
+      label: category.name,
+      badgeStyle: {
+        backgroundColor: `${color}15`,
+        borderColor: `${color}40`,
+        color: color,
+      },
+    };
+  }
+
   const parts: string[] = [];
   if (technicalAction) parts.push("Ação Técnica");
   if (implementation) parts.push("Implementação");
@@ -269,7 +291,8 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
     log.technicalAction,
     log.implementation,
     log.isPrompt,
-    log.isIdea
+    log.isIdea,
+    log.category
   );
   const formattedDate = formatDate(log.createdAt);
 
@@ -442,7 +465,8 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
 
       {/* Rodapé: Faixa de Categoria */}
       <div
-        className={`w-full py-1.5 px-3 text-[9px] uppercase tracking-wider font-bold text-center shrink-0 border-t ${footerConfig.badgeClass}`}
+        className={`w-full py-1.5 px-3 text-[9px] uppercase tracking-wider font-bold text-center shrink-0 border-t ${footerConfig.badgeClass || ""}`}
+        style={footerConfig.badgeStyle}
       >
         {footerConfig.label}
       </div>

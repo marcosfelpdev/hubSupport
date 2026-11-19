@@ -50,6 +50,26 @@ export interface TagItem {
   };
 }
 
+export interface WorkLogCategoryItem {
+  id: string;
+  slug: string;
+  name: string;
+  subtitle?: string | null;
+  icon: string;
+  color: string;
+  notifyRole?: string | null;
+  targetKanban: boolean;
+  lockStatus: boolean;
+  targetStatus?: string | null;
+  active: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    workLogs: number;
+  };
+}
+
 export interface WorkLogItem {
   id: string;
   title?: string;
@@ -58,6 +78,8 @@ export interface WorkLogItem {
   reportedProblem: string;
   actionTaken?: string;
   status: string;
+  categoryId?: string | null;
+  category?: WorkLogCategoryItem | null;
   technicalAction: boolean;
   implementation: boolean;
   isPrompt?: boolean;
@@ -577,6 +599,59 @@ export const api = {
     },
     async delete(id: string): Promise<{ success: boolean; message?: string }> {
       return request<{ success: boolean; message?: string }>(`/api/clients/${id}`, {
+        method: "DELETE",
+      });
+    },
+  },
+
+  // Gestão de Categorias de Atendimento
+  categories: {
+    async getAll(all = false): Promise<WorkLogCategoryItem[]> {
+      const query = all ? "?all=true" : "";
+      return request<WorkLogCategoryItem[]>(`/api/categories${query}`);
+    },
+    async getById(id: string): Promise<WorkLogCategoryItem> {
+      return request<WorkLogCategoryItem>(`/api/categories/${id}`);
+    },
+    async create(data: {
+      name: string;
+      subtitle?: string | null;
+      icon?: string;
+      color?: string;
+      notifyRole?: string | null;
+      targetKanban?: boolean;
+      lockStatus?: boolean;
+      targetStatus?: string | null;
+      active?: boolean;
+      order?: number;
+    }): Promise<WorkLogCategoryItem> {
+      return request<WorkLogCategoryItem>("/api/categories", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    async update(
+      id: string,
+      data: {
+        name?: string;
+        subtitle?: string | null;
+        icon?: string;
+        color?: string;
+        notifyRole?: string | null;
+        targetKanban?: boolean;
+        lockStatus?: boolean;
+        targetStatus?: string | null;
+        active?: boolean;
+        order?: number;
+      }
+    ): Promise<WorkLogCategoryItem> {
+      return request<WorkLogCategoryItem>(`/api/categories/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+    },
+    async delete(id: string): Promise<{ message: string; id: string }> {
+      return request<{ message: string; id: string }>(`/api/categories/${id}`, {
         method: "DELETE",
       });
     },

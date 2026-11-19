@@ -116,6 +116,104 @@ async function main() {
     });
   }
 
+  // 6. Criar Categorias de Atendimento padrão (idempotente)
+  const defaultCategories = [
+    {
+      slug: "technical_action",
+      name: "Ação Técnica",
+      subtitle: "Demanda técnica / dev",
+      icon: "cog",
+      color: "#f59e0b",
+      notifyRole: "TECHNICIAN",
+      targetKanban: true,
+      lockStatus: true,
+      targetStatus: "Backlog",
+      active: true,
+      order: 1,
+    },
+    {
+      slug: "implementation",
+      name: "Implementação",
+      subtitle: "Novas features / setup",
+      icon: "rocket",
+      color: "#3b82f6",
+      notifyRole: "TECHNICIAN",
+      targetKanban: true,
+      lockStatus: true,
+      targetStatus: "Backlog",
+      active: true,
+      order: 2,
+    },
+    {
+      slug: "prompt",
+      name: "Prompt",
+      subtitle: "Engenharia / Ajuste de prompt de IA",
+      icon: "sparkles",
+      color: "#10b981",
+      notifyRole: "TECHNICIAN",
+      targetKanban: true,
+      lockStatus: true,
+      targetStatus: "Backlog",
+      active: true,
+      order: 3,
+    },
+    {
+      slug: "idea",
+      name: "Ideia",
+      subtitle: "Sugestão de melhoria / Inovação",
+      icon: "lightbulb",
+      color: "#8b5cf6",
+      notifyRole: "TECHNICIAN",
+      targetKanban: true,
+      lockStatus: true,
+      targetStatus: "Backlog",
+      active: true,
+      order: 4,
+    },
+  ];
+
+  const categoryMap: Record<string, string> = {};
+  for (const catData of defaultCategories) {
+    const cat = await prisma.workLogCategory.upsert({
+      where: { slug: catData.slug },
+      update: {
+        name: catData.name,
+        subtitle: catData.subtitle,
+        icon: catData.icon,
+        color: catData.color,
+        notifyRole: catData.notifyRole,
+        targetKanban: catData.targetKanban,
+        lockStatus: catData.lockStatus,
+        targetStatus: catData.targetStatus,
+        active: catData.active,
+        order: catData.order,
+      },
+      create: catData,
+    });
+    categoryMap[catData.slug] = cat.id;
+  }
+
+  // 7. Migrar WorkLogs legados que ainda não possuem categoryId associado
+  const legacyLogs = await prisma.workLog.findMany({
+    where: { categoryId: null },
+    select: { id: true, technicalAction: true, implementation: true, isPrompt: true, isIdea: true },
+  });
+
+  for (const log of legacyLogs) {
+    let catIdToSet: string | null = null;
+    if (log.isIdea && categoryMap.idea) catIdToSet = categoryMap.idea;
+    else if (log.isPrompt && categoryMap.prompt) catIdToSet = categoryMap.prompt;
+    else if (log.implementation && categoryMap.implementation) catIdToSet = categoryMap.implementation;
+    else if (log.technicalAction && categoryMap.technical_action) catIdToSet = categoryMap.technical_action;
+
+    if (catIdToSet) {
+      await prisma.workLog.update({
+        where: { id: log.id },
+        data: { categoryId: catIdToSet },
+      });
+    }
+  }
+
   // 6. Chamados de exemplo opcionais (apenas se explicitamente habilitado via SEED_SAMPLE_LOGS=true)
   if (process.env.SEED_SAMPLE_LOGS === "true") {
     const defaultTagERP = await prisma.tag.findUnique({ where: { name: "Sistema ERP" } });

@@ -37,6 +37,24 @@ model Tag {
   workLogs  WorkLog[]
 }
 
+model WorkLogCategory {
+  id           String    @id @default(cuid())
+  slug         String    @unique // ex: "technical_action", "implementation", "prompt", "idea", ou gerado pelo nome
+  name         String    // ex: "Ação Técnica", "Prompt", "Infraestrutura"
+  subtitle     String?   // ex: "Demanda técnica / dev"
+  icon         String    @default("cog") // Chave do ícone Lucide: "cog", "rocket", "sparkles", "lightbulb", etc.
+  color        String    @default("#3b82f6") // Cor hexadecimal da categoria
+  notifyRole   String?   // "TECHNICIAN" | "ADMIN" | "MANAGER" | "USER" | null (nenhum)
+  targetKanban Boolean   @default(true) // Direciona para o Kanban Técnico?
+  lockStatus   Boolean   @default(true) // Trava status inicial na criação?
+  targetStatus String?   @default("Backlog") // Status forçado quando lockStatus for true
+  active       Boolean   @default(true) // Visível no formulário?
+  order        Int       @default(0) // Ordem de exibição na grade
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  workLogs     WorkLog[]
+}
+
 model WorkLog {
   id              String                 @id @default(cuid())
   title           String                 @default("") // Título do atendimento/relatório
@@ -46,10 +64,12 @@ model WorkLog {
   descriptionInterleaved String?                @db.Text // JSON estruturado alternando blocos de texto e referências de mídia
   actionTaken            String                 @default("") @db.Text // Ação realizada (integrada na descrição)
   status          String                 @default("Realizado") // Realizado, Em andamento, Aguardando reunião, Não foi possível realizar, Solucionado
-  technicalAction Boolean                @default(false) // Ação técnica (envio para equipe de programadores)
-  implementation  Boolean                @default(false) // Implementação (sugestão de melhoria)
-  isPrompt        Boolean                @default(false) // Prompt (engenharia / ajuste de prompt de IA)
-  isIdea          Boolean                @default(false) // Ideia (sugestão de melhoria ou inovação)
+  categoryId      String?
+  category        WorkLogCategory?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  technicalAction Boolean                @default(false) // Ação técnica (envio para equipe de programadores) [legado mantido para compatibilidade]
+  implementation  Boolean                @default(false) // Implementação (sugestão de melhoria) [legado mantido para compatibilidade]
+  isPrompt        Boolean                @default(false) // Prompt (engenharia / ajuste de prompt de IA) [legado mantido para compatibilidade]
+  isIdea          Boolean                @default(false) // Ideia (sugestão de melhoria ou inovação) [legado mantido para compatibilidade]
   media           String                 @default("[]") @db.Text // JSON array de caminhos de arquivos anexados
   createdAt       DateTime               @default(now())
   userId          String
