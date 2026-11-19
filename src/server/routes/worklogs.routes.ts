@@ -17,6 +17,7 @@ const defaultWorkLogInclude = {
   assignedTo: {
     select: { id: true, name: true, email: true, role: true },
   },
+  category: true,
   tag: true,
   aiReport: true,
   client: {
@@ -82,6 +83,7 @@ router.get("/kanban", authenticateToken, async (req: Request, res: Response): Pr
     const logs = await prisma.workLog.findMany({
       where: {
         OR: [
+          { category: { targetKanban: true } },
           { technicalAction: true },
           { implementation: true },
           { isPrompt: true },
@@ -109,6 +111,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
       const logs = await prisma.workLog.findMany({
         where: {
           OR: [
+            { category: { targetKanban: true } },
             { technicalAction: true },
             { implementation: true },
             { isPrompt: true },
@@ -314,6 +317,7 @@ router.post(
         implementation,
         isPrompt,
         isIdea,
+        categoryId,
         tagId,
         clientId,
       } = req.body;
@@ -473,20 +477,57 @@ router.post(
         savedRecordingPath = key;
       }
 
-      const isTechnicalAction =
-        technicalAction === "on" || technicalAction === "true" || technicalAction === true;
-      const isImplementation =
-        implementation === "on" || implementation === "true" || implementation === true;
-      const isPromptBool =
-        isPrompt === "on" || isPrompt === "true" || isPrompt === true;
-      const isIdeaBool =
-        isIdea === "on" || isIdea === "true" || isIdea === true;
-      const isBacklogDemand =
-        isTechnicalAction || isImplementation || isPromptBool || isIdeaBool;
+      let resolvedCategory = null;
+      let cleanCategoryId: string | null = null;
 
-      // Se for demanda técnica (ação técnica, implementação, prompt ou ideia), o chamado destina-se à equipe técnica
-      // e deve obrigatoriamente iniciar na coluna "Backlog" do Kanban
-      const finalStatus = isBacklogDemand ? "Backlog" : status.trim();
+      if (categoryId && typeof categoryId === "string" && categoryId.trim()) {
+        resolvedCategory = await prisma.workLogCategory.findUnique({
+          where: { id: categoryId.trim() },
+        });
+        if (resolvedCategory) {
+          cleanCategoryId = resolvedCategory.id;
+        }
+      }
+
+      // Se categoryId não foi passado mas foram passados os booleanos legados, tenta encontrar pelo slug
+      if (!resolvedCategory) {
+        if (isIdea === "on" || isIdea === "true" || isIdea === true) {
+          resolvedCategory = await prisma.workLogCategory.findUnique({ where: { slug: "idea" } });
+        } else if (isPrompt === "on" || isPrompt === "true" || isPrompt === true) {
+          resolvedCategory = await prisma.workLogCategory.findUnique({ where: { slug: "prompt" } });
+        } else if (implementation === "on" || implementation === "true" || implementation === true) {
+          resolvedCategory = await prisma.workLogCategory.findUnique({ where: { slug: "implementation" } });
+        } else if (technicalAction === "on" || technicalAction === "true" || technicalAction === true) {
+          resolvedCategory = await prisma.workLogCategory.findUnique({ where: { slug: "technical_action" } });
+        }
+        if (resolvedCategory) {
+          cleanCategoryId = resolvedCategory.id;
+        }
+      }
+
+      // Sincronização dos flags legados
+      let isTechnicalAction =
+        technicalAction === "on" || technicalAction === "true" || technicalAction === true;
+      let isImplementation =
+        implementation === "on" || implementation === "true" || implementation === true;
+      let isPromptBool =
+        isPrompt === "on" || isPrompt === "true" || isPrompt === true;
+      let isIdeaBool =
+        isIdea === "on" || isIdea === "true" || isIdea === true;
+
+      if (resolvedCategory) {
+        isTechnicalAction = resolvedCategory.slug === "technical_action";
+        isImplementation = resolvedCategory.slug === "implementation";
+        isPromptBool = resolvedCategory.slug === "prompt";
+        isIdeaBool = resolvedCategory.slug === "idea";
+      }
+
+      const isBacklogDemand = resolvedCategory
+        ? resolvedCategory.lockStatus
+        : (isTechnicalAction || isImplementation || isPromptBool || isIdeaBool);
+
+      const targetStatusForCategory = resolvedCategory?.targetStatus || "Backlog";
+      const finalStatus = isBacklogDemand ? targetStatusForCategory : (status ? String(status).trim() : "Realizado");
 
       // Resolve clientId caso fornecido diretamente ou correspondente ao nome do cliente
       let resolvedClientId = clientId && typeof clientId === "string" && clientId.trim() ? clientId.trim() : null;
@@ -509,6 +550,7 @@ router.post(
           descriptionInterleaved: finalDescriptionInterleaved,
           actionTaken: (actionTaken || "").trim(),
           status: finalStatus,
+          categoryId: cleanCategoryId,
           technicalAction: isTechnicalAction,
           implementation: isImplementation,
           isPrompt: isPromptBool,
@@ -557,27 +599,34 @@ router.post(
         });
       });
 
-      // Se for demanda técnica (ação técnica, implementação, prompt ou ideia), cria notificação para os técnicos
-      if (isBacklogDemand) {
-        const technicians = await prisma.user.findMany({
+      // Notificações dinâmicas para a função configurada na categoria ou fallback para técnicos
+      const targetNotifyRole = resolvedCategory ? resolvedCategory.notifyRole : (isBacklogDemand ? "TECHNICIAN" : null);
+
+      if (targetNotifyRole) {
+        const targetUsers = await prisma.user.findMany({
           where: {
-            role: "TECHNICIAN",
+            role: targetNotifyRole,
             active: true,
           },
           select: { id: true },
         });
 
-        if (technicians.length > 0) {
-          const activeLabels: string[] = [];
-          if (isTechnicalAction) activeLabels.push("Ação Técnica");
-          if (isImplementation) activeLabels.push("Implementação");
-          if (isPromptBool) activeLabels.push("Prompt");
-          if (isIdeaBool) activeLabels.push("Ideia");
-          const typeLabel = activeLabels.join(" · ") || "Demanda Técnica";
+        if (targetUsers.length > 0) {
+          const typeLabel =
+            resolvedCategory?.name ||
+            (isTechnicalAction
+              ? "Ação Técnica"
+              : isImplementation
+              ? "Implementação"
+              : isPromptBool
+              ? "Prompt"
+              : isIdeaBool
+              ? "Ideia"
+              : "Demanda Técnica");
 
           await prisma.notification.createMany({
-            data: technicians.map((tech) => ({
-              userId: tech.id,
+            data: targetUsers.map((target) => ({
+              userId: target.id,
               workLogId: newLog.id,
               title: `Novo chamado: ${finalTitle}`,
               message: `${user.name} registrou o atendimento "${finalTitle}" (${typeLabel}) para "${clientOrOffice.trim()}".`,
