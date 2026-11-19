@@ -40,7 +40,7 @@
 
 ### Task 3: Verificação Completa e Build
 
-- [ ] **Step 1:** Executar testes automatizados com `npx tsx scripts/test-kanban-finished-filter.ts`.
-- [ ] **Step 2:** Executar checagem de tipos estrita com `npx tsc --noEmit`.
-- [ ] **Step 3:** Executar compilação completa da aplicação com `npm run build`.
-- [ ] **Step 4:** Fazer commit das alterações e revisar.
+- [x] **Step 1:** Executar testes automatizados com `npx tsx scripts/test-kanban-finished-filter.ts`.
+- [x] **Step 2:** Executar checagem de tipos estrita com `npx tsc --noEmit`.
+- [x] **Step 3:** Executar compilação completa da aplicação com `npm run build`.
+- [x] **Step 4:** Fazer commit das alterações e revisar.
