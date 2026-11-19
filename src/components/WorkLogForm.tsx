@@ -1,7 +1,8 @@
 import { useState, useTransition, useEffect, useRef, useMemo, useCallback } from "react";
-import { api, TagItem, ClientItem } from "@/services/api";
+import { api, TagItem, ClientItem, WorkLogCategoryItem } from "@/services/api";
 import { ClientCombobox } from "@/components/ClientCombobox";
 import { hexToRgba } from "@/components/TagBadge";
+import { getCategoryIconComponent } from "@/components/CategoryIconPicker";
 import {
   Video,
   FileText,
@@ -50,12 +51,21 @@ export default function WorkLogForm({
 }: WorkLogFormProps = {}) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [technicalAction, setTechnicalAction] = useState(false);
-  const [implementation, setImplementation] = useState(false);
-  const [isPrompt, setIsPrompt] = useState(false);
-  const [isIdea, setIsIdea] = useState(false);
+  const [categories, setCategories] = useState<WorkLogCategoryItem[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("Realizado");
-  const isTechnicalOrImplementation = technicalAction || implementation || isPrompt || isIdea;
+
+  const selectedCategory = useMemo(() => {
+    return categories.find((c) => c.id === selectedCategoryId) || null;
+  }, [categories, selectedCategoryId]);
+
+  const isStatusLocked = Boolean(selectedCategory?.lockStatus);
+  const lockedTargetStatus = selectedCategory?.targetStatus || "Backlog";
+  const isTechnicalOrImplementation = isStatusLocked;
+
+  const handleToggleCategory = useCallback((categoryId: string) => {
+    setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId));
+  }, []);
 
   // Mídias Anexadas e Sincronização Bidirecional
   const [attachedMedia, setAttachedMedia] = useState<AttachedMediaItem[]>([]);
@@ -94,7 +104,7 @@ export default function WorkLogForm({
     let mounted = true;
     async function loadInitialData() {
       try {
-        const [tagsData, clientsData] = await Promise.all([
+        const [tagsData, clientsData, categoriesData] = await Promise.all([
           api.tags.getAll().catch((err) => {
             console.error("[WorkLogForm] Erro ao carregar tags:", err);
             return [] as TagItem[];
@@ -103,10 +113,15 @@ export default function WorkLogForm({
             console.error("[WorkLogForm] Erro ao carregar clientes:", err);
             return [] as ClientItem[];
           }),
+          api.categories.getAll().catch((err) => {
+            console.error("[WorkLogForm] Erro ao carregar categorias:", err);
+            return [] as WorkLogCategoryItem[];
+          }),
         ]);
         if (mounted) {
           setTags(tagsData);
           setClients(clientsData);
+          setCategories(categoriesData);
         }
       } catch (err) {
         console.error("[WorkLogForm] Erro ao carregar dados iniciais:", err);
@@ -321,11 +336,14 @@ export default function WorkLogForm({
     const form = e.currentTarget;
     const formData = new FormData(form);
 
-    const finalStatus = isTechnicalOrImplementation ? "Backlog" : selectedStatus;
-    formData.set("technicalAction", technicalAction ? "on" : "off");
-    formData.set("implementation", implementation ? "on" : "off");
-    formData.set("isPrompt", isPrompt ? "on" : "off");
-    formData.set("isIdea", isIdea ? "on" : "off");
+    const finalStatus = isStatusLocked ? lockedTargetStatus : selectedStatus;
+    if (selectedCategoryId) {
+      formData.set("categoryId", selectedCategoryId);
+    }
+    formData.set("technicalAction", selectedCategory?.slug === "technical_action" ? "on" : "off");
+    formData.set("implementation", selectedCategory?.slug === "implementation" ? "on" : "off");
+    formData.set("isPrompt", selectedCategory?.slug === "prompt" ? "on" : "off");
+    formData.set("isIdea", selectedCategory?.slug === "idea" ? "on" : "off");
     formData.set("status", finalStatus);
     formData.set("tagId", selectedTagId);
     formData.set("clientId", selectedClient.id);
@@ -347,10 +365,7 @@ export default function WorkLogForm({
       try {
         await api.worklogs.create(formData);
         form.reset();
-        setTechnicalAction(false);
-        setImplementation(false);
-        setIsPrompt(false);
-        setIsIdea(false);
+        setSelectedCategoryId(null);
         setSelectedStatus("Realizado");
         setSelectedTagId(null);
         setSelectedClient(null);
@@ -500,9 +515,9 @@ export default function WorkLogForm({
               <label htmlFor="status" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Status <span className="text-rose-500">*</span>
               </label>
-              {isTechnicalOrImplementation && (
+              {isStatusLocked && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 px-2 py-0.5 rounded-full">
-                  <Lock className="w-3 h-3 text-indigo-600 dark:text-indigo-400" /> Fixo em Backlog
+                  <Lock className="w-3 h-3 text-indigo-600 dark:text-indigo-400" /> Fixo em {lockedTargetStatus}
                 </span>
               )}
             </div>
@@ -510,17 +525,17 @@ export default function WorkLogForm({
               <select
                 id="status"
                 name="status"
-                value={isTechnicalOrImplementation ? "Backlog" : selectedStatus}
+                value={isStatusLocked ? lockedTargetStatus : selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                disabled={isPending || isTechnicalOrImplementation}
+                disabled={isPending || isStatusLocked}
                 className={`w-full appearance-none rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs pr-10 outline-none ${
-                  isTechnicalOrImplementation
+                  isStatusLocked
                     ? "bg-slate-100/80 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 font-medium cursor-not-allowed"
                     : "bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white cursor-pointer"
                 }`}
               >
-                {isTechnicalOrImplementation ? (
-                  <option value="Backlog">Backlog (Padrão para Equipe Técnica)</option>
+                {isStatusLocked ? (
+                  <option value={lockedTargetStatus}>{lockedTargetStatus} (Padrão da Categoria)</option>
                 ) : (
                   STATUS_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -828,152 +843,104 @@ export default function WorkLogForm({
           </div>
         </div>
 
-        {/* Checklist: Categorias de Chamado (Ação Técnica, Implementação, Prompt, Ideia) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50/70 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl">
-          {/* Card 1: Ação Técnica (Âmbar) */}
-          <button
-            type="button"
-            onClick={() => setTechnicalAction((prev) => !prev)}
-            disabled={isPending}
-            className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer select-none ${
-              technicalAction
-                ? "bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 shadow-xs ring-1 ring-amber-300 dark:ring-amber-800"
-                : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
-            }`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
-                  technicalAction ? "bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-                }`}
-              >
-                <Cog className="w-4 h-4" />
-              </div>
-              <div className="text-left min-w-0">
-                <span className="block font-semibold text-xs text-slate-900 dark:text-white">Ação Técnica</span>
-                <span className="block text-[11px] text-slate-500 dark:text-slate-400">Demanda técnica / dev</span>
-              </div>
+        {/* Checklist: Categorias de Chamado (Seleção Única / Dinâmico) */}
+        {categories.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Tipo do Atendimento{" "}
+                <span className="text-slate-400 dark:text-slate-500 lowercase font-normal">
+                  (opcional - selecione até 1 categoria)
+                </span>
+              </span>
+              {selectedCategoryId && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategoryId(null)}
+                  className="text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                >
+                  Limpar seleção
+                </button>
+              )}
             </div>
-            <div
-              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
-                technicalAction
-                  ? "bg-amber-500 border-amber-500 text-white"
-                  : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
-              }`}
-            >
-              {technicalAction && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-            </div>
-          </button>
 
-          {/* Card 2: Implementação (Azul) */}
-          <button
-            type="button"
-            onClick={() => setImplementation((prev) => !prev)}
-            disabled={isPending}
-            className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer select-none ${
-              implementation
-                ? "bg-blue-50/90 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200 shadow-xs ring-1 ring-blue-300 dark:ring-blue-800"
-                : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
-            }`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
-                  implementation ? "bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-                }`}
-              >
-                <Rocket className="w-4 h-4" />
-              </div>
-              <div className="text-left min-w-0">
-                <span className="block font-semibold text-xs text-slate-900 dark:text-white">Implementação</span>
-                <span className="block text-[11px] text-slate-500 dark:text-slate-400">Novas features / setup</span>
-              </div>
-            </div>
-            <div
-              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
-                implementation
-                  ? "bg-blue-500 border-blue-500 text-white"
-                  : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
-              }`}
-            >
-              {implementation && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-            </div>
-          </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50/70 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl">
+              {categories.map((cat) => {
+                const isSelected = selectedCategoryId === cat.id;
+                const IconComp = getCategoryIconComponent(cat.icon);
+                const color = cat.color || "#3b82f6";
 
-          {/* Card 3: Prompt (Esmeralda) */}
-          <button
-            type="button"
-            onClick={() => setIsPrompt((prev) => !prev)}
-            disabled={isPending}
-            className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer select-none ${
-              isPrompt
-                ? "bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 shadow-xs ring-1 ring-emerald-300 dark:ring-emerald-800"
-                : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
-            }`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
-                  isPrompt
-                    ? "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-                }`}
-              >
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div className="text-left min-w-0">
-                <span className="block font-semibold text-xs text-slate-900 dark:text-white">Prompt</span>
-                <span className="block text-[11px] text-slate-500 dark:text-slate-400">Engenharia / Ajuste de prompt de IA</span>
-              </div>
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleToggleCategory(cat.id)}
+                    disabled={isPending}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer select-none ${
+                      isSelected
+                        ? "shadow-xs ring-1"
+                        : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
+                    }`}
+                    style={
+                      isSelected
+                        ? {
+                            backgroundColor: `${color}12`,
+                            borderColor: `${color}70`,
+                            color: color,
+                            boxShadow: `0 0 0 1px ${color}70`,
+                          }
+                        : undefined
+                    }
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 border"
+                        style={
+                          isSelected
+                            ? {
+                                backgroundColor: `${color}25`,
+                                borderColor: `${color}50`,
+                                color: color,
+                              }
+                            : undefined
+                        }
+                      >
+                        <IconComp className="w-4 h-4" />
+                      </div>
+                      <div className="text-left min-w-0">
+                        <span className="block font-semibold text-xs text-slate-900 dark:text-white truncate">
+                          {cat.name}
+                        </span>
+                        {cat.subtitle && (
+                          <span className="block text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                            {cat.subtitle}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
+                        isSelected
+                          ? "text-white"
+                          : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      }`}
+                      style={
+                        isSelected
+                          ? {
+                              backgroundColor: color,
+                              borderColor: color,
+                            }
+                          : undefined
+                      }
+                    >
+                      {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-            <div
-              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
-                isPrompt
-                  ? "bg-emerald-500 border-emerald-500 text-white"
-                  : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
-              }`}
-            >
-              {isPrompt && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-            </div>
-          </button>
-
-          {/* Card 4: Ideia (Violeta) */}
-          <button
-            type="button"
-            onClick={() => setIsIdea((prev) => !prev)}
-            disabled={isPending}
-            className={`flex items-center justify-between p-3 rounded-xl border text-sm font-medium transition-all cursor-pointer select-none ${
-              isIdea
-                ? "bg-violet-50/90 dark:bg-violet-950/40 border-violet-300 dark:border-violet-800 text-violet-900 dark:text-violet-200 shadow-xs ring-1 ring-violet-300 dark:ring-violet-800"
-                : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
-            }`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
-                  isIdea
-                    ? "bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-                }`}
-              >
-                <Lightbulb className="w-4 h-4" />
-              </div>
-              <div className="text-left min-w-0">
-                <span className="block font-semibold text-xs text-slate-900 dark:text-white">Ideia</span>
-                <span className="block text-[11px] text-slate-500 dark:text-slate-400">Sugestão de melhoria / Inovação</span>
-              </div>
-            </div>
-            <div
-              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
-                isIdea
-                  ? "bg-violet-500 border-violet-500 text-white"
-                  : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
-              }`}
-            >
-              {isIdea && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-            </div>
-          </button>
-        </div>
+          </div>
+        )}
 
         {/* Submit */}
         <button
