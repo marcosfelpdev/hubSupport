@@ -567,6 +567,11 @@ router.post(
           userId: user.id,
           tagId: cleanTagId,
           clientId: resolvedClientId,
+          validationStartedAt:
+            finalStatus.toLowerCase().trim() === "validação" ||
+            finalStatus.toLowerCase().trim() === "validacao"
+              ? new Date()
+              : null,
         },
       });
 
@@ -697,6 +702,7 @@ router.patch(
             data: {
               status: "Solucionado",
               hasValidationRejection: false, // Aprovação formal limpa pendência de recusa
+              validationStartedAt: null, // Saiu da validação para solucionado
             },
           }),
           prisma.workLogStatusHistory.create({
@@ -1024,6 +1030,7 @@ router.patch(
             data: {
               status: newStatus,
               hasValidationRejection: true,
+              validationStartedAt: null, // Reseta contador de validação ao recuar
             },
           }),
           prisma.workLogNote.create({
@@ -1044,11 +1051,23 @@ router.patch(
           }),
         ]);
       } else if (currentStatus !== newStatus) {
+        const isEnteringVal =
+          targetNorm === "validação" ||
+          targetNorm === "validacao" ||
+          targetNorm === "em validação" ||
+          targetNorm === "em validacao";
+
         await prisma.$transaction([
           prisma.workLog.update({
             where: { id },
             data: {
               status: newStatus,
+              // Inicia contador se estiver entrando em Validação, limpa se estiver saindo
+              validationStartedAt: isEnteringVal
+                ? new Date()
+                : isFromValidation
+                ? null
+                : existing.validationStartedAt,
             },
           }),
           prisma.workLogStatusHistory.create({

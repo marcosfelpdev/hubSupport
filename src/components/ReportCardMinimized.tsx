@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import TagBadge from "./TagBadge";
 import { getCategoryIconComponent } from "./CategoryIconPicker";
+import { getValidationDuration } from "./dashboard/WorkLogDetailContent";
 
 export interface ReportCardMinimizedLog {
   id: string;
@@ -27,6 +28,7 @@ export interface ReportCardMinimizedLog {
   isPrompt?: boolean;
   isIdea?: boolean;
   hasValidationRejection?: boolean;
+  validationStartedAt?: Date | string | null;
   notes?: Array<{
     id: string;
     type: string;
@@ -467,7 +469,11 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
             {/* Ícone de Status */}
             <span
               className={`inline-flex items-center justify-center w-6 h-6 rounded-lg border shadow-2xs cursor-help transition-all ${statusIconDef.bgClass} ${statusIconDef.colorClass}`}
-              title={`Status: ${statusIconDef.label}`}
+              title={
+                statusIconDef.label === "Validação" && log.validationStartedAt
+                  ? `Status: Validação (${getValidationDuration(log.validationStartedAt).label} em validação)`
+                  : `Status: ${statusIconDef.label}`
+              }
             >
               <StatusIcon size={13} className="shrink-0" />
             </span>
