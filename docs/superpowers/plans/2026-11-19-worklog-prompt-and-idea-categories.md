@@ -35,21 +35,21 @@
 - Modify: `src/services/api.ts:25-45, 60-80`
 - Test: `scripts/test-worklog-prompt-idea-backend.ts`
 
-- [ ] **Step 1: Update Prisma schema and sync database**
+- [x] **Step 1: Update Prisma schema and sync database**
   Add `isPrompt Boolean @default(false)` and `isIdea Boolean @default(false)` to `model WorkLog`. Run `npx prisma db push`.
-- [ ] **Step 2: Update Express worklogs routes in `src/server/routes/worklogs.routes.ts`**
+- [x] **Step 2: Update Express worklogs routes in `src/server/routes/worklogs.routes.ts`**
   - Accept `isPrompt` and `isIdea` in `POST /api/worklogs`.
   - Calculate `isBacklogDemand = isTechnicalAction || isImplementation || isPromptBool || isIdeaBool`.
   - Set `status: isBacklogDemand ? "Backlog" : status.trim()`.
   - Persist `isPrompt` and `isIdea` in `prisma.workLog.create`.
   - Include `isPrompt: true` and `isIdea: true` in technician notifications and in `/api/worklogs/kanban` query filter.
-- [ ] **Step 3: Update `src/services/api.ts`**
+- [x] **Step 3: Update `src/services/api.ts`**
   Add `isPrompt?: boolean` and `isIdea?: boolean` to `WorkLogItem` interface.
-- [ ] **Step 4: Create backend automated integration test**
+- [x] **Step 4: Create backend automated integration test**
   Create `scripts/test-worklog-prompt-idea-backend.ts` testing creation with `isPrompt`, `isIdea`, status locking to "Backlog", query in Kanban, and technician notifications.
-- [ ] **Step 5: Run integration test and verify passing**
+- [x] **Step 5: Run integration test and verify passing**
   Execute `npx tsx scripts/test-worklog-prompt-idea-backend.ts` and confirm 100% pass rate.
-- [ ] **Step 6: Commit changes**
+- [x] **Step 6: Commit changes**
   `git add prisma/schema.prisma src/server/routes/worklogs.routes.ts src/services/api.ts scripts/test-worklog-prompt-idea-backend.ts && git commit -m "feat(backend): add isPrompt and isIdea to WorkLog and API routes"`
 
 ---
@@ -59,22 +59,22 @@
 **Files:**
 - Modify: `src/components/WorkLogForm.tsx:50-60, 315-355, 490-520, 820-890`
 
-- [ ] **Step 1: Add state and status locking logic in `WorkLogForm.tsx`**
+- [x] **Step 1: Add state and status locking logic in `WorkLogForm.tsx`**
   Add `const [isPrompt, setIsPrompt] = useState(false);` and `const [isIdea, setIsIdea] = useState(false);`. Update `const isTechnicalOrImplementation = technicalAction || implementation || isPrompt || isIdea;`.
-- [ ] **Step 2: Update `handleSubmit` FormData and reset**
+- [x] **Step 2: Update `handleSubmit` FormData and reset**
   In `handleSubmit`:
   - `formData.set("isPrompt", isPrompt ? "on" : "off");`
   - `formData.set("isIdea", isIdea ? "on" : "off");`
   - On reset, `setIsPrompt(false); setIsIdea(false);`.
-- [ ] **Step 3: Render 4 Category Cards in responsive grid**
+- [x] **Step 3: Render 4 Category Cards in responsive grid**
   Update the category container to `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3`:
   - 1. Ação Técnica: `Cog`, Amber (`#f59e0b`), "Demanda técnica / dev"
   - 2. Implementação: `Rocket`, Blue (`#3b82f6`), "Novas features / setup"
   - 3. Prompt: `Sparkles`, Emerald (`#10b981`), "Engenharia / Ajuste de prompt de IA"
   - 4. Ideia: `Lightbulb`, Violet (`#8b5cf6`), "Sugestão de melhoria / Inovação"
-- [ ] **Step 4: Verify build with `npx vite build`**
+- [x] **Step 4: Verify build with `npx vite build`**
   Confirm zero TypeScript or compilation errors.
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
   `git add src/components/WorkLogForm.tsx && git commit -m "feat(worklogs): add Prompt and Idea category cards to WorkLogForm"`
 
 ---
@@ -86,18 +86,18 @@
 - Modify: `src/components/dashboard/TechnicianKanbanBoard.tsx:230-265, 330-360`
 - Modify: `src/components/dashboard/WorkLogDetailContent.tsx:75-90, 900-925`
 
-- [ ] **Step 1: Update `ReportCardMinimized.tsx` badge rendering**
+- [x] **Step 1: Update `ReportCardMinimized.tsx` badge rendering**
   Update `getFooterConfig` to handle `isPrompt` and `isIdea`:
   - If `isPrompt`: badge with emerald styling.
   - If `isIdea`: badge with violet styling.
   - Multi-tag label combinations (e.g. "Prompt · Ideia", "Ação Técnica · Prompt").
-- [ ] **Step 2: Update `TechnicianKanbanBoard.tsx` filters and totalizers**
+- [x] **Step 2: Update `TechnicianKanbanBoard.tsx` filters and totalizers**
   Add filter options for "Prompt" and "Ideia" in `filterType`, and add metric count indicators for `promptCount` and `ideaCount`.
-- [ ] **Step 3: Update `WorkLogDetailContent.tsx`**
+- [x] **Step 3: Update `WorkLogDetailContent.tsx`**
   Render badges for `isPrompt` (Emerald chip with `Sparkles`) and `isIdea` (Violet chip with `Lightbulb`) in the worklog detail header.
-- [ ] **Step 4: Verify build with `npx vite build`**
+- [x] **Step 4: Verify build with `npx vite build`**
   Confirm zero TypeScript or compilation errors.
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
   `git add src/components/ReportCardMinimized.tsx src/components/dashboard/TechnicianKanbanBoard.tsx src/components/dashboard/WorkLogDetailContent.tsx && git commit -m "feat(kanban): add badges and filters for Prompt and Idea categories"`
 
 ---
@@ -108,11 +108,11 @@
 - Modify: `scripts/test-worklog-prompt-idea-backend.ts`
 - Modify: `docs/superpowers/plans/2026-11-19-worklog-prompt-and-idea-categories.md`
 
-- [ ] **Step 1: Execute full backend test suite**
+- [x] **Step 1: Execute full backend test suite**
   Run `npx tsx scripts/test-worklog-prompt-idea-backend.ts` and verify 100% pass rate.
-- [ ] **Step 2: Execute regression tests**
+- [x] **Step 2: Execute regression tests**
   Run `npx tsx scripts/test-worklog-client-combobox.ts` and `npx tsx scripts/test-client-manager-feature.ts`.
-- [ ] **Step 3: Run production build check**
+- [x] **Step 3: Run production build check**
   Run `npx vite build` and ensure clean output.
-- [ ] **Step 4: Mark plan complete and commit**
+- [x] **Step 4: Mark plan complete and commit**
   Update all checkboxes in `docs/superpowers/plans/2026-11-19-worklog-prompt-and-idea-categories.md` to `[x]` and commit.
