@@ -13,6 +13,8 @@ export interface ReportCardMinimizedLog {
   createdAt: Date | string;
   technicalAction?: boolean;
   implementation?: boolean;
+  isPrompt?: boolean;
+  isIdea?: boolean;
   media?: string;
   userId?: string;
   user?: {
@@ -140,28 +142,62 @@ interface FooterConfig {
   badgeClass: string;
 }
 
-function getFooterConfig(technicalAction?: boolean, implementation?: boolean): FooterConfig {
-  if (technicalAction && implementation) {
+function getFooterConfig(
+  technicalAction?: boolean,
+  implementation?: boolean,
+  isPrompt?: boolean,
+  isIdea?: boolean
+): FooterConfig {
+  const parts: string[] = [];
+  if (technicalAction) parts.push("Ação Técnica");
+  if (implementation) parts.push("Implementação");
+  if (isPrompt) parts.push("Prompt");
+  if (isIdea) parts.push("Ideia");
+
+  if (parts.length > 1) {
     return {
-      label: "Ação Técnica · Implementação",
-      badgeClass: "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/80",
+      label: parts.join(" · "),
+      badgeClass:
+        "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/80",
     };
   }
+
   if (technicalAction) {
     return {
       label: "Ação Técnica",
-      badgeClass: "bg-orange-50 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border-orange-200/80 dark:border-orange-800/80",
+      badgeClass:
+        "bg-orange-50 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border-orange-200/80 dark:border-orange-800/80",
     };
   }
+
   if (implementation) {
     return {
       label: "Implementação",
-      badgeClass: "bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/80",
+      badgeClass:
+        "bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/80",
     };
   }
+
+  if (isPrompt) {
+    return {
+      label: "Prompt",
+      badgeClass:
+        "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/80",
+    };
+  }
+
+  if (isIdea) {
+    return {
+      label: "Ideia",
+      badgeClass:
+        "bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-300 border-violet-200/80 dark:border-violet-800/80",
+    };
+  }
+
   return {
     label: "Atendimento",
-    badgeClass: "bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/80",
+    badgeClass:
+      "bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/80",
   };
 }
 
@@ -229,7 +265,12 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
   dataCardId,
 }) => {
   const statusPill = getStatusPill(log.status);
-  const footerConfig = getFooterConfig(log.technicalAction, log.implementation);
+  const footerConfig = getFooterConfig(
+    log.technicalAction,
+    log.implementation,
+    log.isPrompt,
+    log.isIdea
+  );
   const formattedDate = formatDate(log.createdAt);
 
   const assignedName = log.assignedTo?.name;

@@ -76,6 +76,8 @@ export interface WorkLogDetailData {
   status: string;
   technicalAction?: boolean;
   implementation?: boolean;
+  isPrompt?: boolean;
+  isIdea?: boolean;
   media?: string | null;
   userId?: string;
   tagId?: string | null;
@@ -915,6 +917,20 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-purple-50 dark:purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 shrink-0">
                   <Lightbulb size={11} />
                   Implementação
+                </span>
+              )}
+
+              {log.isPrompt && (
+                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 shrink-0">
+                  <Sparkles size={11} />
+                  Prompt
+                </span>
+              )}
+
+              {log.isIdea && (
+                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-300 border border-violet-200/80 dark:border-violet-800 shrink-0">
+                  <Lightbulb size={11} />
+                  Ideia
                 </span>
               )}
             </div>

@@ -21,6 +21,8 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
             clientOrOffice: true,
             technicalAction: true,
             implementation: true,
+            isPrompt: true,
+            isIdea: true,
             status: true,
           },
         },
