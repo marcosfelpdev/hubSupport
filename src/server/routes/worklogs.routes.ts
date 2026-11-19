@@ -5,7 +5,7 @@ import fs from "fs/promises";
 import fsSync from "fs";
 import { prisma } from "../../lib/prisma";
 import { uploadFileFromDisk, uploadBuffer, fileExists, deleteFile } from "../services/r2Storage";
-import { authenticateToken, requireTechnicianOrAdmin, requireTechnicianManagerOrAdmin, requireAdmin } from "../auth";
+import { authenticateToken, requireTechnicianOrAdmin, requireAdmin } from "../auth";
 import { processAiReportJob } from "../../lib/report-processor";
 
 const router = Router();
@@ -669,7 +669,6 @@ router.post(
 router.patch(
   "/:id/resolve",
   authenticateToken,
-  requireTechnicianOrAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
@@ -680,6 +679,14 @@ router.patch(
 
       if (!existing) {
         res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      // REGRA: Apenas o usuário que inicialmente criou o relatório pode validar e aprovar a solução
+      if (existing.userId !== req.user!.id) {
+        res.status(403).json({
+          error: "Apenas o usuário que inicialmente criou o relatório pode validar e aprovar a solução.",
+        });
         return;
       }
 
@@ -886,7 +893,6 @@ router.post(
 router.patch(
   "/:id/assign",
   authenticateToken,
-  requireTechnicianManagerOrAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
@@ -979,10 +985,17 @@ router.patch(
         targetNorm === "concluído" ||
         targetNorm === "concluido";
 
-      // 1. REGRA: Tentativa de finalização direta sem passar por validação prévia
-      if (isToFinished && !isFromValidation) {
-        // Redireciona para validação para homologação obrigatória
-        newStatus = "Validação";
+      // 1. REGRA: Tentativa de finalização (apenas o criador pode concluir e somente a partir de Validação)
+      if (isToFinished) {
+        if (!isFromValidation) {
+          // Redireciona para validação para homologação obrigatória
+          newStatus = "Validação";
+        } else if (existing.userId !== req.user!.id) {
+          res.status(403).json({
+            error: "Apenas o usuário que inicialmente criou o relatório pode validar e concluir o atendimento.",
+          });
+          return;
+        }
       }
 
       // 2. REGRA: Recuo da coluna de Validação para trás exige justificativa obrigatória

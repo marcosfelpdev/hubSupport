@@ -365,10 +365,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
     const currentUserRole = currentUser?.role?.toUpperCase();
   const isAdmin = currentUserRole === "ADMIN";
   const canDelete = currentUserRole === "ADMIN" || currentUserRole === "TECHNICIAN";
-  const canAssign =
-    currentUserRole === "ADMIN" ||
-    currentUserRole === "MANAGER" ||
-    currentUserRole === "TECHNICIAN";
+  const canAssign = !!currentUser;
 
   // Estados para exclusão administrativa
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -439,6 +436,11 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   const [newNoteContent, setNewNoteContent] = useState<string>("");
   const [isSubmittingNote, setIsSubmittingNote] = useState<boolean>(false);
   const [noteError, setNoteError] = useState<string | null>(null);
+
+  // Verificação de autoria: apenas quem criou o relatório pode validá-lo e marcá-lo como concluído
+  const creatorId = currentLog.userId || log.userId;
+  const isCreator = !!(currentUser?.id && creatorId === currentUser.id);
+  const creatorName = currentLog.user?.name || log.user?.name || "autor original";
 
   // Estados locais para atribuição de responsável técnico
   const [currentAssignee, setCurrentAssignee] = useState(log.assignedTo || null);
@@ -589,6 +591,13 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
     const normNew = (newStatus || "").toLowerCase().trim();
 
     if (normCurrent === normNew) {
+      return;
+    }
+
+    if (normNew === "solucionado" && !isCreator) {
+      setStatusError(
+        `Apenas o usuário que inicialmente criou o relatório (${creatorName}) pode validar e marcar como Solucionado.`
+      );
       return;
     }
 
@@ -760,10 +769,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
     );
   }, [currentStatus]);
 
-  const canApproveOrRejectValidation =
-    currentUserRole === "ADMIN" ||
-    currentUserRole === "TECHNICIAN" ||
-    currentUserRole === "MANAGER";
+  const canApproveOrRejectValidation = !!currentUser;
 
   const statusPill = useMemo(() => getStatusPill(currentStatus), [currentStatus]);
   const hasPdf = !!currentAiReport?.pdfPath;
@@ -1389,9 +1395,17 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 <button
                   type="button"
                   onClick={handleApproveSolution}
-                  disabled={isValidatingAction || isUpdatingStatus}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 shadow-xs hover:shadow transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-wait"
-                  title="Aprovar a solução e marcar este chamado como Solucionado"
+                  disabled={!isCreator || isValidatingAction || isUpdatingStatus}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-all ${
+                    isCreator
+                      ? "text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 hover:shadow cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-wait"
+                      : "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 cursor-not-allowed opacity-60"
+                  }`}
+                  title={
+                    isCreator
+                      ? "Aprovar a solução e marcar este chamado como Solucionado"
+                      : `Apenas o autor original (${creatorName}) pode aprovar e concluir este atendimento.`
+                  }
                 >
                   {isValidatingAction ? (
                     <Loader2 size={13} className="animate-spin text-white shrink-0" />
@@ -1403,6 +1417,15 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
               </div>
             )}
           </div>
+
+          {!isCreator && (
+            <div className="mt-2.5 pt-2 border-t border-purple-200/60 dark:border-purple-900/60 flex items-center gap-1.5 text-xs text-purple-800 dark:text-purple-300">
+              <span className="font-semibold">🔒 Validação Restrita:</span>
+              <span>
+                Apenas o usuário que inicialmente criou o relatório (<strong>{creatorName}</strong>) pode aprovar a solução e marcar como concluído.
+              </span>
+            </div>
+          )}
 
           {validationActionError && (
             <div className="mt-2 text-xs text-rose-700 dark:text-rose-300 font-medium">

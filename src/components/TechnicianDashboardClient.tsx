@@ -133,6 +133,7 @@ function getMediaPaths(log: TechnicalWorkLog): string[] {
 
 export default function TechnicianDashboardClient({
   logs: initialLogs,
+  currentUserId,
   employees,
   onLogResolved,
   onRefresh,
@@ -415,19 +416,35 @@ export default function TechnicianDashboardClient({
                           <span>Solucionado</span>
                         </div>
                       ) : (
-                        <button
-                          id="btn-solucionado"
-                          onClick={() => handleMarkSolved(selectedLog.id)}
-                          disabled={isPending}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isPending ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          ) : (
-                            <CheckCircle2 size={16} />
+                        <div className="flex flex-col items-end gap-1">
+                          <button
+                            id="btn-solucionado"
+                            onClick={() => handleMarkSolved(selectedLog.id)}
+                            disabled={isPending || selectedLog.userId !== currentUserId}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs shadow-xs transition-all ${
+                              selectedLog.userId === currentUserId
+                                ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white cursor-pointer active:scale-95 disabled:opacity-50"
+                                : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700 cursor-not-allowed opacity-60"
+                            }`}
+                            title={
+                              selectedLog.userId === currentUserId
+                                ? "Marcar como Solucionado"
+                                : "Apenas o usuário que inicialmente criou o relatório pode validar e solucionar o atendimento."
+                            }
+                          >
+                            {isPending ? (
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={16} />
+                            )}
+                            <span>Marcar como Solucionado</span>
+                          </button>
+                          {selectedLog.userId !== currentUserId && (
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                              🔒 Apenas o criador original pode validar este chamado
+                            </span>
                           )}
-                          <span>Marcar como Solucionado</span>
-                        </button>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -40,14 +40,7 @@ export default function App() {
             {/* Menu Atendimentos (registro e feed diário) */}
             <Route path="/dashboard/atendimentos" element={<DashboardPage />} />
             
-            <Route
-              path="/dashboard/tecnico"
-              element={
-                <ProtectedRoute allowedRoles={["TECHNICIAN", "ADMIN"]}>
-                  <TechnicianPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/dashboard/tecnico" element={<TechnicianPage />} />
 
             <Route
               path="/dashboard/funcionarios"
