@@ -228,10 +228,10 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
   const DEFAULT_CATEGORIES: WorkLogCategoryItem[] = useMemo(
     () => [
-      { id: "technical_action", name: "Ação Técnica", slug: "technical_action", color: "#0284c7", icon: "cog", targetKanban: true, lockStatus: false, active: true },
-      { id: "implementation", name: "Implementação", slug: "implementation", color: "#8b5cf6", icon: "rocket", targetKanban: true, lockStatus: false, active: true },
-      { id: "prompt", name: "Prompt", slug: "prompt", color: "#10b981", icon: "sparkles", targetKanban: true, lockStatus: false, active: true },
-      { id: "idea", name: "Ideia", slug: "idea", color: "#7c3aed", icon: "lightbulb", targetKanban: true, lockStatus: false, active: true },
+      { id: "technical_action", name: "Ação Técnica", slug: "technical_action", color: "#0284c7", icon: "cog", targetKanban: true, lockStatus: false, active: true, order: 1, createdAt: "", updatedAt: "" },
+      { id: "implementation", name: "Implementação", slug: "implementation", color: "#8b5cf6", icon: "rocket", targetKanban: true, lockStatus: false, active: true, order: 2, createdAt: "", updatedAt: "" },
+      { id: "prompt", name: "Prompt", slug: "prompt", color: "#10b981", icon: "sparkles", targetKanban: true, lockStatus: false, active: true, order: 3, createdAt: "", updatedAt: "" },
+      { id: "idea", name: "Ideia", slug: "idea", color: "#7c3aed", icon: "lightbulb", targetKanban: true, lockStatus: false, active: true, order: 4, createdAt: "", updatedAt: "" },
     ],
     []
   );

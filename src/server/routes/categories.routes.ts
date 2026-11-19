@@ -40,7 +40,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
 // GET /api/categories/:id - Detalhes de uma categoria
 router.get("/:id", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const category = await prisma.workLogCategory.findUnique({
       where: { id },
       include: {
@@ -133,7 +133,7 @@ router.post("/", authenticateToken, requireAdmin, async (req: Request, res: Resp
 // PUT /api/categories/:id - Atualização de categoria (Apenas ADMIN)
 router.put("/:id", authenticateToken, requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const {
       name,
       subtitle,
@@ -196,7 +196,7 @@ router.put("/:id", authenticateToken, requireAdmin, async (req: Request, res: Re
 // DELETE /api/categories/:id - Exclusão de categoria (Apenas ADMIN)
 router.delete("/:id", authenticateToken, requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const existing = await prisma.workLogCategory.findUnique({
       where: { id },
