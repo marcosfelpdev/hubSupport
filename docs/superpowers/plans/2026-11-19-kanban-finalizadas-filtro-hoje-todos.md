@@ -12,15 +12,15 @@
 
 ### Task 1: Lógica de Filtragem e Teste Automatizado
 
-- [ ] **Step 1:** Criar o script de teste `scripts/test-kanban-finished-filter.ts` cobrindo cenários:
+- [x] **Step 1:** Criar o script de teste `scripts/test-kanban-finished-filter.ts` cobrindo cenários:
   1. Card com `statusHistory` indicando finalização hoje.
   2. Card com `statusHistory` indicando finalização em data anterior (ontem).
   3. Card sem `statusHistory` com `updatedAt` hoje.
   4. Card sem `statusHistory` com `updatedAt` anterior.
   5. Múltiplas transições no histórico (pegando a mais recente com `toStatus === "Solucionado"`).
-- [ ] **Step 2:** Executar o teste com `npx tsx scripts/test-kanban-finished-filter.ts` e confirmar que falha (ou roda com a lógica importada).
-- [ ] **Step 3:** Implementar e exportar a função `isFinalizedToday(log: WorkLogItem): boolean` em `src/components/dashboard/TechnicianKanbanBoard.tsx`.
-- [ ] **Step 4:** Re-executar o script de teste e confirmar que todos os cenários passam.
+- [x] **Step 2:** Executar o teste com `npx tsx scripts/test-kanban-finished-filter.ts` e confirmar que falha (ou roda com a lógica importada).
+- [x] **Step 3:** Implementar e exportar a função `isFinalizedToday(log: WorkLogItem): boolean` em `src/components/dashboard/TechnicianKanbanBoard.tsx`.
+- [x] **Step 4:** Re-executar o script de teste e confirmar que todos os cenários passam.
 
 ---
 
