@@ -1,7 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
-  Cog,
-  Lightbulb,
   Search,
   CheckCircle2,
   Clock,
@@ -9,10 +7,9 @@ import {
   Inbox,
   X,
   ShieldCheck,
-  Sparkles,
-  Rocket,
 } from "lucide-react";
-import { WorkLogItem, api } from "@/services/api";
+import { WorkLogItem, WorkLogCategoryItem, api } from "@/services/api";
+import { getCategoryIconComponent } from "@/components/CategoryIconPicker";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
 
@@ -144,9 +141,18 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<"" | "technical" | "implementation" | "prompt" | "idea">("");
+  const [filterType, setFilterType] = useState<string>("");
   const [filterAuthor, setFilterAuthor] = useState("");
   const [filterTag, setFilterTag] = useState("");
+  const [categories, setCategories] = useState<WorkLogCategoryItem[]>([]);
+
+  // Carrega categorias ativas para os filtros dinâmicos
+  useEffect(() => {
+    api.categories
+      .getAll()
+      .then((cats) => setCategories(cats.filter((c) => c.active)))
+      .catch((err) => console.error("[Kanban] Erro ao buscar categorias:", err));
+  }, []);
 
   // Sincroniza quando initialLogs mudar
   useEffect(() => {
@@ -220,6 +226,18 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
     return list;
   }, [logs]);
 
+  const DEFAULT_CATEGORIES: WorkLogCategoryItem[] = useMemo(
+    () => [
+      { id: "technical_action", name: "Ação Técnica", slug: "technical_action", color: "#0284c7", icon: "cog", targetKanban: true, lockStatus: false, active: true },
+      { id: "implementation", name: "Implementação", slug: "implementation", color: "#8b5cf6", icon: "rocket", targetKanban: true, lockStatus: false, active: true },
+      { id: "prompt", name: "Prompt", slug: "prompt", color: "#10b981", icon: "sparkles", targetKanban: true, lockStatus: false, active: true },
+      { id: "idea", name: "Ideia", slug: "idea", color: "#7c3aed", icon: "lightbulb", targetKanban: true, lockStatus: false, active: true },
+    ],
+    []
+  );
+
+  const displayedCategories = categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+
   // Filtragem dos logs
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
@@ -234,33 +252,58 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
           (log.tag?.name && log.tag.name.toLowerCase().includes(query));
         if (!matchesQuery) return false;
       }
-      if (filterType === "technical" && !log.technicalAction) return false;
-      if (filterType === "implementation" && !log.implementation) return false;
-      if (filterType === "prompt" && !log.isPrompt) return false;
-      if (filterType === "idea" && !log.isIdea) return false;
+      if (filterType) {
+        const isCatMatch =
+          log.category?.id === filterType ||
+          log.category?.slug === filterType ||
+          log.categoryId === filterType;
+        const isLegacyMatch =
+          (filterType === "technical_action" && log.technicalAction) ||
+          (filterType === "technical" && log.technicalAction) ||
+          (filterType === "implementation" && log.implementation) ||
+          (filterType === "prompt" && log.isPrompt) ||
+          (filterType === "idea" && log.isIdea);
+        if (!isCatMatch && !isLegacyMatch) return false;
+      }
       if (filterAuthor && log.user?.name !== filterAuthor) return false;
       if (filterTag && log.tag?.name !== filterTag) return false;
       return true;
     });
   }, [logs, searchTerm, filterType, filterAuthor, filterTag]);
 
-  // Contagens para o totalizador métrico
-  const technicalCount = useMemo(
-    () => filteredLogs.filter((l) => l.technicalAction).length,
-    [filteredLogs]
-  );
-  const implementationCount = useMemo(
-    () => filteredLogs.filter((l) => l.implementation).length,
-    [filteredLogs]
-  );
-  const promptCount = useMemo(
-    () => filteredLogs.filter((l) => l.isPrompt).length,
-    [filteredLogs]
-  );
-  const ideaCount = useMemo(
-    () => filteredLogs.filter((l) => l.isIdea).length,
-    [filteredLogs]
-  );
+  // Contagens dinâmicas por categoria baseadas na busca e filtros gerais (exceto filterType)
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const cat of displayedCategories) {
+      counts[cat.id] = logs.filter((log) => {
+        if (searchTerm) {
+          const query = searchTerm.toLowerCase();
+          const matchesQuery =
+            (log.title && log.title.toLowerCase().includes(query)) ||
+            log.requester.toLowerCase().includes(query) ||
+            log.clientOrOffice.toLowerCase().includes(query) ||
+            log.reportedProblem.toLowerCase().includes(query) ||
+            (log.user?.name && log.user.name.toLowerCase().includes(query)) ||
+            (log.tag?.name && log.tag.name.toLowerCase().includes(query));
+          if (!matchesQuery) return false;
+        }
+        if (filterAuthor && log.user?.name !== filterAuthor) return false;
+        if (filterTag && log.tag?.name !== filterTag) return false;
+
+        const isCatMatch =
+          log.category?.id === cat.id ||
+          log.category?.slug === cat.slug ||
+          log.categoryId === cat.id;
+        const isLegacyMatch =
+          (cat.slug === "technical_action" && log.technicalAction) ||
+          (cat.slug === "implementation" && log.implementation) ||
+          (cat.slug === "prompt" && log.isPrompt) ||
+          (cat.slug === "idea" && log.isIdea);
+        return isCatMatch || isLegacyMatch;
+      }).length;
+    }
+    return counts;
+  }, [displayedCategories, logs, searchTerm, filterAuthor, filterTag]);
 
   const hasActiveFilters = Boolean(searchTerm || filterType || filterAuthor || filterTag);
 
@@ -393,17 +436,18 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               />
             </div>
 
-            {/* Dropdown: Tipo */}
+            {/* Dropdown: Tipo Dinâmico */}
             <select
               className="bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-xs rounded-xl px-3.5 py-2 cursor-pointer focus:outline-none focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 transition-all shadow-xs"
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value as "" | "technical" | "implementation" | "prompt" | "idea")}
+              onChange={(e) => setFilterType(e.target.value)}
             >
               <option value="">Todos os tipos</option>
-              <option value="technical">Ação Técnica</option>
-              <option value="implementation">Implementação</option>
-              <option value="prompt">Prompt</option>
-              <option value="idea">Ideia</option>
+              {displayedCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
 
             {/* Dropdown: Tag */}
@@ -455,65 +499,46 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               <strong className="text-slate-900 dark:text-white font-bold">{filteredLogs.length}</strong>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setFilterType(filterType === "technical" ? "" : "technical")}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
-                filterType === "technical"
-                  ? "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800 ring-1 ring-sky-300 dark:ring-sky-800"
-                  : "bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-300"
-              }`}
-              title="Filtrar por Ação Técnica"
-            >
-              <Cog size={13} className={filterType === "technical" ? "text-sky-600 dark:text-sky-400" : "text-slate-400 dark:text-slate-500"} />
-              <span>Ação Técnica:</span>
-              <strong className="font-bold">{technicalCount}</strong>
-            </button>
+            {displayedCategories.map((cat) => {
+              const IconComp = getCategoryIconComponent(cat.icon);
+              const isSelected =
+                filterType === cat.id ||
+                filterType === cat.slug ||
+                (cat.slug === "technical_action" && filterType === "technical");
+              const count = categoryCounts[cat.id] ?? 0;
 
-            <button
-              type="button"
-              onClick={() => setFilterType(filterType === "implementation" ? "" : "implementation")}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
-                filterType === "implementation"
-                  ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800 ring-1 ring-purple-300 dark:ring-purple-800"
-                  : "bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-300"
-              }`}
-              title="Filtrar por Implementação"
-            >
-              <Rocket size={13} className={filterType === "implementation" ? "text-purple-600 dark:text-purple-400" : "text-slate-400 dark:text-slate-500"} />
-              <span>Implementação:</span>
-              <strong className="font-bold">{implementationCount}</strong>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterType(filterType === "prompt" ? "" : "prompt")}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
-                filterType === "prompt"
-                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-300 dark:ring-emerald-800"
-                  : "bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-300"
-              }`}
-              title="Filtrar por Prompt"
-            >
-              <Sparkles size={13} className={filterType === "prompt" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"} />
-              <span>Prompt:</span>
-              <strong className="font-bold">{promptCount}</strong>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterType(filterType === "idea" ? "" : "idea")}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
-                filterType === "idea"
-                  ? "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-300 dark:border-violet-800 ring-1 ring-violet-300 dark:ring-violet-800"
-                  : "bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-300"
-              }`}
-              title="Filtrar por Ideia"
-            >
-              <Lightbulb size={13} className={filterType === "idea" ? "text-violet-600 dark:text-violet-400" : "text-slate-400 dark:text-slate-500"} />
-              <span>Ideia:</span>
-              <strong className="font-bold">{ideaCount}</strong>
-            </button>
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setFilterType(isSelected ? "" : cat.id)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                    isSelected
+                      ? "ring-1"
+                      : "bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-300"
+                  }`}
+                  style={
+                    isSelected
+                      ? {
+                          backgroundColor: `${cat.color}15`,
+                          color: cat.color,
+                          borderColor: cat.color,
+                          boxShadow: `0 0 0 1px ${cat.color}40`,
+                        }
+                      : undefined
+                  }
+                  title={`Filtrar por ${cat.name}`}
+                >
+                  <IconComp
+                    size={13}
+                    style={{ color: isSelected ? cat.color : undefined }}
+                    className={isSelected ? "" : "text-slate-400 dark:text-slate-500"}
+                  />
+                  <span>{cat.name}:</span>
+                  <strong className="font-bold">{count}</strong>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

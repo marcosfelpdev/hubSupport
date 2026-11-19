@@ -25,7 +25,7 @@ import {
 export interface IconOption {
   key: string;
   label: string;
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties; size?: number }>;
 }
 
 export const AVAILABLE_ICONS: IconOption[] = [
@@ -51,7 +51,7 @@ export const AVAILABLE_ICONS: IconOption[] = [
   { key: "check-circle", label: "Sucesso", icon: CheckCircle },
 ];
 
-export function getCategoryIconComponent(iconKey?: string): React.ComponentType<{ className?: string; style?: React.CSSProperties }> {
+export function getCategoryIconComponent(iconKey?: string): React.ComponentType<{ className?: string; style?: React.CSSProperties; size?: number }> {
   if (!iconKey) return Cog;
   const match = AVAILABLE_ICONS.find((item) => item.key.toLowerCase() === iconKey.toLowerCase());
   return match ? match.icon : Cog;
