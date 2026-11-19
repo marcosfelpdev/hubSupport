@@ -26,6 +26,7 @@ model User {
   statusChanges    WorkLogStatusHistory[]
   assignedWorkLogs WorkLog[]              @relation("AssignedWorkLogs")
   managedClients   Client[]               @relation("ClientManager")
+  workLogNotes     WorkLogNote[]
 }
 
 model Tag {
@@ -83,6 +84,8 @@ model WorkLog {
   assignedTo      User?                  @relation("AssignedWorkLogs", fields: [assignedToId], references: [id], onDelete: SetNull)
   clientId        String?
   client          Client?                @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  hasValidationRejection Boolean       @default(false)
+  notes           WorkLogNote[]
 }
 
 model Notification {
@@ -153,4 +156,16 @@ model Client {
   updatedAt DateTime      @updatedAt
   workLogs  WorkLog[]
   events    AgendaEvent[]
+}
+
+model WorkLogNote {
+  id        String   @id @default(cuid())
+  workLogId String
+  workLog   WorkLog  @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  type      String   @default("general") // "general" | "rejection"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
