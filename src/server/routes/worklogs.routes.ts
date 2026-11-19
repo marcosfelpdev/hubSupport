@@ -76,18 +76,44 @@ const upload = multer({
   },
 });
 
+// GET /api/worklogs/kanban
+router.get("/kanban", authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const logs = await prisma.workLog.findMany({
+      where: {
+        OR: [
+          { technicalAction: true },
+          { implementation: true },
+          { isPrompt: true },
+          { isIdea: true },
+        ],
+      },
+      include: defaultWorkLogInclude,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    res.json(logs);
+  } catch (error) {
+    console.error("[WorkLogs] Erro ao buscar atendimentos do kanban:", error);
+    res.status(500).json({ error: "Erro ao buscar atendimentos do kanban." });
+  }
+});
+
 // GET /api/worklogs
 router.get("/", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
     const type = req.query.type as string;
 
-    if (type === "technical") {
+    if (type === "technical" || type === "kanban") {
       const logs = await prisma.workLog.findMany({
         where: {
-          OR: [{ technicalAction: true }, { implementation: true }],
-          user: {
-            role: { not: "TECHNICIAN" },
-          },
+          OR: [
+            { technicalAction: true },
+            { implementation: true },
+            { isPrompt: true },
+            { isIdea: true },
+          ],
         },
         include: defaultWorkLogInclude,
         orderBy: {
@@ -199,7 +225,16 @@ router.get("/dashboard-summary", authenticateToken, async (req: Request, res: Re
       prisma.workLog.count(),
       prisma.workLog.count({ where: { status: "Solucionado" } }),
       prisma.workLog.count({ where: { createdAt: { gte: today, lt: tomorrow } } }),
-      prisma.workLog.count({ where: { OR: [{ technicalAction: true }, { implementation: true }] } }),
+      prisma.workLog.count({
+        where: {
+          OR: [
+            { technicalAction: true },
+            { implementation: true },
+            { isPrompt: true },
+            { isIdea: true },
+          ],
+        },
+      }),
     ]);
 
     res.json({
@@ -277,6 +312,8 @@ router.post(
         status = "Realizado",
         technicalAction,
         implementation,
+        isPrompt,
+        isIdea,
         tagId,
         clientId,
       } = req.body;
@@ -440,10 +477,16 @@ router.post(
         technicalAction === "on" || technicalAction === "true" || technicalAction === true;
       const isImplementation =
         implementation === "on" || implementation === "true" || implementation === true;
+      const isPromptBool =
+        isPrompt === "on" || isPrompt === "true" || isPrompt === true;
+      const isIdeaBool =
+        isIdea === "on" || isIdea === "true" || isIdea === true;
+      const isBacklogDemand =
+        isTechnicalAction || isImplementation || isPromptBool || isIdeaBool;
 
-      // Se for ação técnica ou implementação, o chamado destina-se à equipe técnica
+      // Se for demanda técnica (ação técnica, implementação, prompt ou ideia), o chamado destina-se à equipe técnica
       // e deve obrigatoriamente iniciar na coluna "Backlog" do Kanban
-      const finalStatus = isTechnicalAction || isImplementation ? "Backlog" : status.trim();
+      const finalStatus = isBacklogDemand ? "Backlog" : status.trim();
 
       // Resolve clientId caso fornecido diretamente ou correspondente ao nome do cliente
       let resolvedClientId = clientId && typeof clientId === "string" && clientId.trim() ? clientId.trim() : null;
@@ -468,6 +511,8 @@ router.post(
           status: finalStatus,
           technicalAction: isTechnicalAction,
           implementation: isImplementation,
+          isPrompt: isPromptBool,
+          isIdea: isIdeaBool,
           media: JSON.stringify(mediaPaths),
           userId: user.id,
           tagId: cleanTagId,
@@ -512,8 +557,8 @@ router.post(
         });
       });
 
-      // Se ação técnica/implementação, cria notificação para os técnicos
-      if (isTechnicalAction || isImplementation) {
+      // Se for demanda técnica (ação técnica, implementação, prompt ou ideia), cria notificação para os técnicos
+      if (isBacklogDemand) {
         const technicians = await prisma.user.findMany({
           where: {
             role: "TECHNICIAN",
@@ -523,12 +568,12 @@ router.post(
         });
 
         if (technicians.length > 0) {
-          const typeLabel =
-            isTechnicalAction && isImplementation
-              ? "Ação Técnica & Implementação"
-              : isTechnicalAction
-              ? "Ação Técnica"
-              : "Implementação";
+          const activeLabels: string[] = [];
+          if (isTechnicalAction) activeLabels.push("Ação Técnica");
+          if (isImplementation) activeLabels.push("Implementação");
+          if (isPromptBool) activeLabels.push("Prompt");
+          if (isIdeaBool) activeLabels.push("Ideia");
+          const typeLabel = activeLabels.join(" · ") || "Demanda Técnica";
 
           await prisma.notification.createMany({
             data: technicians.map((tech) => ({

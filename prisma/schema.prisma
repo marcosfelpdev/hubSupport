@@ -48,6 +48,8 @@ model WorkLog {
   status          String                 @default("Realizado") // Realizado, Em andamento, Aguardando reunião, Não foi possível realizar, Solucionado
   technicalAction Boolean                @default(false) // Ação técnica (envio para equipe de programadores)
   implementation  Boolean                @default(false) // Implementação (sugestão de melhoria)
+  isPrompt        Boolean                @default(false) // Prompt (engenharia / ajuste de prompt de IA)
+  isIdea          Boolean                @default(false) // Ideia (sugestão de melhoria ou inovação)
   media           String                 @default("[]") @db.Text // JSON array de caminhos de arquivos anexados
   createdAt       DateTime               @default(now())
   userId          String
