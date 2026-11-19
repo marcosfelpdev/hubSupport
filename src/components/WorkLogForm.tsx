@@ -829,7 +829,7 @@ export default function WorkLogForm({
         </div>
 
         {/* Checklist: Categorias de Chamado (Ação Técnica, Implementação, Prompt, Ideia) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3.5 bg-slate-50/70 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50/70 dark:bg-[#0b0f19]/60 border border-slate-200 dark:border-slate-800 rounded-xl">
           {/* Card 1: Ação Técnica (Âmbar) */}
           <button
             type="button"
@@ -841,21 +841,21 @@ export default function WorkLogForm({
                 : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
             }`}
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
                   technicalAction ? "bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                 }`}
               >
                 <Cog className="w-4 h-4" />
               </div>
-              <div className="text-left">
+              <div className="text-left min-w-0">
                 <span className="block font-semibold text-xs text-slate-900 dark:text-white">Ação Técnica</span>
                 <span className="block text-[11px] text-slate-500 dark:text-slate-400">Demanda técnica / dev</span>
               </div>
             </div>
             <div
-              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
                 technicalAction
                   ? "bg-amber-500 border-amber-500 text-white"
                   : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
@@ -876,21 +876,21 @@ export default function WorkLogForm({
                 : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
             }`}
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
                   implementation ? "bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                 }`}
               >
                 <Rocket className="w-4 h-4" />
               </div>
-              <div className="text-left">
+              <div className="text-left min-w-0">
                 <span className="block font-semibold text-xs text-slate-900 dark:text-white">Implementação</span>
                 <span className="block text-[11px] text-slate-500 dark:text-slate-400">Novas features / setup</span>
               </div>
             </div>
             <div
-              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
                 implementation
                   ? "bg-blue-500 border-blue-500 text-white"
                   : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
@@ -911,9 +911,9 @@ export default function WorkLogForm({
                 : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
             }`}
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
                   isPrompt
                     ? "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300"
                     : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
@@ -921,13 +921,13 @@ export default function WorkLogForm({
               >
                 <Sparkles className="w-4 h-4" />
               </div>
-              <div className="text-left">
+              <div className="text-left min-w-0">
                 <span className="block font-semibold text-xs text-slate-900 dark:text-white">Prompt</span>
                 <span className="block text-[11px] text-slate-500 dark:text-slate-400">Engenharia / Ajuste de prompt de IA</span>
               </div>
             </div>
             <div
-              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
                 isPrompt
                   ? "bg-emerald-500 border-emerald-500 text-white"
                   : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
@@ -948,9 +948,9 @@ export default function WorkLogForm({
                 : "bg-white dark:bg-[#111726] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-[#161f33]"
             }`}
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0 ${
                   isIdea
                     ? "bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300"
                     : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
@@ -958,13 +958,13 @@ export default function WorkLogForm({
               >
                 <Lightbulb className="w-4 h-4" />
               </div>
-              <div className="text-left">
+              <div className="text-left min-w-0">
                 <span className="block font-semibold text-xs text-slate-900 dark:text-white">Ideia</span>
                 <span className="block text-[11px] text-slate-500 dark:text-slate-400">Sugestão de melhoria / Inovação</span>
               </div>
             </div>
             <div
-              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${
                 isIdea
                   ? "bg-violet-500 border-violet-500 text-white"
                   : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
