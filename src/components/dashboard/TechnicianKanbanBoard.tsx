@@ -10,6 +10,7 @@ import {
   X,
   ShieldCheck,
   Sparkles,
+  Rocket,
 } from "lucide-react";
 import { WorkLogItem, api } from "@/services/api";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
@@ -479,7 +480,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               }`}
               title="Filtrar por Implementação"
             >
-              <Lightbulb size={13} className={filterType === "implementation" ? "text-purple-600 dark:text-purple-400" : "text-slate-400 dark:text-slate-500"} />
+              <Rocket size={13} className={filterType === "implementation" ? "text-purple-600 dark:text-purple-400" : "text-slate-400 dark:text-slate-500"} />
               <span>Implementação:</span>
               <strong className="font-bold">{implementationCount}</strong>
             </button>

@@ -14,6 +14,7 @@ import {
   RotateCw,
   Cog,
   Lightbulb,
+  Rocket,
   ChevronDown,
   Check,
   History,
@@ -914,8 +915,8 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
               )}
 
               {log.implementation && (
-                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-purple-50 dark:purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 shrink-0">
-                  <Lightbulb size={11} />
+                <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 shrink-0">
+                  <Rocket size={11} />
                   Implementação
                 </span>
               )}
