@@ -184,6 +184,9 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   const [logs, setLogs] = useState<WorkLogItem[]>(initialLogs);
   const [selectedLogForModal, setSelectedLogForModal] = useState<WorkLogItem | null>(null);
 
+  // Filtro de Finalizadas (Hoje vs Todos)
+  const [finishedFilter, setFinishedFilter] = useState<"hoje" | "todos">("hoje");
+
   // Drag and Drop state
   const [draggingLogId, setDraggingLogId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<ColumnId | null>(null);
@@ -375,6 +378,11 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
     setFilterTag("");
   };
 
+  // Total geral de finalizadas sem o filtro diário (para uso no badge / tooltip)
+  const totalFinalizedCount = useMemo(() => {
+    return filteredLogs.filter((log) => getColumnForStatus(log.status) === "finalizadas").length;
+  }, [filteredLogs]);
+
   // Agrupamento por colunas
   const columnsData = useMemo(() => {
     const groups: Record<ColumnId, WorkLogItem[]> = {
@@ -387,11 +395,17 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
     filteredLogs.forEach((log) => {
       const colId = getColumnForStatus(log.status);
-      groups[colId].push(log);
+      if (colId === "finalizadas") {
+        if (finishedFilter === "todos" || isFinalizedToday(log)) {
+          groups.finalizadas.push(log);
+        }
+      } else {
+        groups[colId].push(log);
+      }
     });
 
     return groups;
-  }, [filteredLogs]);
+  }, [filteredLogs, finishedFilter]);
 
   // Handlers de Drag and Drop
   const handleDragStart = (logId: string, e: React.DragEvent) => {
@@ -699,25 +713,63 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               }`}
             >
               {/* Cabeçalho da Coluna */}
-              <div className="flex items-center justify-between p-3.5 pb-3 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              <div className="flex items-center justify-between p-3.5 pb-3 border-b border-slate-200/80 dark:border-slate-800 shrink-0 gap-1.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${col.dotColor}`} />
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
                     {col.title}
                   </span>
                   {col.isDefault && (
                     <span
                       title="Coluna padrão onde novos chamados técnicos e implementações são inseridos"
-                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0"
                     >
                       Padrão
                     </span>
                   )}
                 </div>
 
-                <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full px-2 py-0.5 text-xs font-semibold shadow-xs">
-                  {cardsInCol.length}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {col.id === "finalizadas" && (
+                    <div className="inline-flex items-center p-0.5 bg-slate-200/70 dark:bg-slate-800/80 rounded-lg text-[10px] font-semibold border border-slate-300/50 dark:border-slate-700/60 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => setFinishedFilter("hoje")}
+                        className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                          finishedFilter === "hoje"
+                            ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-2xs font-bold"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                        title="Exibir apenas relatórios finalizados hoje"
+                      >
+                        Hoje
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFinishedFilter("todos")}
+                        className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                          finishedFilter === "todos"
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                        title="Exibir todos os relatórios finalizados"
+                      >
+                        Todos
+                      </button>
+                    </div>
+                  )}
+
+                  <span
+                    className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full px-2 py-0.5 text-xs font-semibold shadow-xs"
+                    title={
+                      col.id === "finalizadas" && finishedFilter === "hoje"
+                        ? `${cardsInCol.length} finalizado(s) hoje de ${totalFinalizedCount} no total`
+                        : undefined
+                    }
+                  >
+                    {cardsInCol.length}
+                  </span>
+                </div>
               </div>
 
               {/* Slot / Feedback de Dropzone quando arrastando sobre */}
@@ -744,6 +796,10 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                         ? "Novos itens aparecerão aqui"
                         : col.id === "validacao"
                         ? "Aguardando validação da equipe ou solicitante"
+                        : col.id === "finalizadas"
+                        ? finishedFilter === "hoje" && totalFinalizedCount > 0
+                          ? `Nenhum chamado finalizado hoje (${totalFinalizedCount} no total). Alterne para 'Todos' para ver o histórico.`
+                          : "Chamados finalizados e aprovados aparecerão aqui"
                         : "Arraste um card para cá"}
                     </p>
                   </div>

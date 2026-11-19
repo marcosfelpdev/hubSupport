@@ -26,15 +26,15 @@
 
 ### Task 2: Implementação do Componente Visual do Toggle e Integração de Estado
 
-- [ ] **Step 1:** Adicionar o estado `finishedFilter: "hoje" | "todos"` com valor inicial `"hoje"` em `TechnicianKanbanBoard.tsx`.
-- [ ] **Step 2:** Atualizar a geração de `columnsData`:
+- [x] **Step 1:** Adicionar o estado `finishedFilter: "hoje" | "todos"` com valor inicial `"hoje"` em `TechnicianKanbanBoard.tsx`.
+- [x] **Step 2:** Atualizar a geração de `columnsData`:
   - Na coluna `finalizadas`, se `finishedFilter === "hoje"`, filtrar com `isFinalizedToday(log)`.
   - Guardar a contagem total de finalizadas para exibir no tooltip.
-- [ ] **Step 3:** Renderizar o controle segmentado no cabeçalho da coluna `finalizadas`:
+- [x] **Step 3:** Renderizar o controle segmentado no cabeçalho da coluna `finalizadas`:
   - Pílula compacta com botões `Hoje` e `Todos`.
   - Estilização Tailwind consistente com tema claro/escuro.
   - Tooltip no badge numérico informando o total geral quando em modo "Hoje".
-- [ ] **Step 4:** Verificar a compilação do TypeScript com `npx tsc --noEmit`.
+- [x] **Step 4:** Verificar a compilação do TypeScript com `npx tsc --noEmit`.
 
 ---
 

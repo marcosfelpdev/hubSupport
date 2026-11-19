@@ -192,6 +192,67 @@ async function runTests() {
     assert(isFinalizedToday(logCreatedAt) === true, "Deve retornar true por fallback de createdAt de hoje");
   }
 
+  // Cenário 9: Simulação da lógica da coluna Finalizadas com finishedFilter === 'hoje'
+  {
+    console.log("📋 Cenário 9: Agrupamento com finishedFilter === 'hoje'");
+    const logHoje = createMockLog({
+      id: "log-hoje",
+      status: "Solucionado",
+      updatedAt: todayIso,
+    });
+    const logOntem = createMockLog({
+      id: "log-ontem",
+      status: "Solucionado",
+      updatedAt: yesterdayIso,
+    });
+    const logBacklog = createMockLog({
+      id: "log-backlog",
+      status: "Backlog",
+      updatedAt: todayIso,
+    });
+
+    const mockFilteredLogs = [logHoje, logOntem, logBacklog];
+    const totalFinalizedCount = mockFilteredLogs.filter(
+      (l) => l.status.toLowerCase() === "solucionado"
+    ).length;
+
+    const finishedFilter = "hoje";
+    const finalizadasInCol = mockFilteredLogs.filter(
+      (l) =>
+        l.status.toLowerCase() === "solucionado" &&
+        (finishedFilter === "todos" || isFinalizedToday(l))
+    );
+
+    assert(totalFinalizedCount === 2, "totalFinalizedCount deve conter o total geral (2)");
+    assert(finalizadasInCol.length === 1, "finalizadasInCol com filtro 'hoje' deve conter apenas 1 card");
+    assert(finalizadasInCol[0].id === "log-hoje", "O card filtrado deve ser o finalizado hoje");
+  }
+
+  // Cenário 10: Simulação da lógica da coluna Finalizadas com finishedFilter === 'todos'
+  {
+    console.log("📋 Cenário 10: Agrupamento com finishedFilter === 'todos'");
+    const logHoje = createMockLog({
+      id: "log-hoje-2",
+      status: "Solucionado",
+      updatedAt: todayIso,
+    });
+    const logOntem = createMockLog({
+      id: "log-ontem-2",
+      status: "Solucionado",
+      updatedAt: yesterdayIso,
+    });
+
+    const mockFilteredLogs = [logHoje, logOntem];
+    const finishedFilter = "todos";
+    const finalizadasInCol = mockFilteredLogs.filter(
+      (l) =>
+        l.status.toLowerCase() === "solucionado" &&
+        (finishedFilter === "todos" || isFinalizedToday(l))
+    );
+
+    assert(finalizadasInCol.length === 2, "finalizadasInCol com filtro 'todos' deve conter todos os cards (2)");
+  }
+
   console.log("\n=================================");
   console.log(`📊 Resultado dos testes: ${passed} passaram, ${failed} falharam.`);
   console.log("=================================\n");
