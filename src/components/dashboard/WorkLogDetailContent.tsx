@@ -26,13 +26,19 @@ import {
   UserCheck,
   Trash2,
   ShieldCheck,
+  ShieldAlert,
   RotateCcw,
+  Pencil,
+  MessageSquare,
+  Send,
 } from "lucide-react";
-import { WorkLogItem, WorkLogStatusHistoryItem, EmployeeItem, api } from "@/services/api";
+import { WorkLogItem, WorkLogStatusHistoryItem, WorkLogNoteItem, EmployeeItem, api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import TagBadge from "@/components/TagBadge";
 import { getCategoryIconComponent } from "@/components/CategoryIconPicker";
 import { formatReportAsText, copyToClipboard } from "@/lib/report-formatter";
+import EditWorkLogModal from "@/components/dashboard/EditWorkLogModal";
+import ValidationRejectionModal from "@/components/dashboard/ValidationRejectionModal";
 
 export interface StructuredReportData {
   title?: string;
@@ -88,6 +94,8 @@ export interface WorkLogDetailData {
   implementation?: boolean;
   isPrompt?: boolean;
   isIdea?: boolean;
+  hasValidationRejection?: boolean;
+  notes?: WorkLogNoteItem[];
   media?: string | null;
   userId?: string;
   tagId?: string | null;
@@ -423,6 +431,15 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   const [statusError, setStatusError] = useState<string | null>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Estados locais para edição de relatório e notas
+  const [currentLog, setCurrentLog] = useState<WorkLogDetailData>(log);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isRejectionModalOpen, setIsRejectionModalOpen] = useState<boolean>(false);
+  const [notesList, setNotesList] = useState<WorkLogNoteItem[]>(log.notes || []);
+  const [newNoteContent, setNewNoteContent] = useState<string>("");
+  const [isSubmittingNote, setIsSubmittingNote] = useState<boolean>(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
+
   // Estados locais para atribuição de responsável técnico
   const [currentAssignee, setCurrentAssignee] = useState(log.assignedTo || null);
   const [employees, setEmployees] = useState<EmployeeItem[]>([]);
@@ -435,6 +452,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
 
   // Sincroniza estado quando o atendimento muda
   useEffect(() => {
+    setCurrentLog(log);
     setCurrentAiReport(log.aiReport ?? null);
     setGenerateFeedback(null);
     setRetryFeedback(null);
@@ -447,7 +465,12 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
     setAssignDropdownOpen(false);
     setEmployeeSearch("");
     setValidationActionError(null);
-  }, [log.id, log.status, log.statusHistory, log.aiReport, log.assignedTo]);
+    if (log.notes) {
+      setNotesList(log.notes);
+    } else {
+      api.worklogs.getNotes(log.id).then(setNotesList).catch(() => {});
+    }
+  }, [log.id, log.status, log.statusHistory, log.aiReport, log.assignedTo, log.notes]);
 
   // Carrega lista de funcionários para o dropdown de atribuição
   useEffect(() => {
@@ -617,15 +640,23 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
     }
   };
 
-  const handleRejectValidation = async () => {
+  const handleRejectValidation = () => {
+    setValidationActionError(null);
+    setIsRejectionModalOpen(true);
+  };
+
+  const handleConfirmDetailRejection = async (reason: string) => {
     setIsValidatingAction(true);
     setValidationActionError(null);
     try {
-      const res = await api.worklogs.updateStatus(log.id, "Em progresso");
+      const res = await api.worklogs.updateStatus(log.id, "Em progresso", reason);
       if (res.success) {
         setCurrentStatus(res.status || "Em progresso");
         if (res.history) {
           setCurrentHistory(res.history);
+        }
+        if (res.notes) {
+          setNotesList(res.notes);
         }
         onRefresh?.();
       } else {
@@ -636,8 +667,28 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
       setValidationActionError(
         err instanceof Error ? err.message : "Erro ao retornar chamado para Em progresso."
       );
+      throw err;
     } finally {
       setIsValidatingAction(false);
+    }
+  };
+
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newNoteContent.trim();
+    if (!clean) return;
+
+    try {
+      setIsSubmittingNote(true);
+      setNoteError(null);
+      const created = await api.worklogs.addNote(log.id, clean, "general");
+      setNotesList((prev) => [created, ...prev]);
+      setNewNoteContent("");
+    } catch (err) {
+      console.error("Erro ao adicionar nota:", err);
+      setNoteError(err instanceof Error ? err.message : "Erro ao adicionar nota.");
+    } finally {
+      setIsSubmittingNote(false);
     }
   };
 
@@ -833,7 +884,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
           <div className="min-w-0 flex-1">
             <div className="flex items-center flex-wrap gap-2 mb-1">
               <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug truncate max-w-full">
-                {log.title || log.clientOrOffice}
+                {currentLog.title || log.title || currentLog.clientOrOffice || log.clientOrOffice}
               </h3>
 
               {/* Seletor Interativo de Status com Dropdown */}
@@ -962,11 +1013,11 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
             </div>
 
             <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1">
-              {log.title && (
+              {(currentLog.title || log.title) && (
                 <span className="inline-flex items-center gap-1">
                   <span>Cliente:</span>
                   <strong className="text-slate-800 dark:text-slate-200 font-semibold">
-                    {log.clientOrOffice}
+                    {currentLog.clientOrOffice || log.clientOrOffice}
                   </strong>
                   <span className="text-slate-300 dark:text-slate-600 ml-1">•</span>
                 </span>
@@ -975,7 +1026,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
               <span className="inline-flex items-center gap-1">
                 <span>Solicitante:</span>
                 <strong className="text-slate-800 dark:text-slate-200 font-semibold">
-                  {log.requester}
+                  {currentLog.requester || log.requester}
                 </strong>
                 <span className="text-slate-300 dark:text-slate-600 ml-1">•</span>
               </span>
@@ -987,13 +1038,13 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 </span>
               </span>
 
-              {log.tag && (
+              {(currentLog.tag || log.tag) && (
                 <>
                   <span className="text-slate-300 dark:text-slate-600">•</span>
                   <span className="inline-flex items-center gap-1">
                     <span>Plataforma:</span>
-                    <strong style={{ color: log.tag.color }} className="font-semibold">
-                      {log.tag.name}
+                    <strong style={{ color: (currentLog.tag || log.tag)?.color }} className="font-semibold">
+                      {(currentLog.tag || log.tag)?.name}
                     </strong>
                   </span>
                 </>
@@ -1003,6 +1054,16 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
         </div>
 
         <div className="shrink-0 flex items-center gap-2 self-start sm:self-center">
+          <button
+            type="button"
+            id="btn-edit-worklog"
+            onClick={() => setIsEditModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
+            title="Editar dados deste atendimento"
+          >
+            <Pencil size={13} className="shrink-0 text-slate-500 dark:text-slate-400" />
+            <span>Editar</span>
+          </button>
           {canDelete && (
             <button
               type="button"
@@ -1354,7 +1415,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
       {/* 2. Grid de 2 Colunas Lado a Lado: Descrição & Solução */}
       <div
         className={`grid gap-3.5 ${
-          log.actionTaken && log.actionTaken.trim() !== ""
+          (currentLog.actionTaken || log.actionTaken) && (currentLog.actionTaken || log.actionTaken)!.trim() !== ""
             ? "grid-cols-1 md:grid-cols-2"
             : "grid-cols-1"
         }`}
@@ -1366,13 +1427,13 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
               Descrição do Atendimento
             </span>
             <p className="text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap break-words">
-              {log.reportedProblem}
+              {currentLog.reportedProblem || log.reportedProblem}
             </p>
           </div>
         </div>
 
         {/* Coluna 2: Solução / Ação Realizada (com ícone CheckCircle2 verde) */}
-        {log.actionTaken && log.actionTaken.trim() !== "" && (
+        {(currentLog.actionTaken || log.actionTaken) && (currentLog.actionTaken || log.actionTaken)!.trim() !== "" && (
           <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-emerald-200 dark:border-emerald-800/80 rounded-xl p-4 flex flex-col justify-between">
             <div>
               <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
@@ -1380,7 +1441,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 Solução / Ação Realizada
               </span>
               <p className="text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap break-words">
-                {log.actionTaken}
+                {currentLog.actionTaken || log.actionTaken}
               </p>
             </div>
           </div>
@@ -1868,6 +1929,121 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
         </div>
       )}
 
+      {/* Seção de Notas e Apontamentos */}
+      <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col gap-4">
+        {/* Cabeçalho da Seção de Notas */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800/80">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 shadow-2xs">
+              <MessageSquare size={14} />
+            </div>
+            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+              Notas e Apontamentos
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700/60">
+              {notesList.length}
+            </span>
+          </div>
+        </div>
+
+        {/* Formulário para adicionar nova nota */}
+        <form onSubmit={handleAddNote} className="flex flex-col gap-2">
+          <div className="relative">
+            <textarea
+              value={newNoteContent}
+              onChange={(e) => setNewNoteContent(e.target.value)}
+              placeholder="Adicionar nota ou observação sobre este atendimento..."
+              rows={2}
+              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all resize-none"
+              disabled={isSubmittingNote}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            {noteError ? (
+              <span className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                {noteError}
+              </span>
+            ) : (
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                Visível a todos os membros da equipe técnica e administradores
+              </span>
+            )}
+            <button
+              type="submit"
+              disabled={!newNoteContent.trim() || isSubmittingNote}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+            >
+              {isSubmittingNote ? (
+                <Loader2 size={13} className="animate-spin shrink-0" />
+              ) : (
+                <Send size={13} className="shrink-0" />
+              )}
+              <span>Adicionar Nota</span>
+            </button>
+          </div>
+        </form>
+
+        {/* Lista de Notas Existentes */}
+        <div className="flex flex-col gap-2.5 max-h-80 overflow-y-auto pr-1">
+          {notesList.length === 0 ? (
+            <div className="text-center py-4 px-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-xs">
+              Nenhuma nota ou apontamento registrado até o momento.
+            </div>
+          ) : (
+            notesList.map((note) => {
+              const isRejection = note.type === "rejection";
+              const roleCfg = getRoleBadge(note.user?.role);
+
+              return (
+                <div
+                  key={note.id}
+                  className={`p-3 rounded-xl border transition-all text-xs flex flex-col gap-1.5 ${
+                    isRejection
+                      ? "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200/90 dark:border-amber-900/50 text-amber-950 dark:text-amber-100"
+                      : "bg-white dark:bg-[#111726] border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 shadow-2xs"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] shrink-0 select-none ${getAvatarColorClass(
+                          note.user?.name || "Usuário"
+                        )}`}
+                      >
+                        {getInitials(note.user?.name || "U")}
+                      </div>
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {note.user?.name || "Usuário"}
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${roleCfg.className}`}
+                      >
+                        <span className={`w-1 h-1 rounded-full ${roleCfg.dotColor}`} />
+                        <span>{roleCfg.label}</span>
+                      </span>
+                      {isRejection && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                          <ShieldAlert size={10} className="shrink-0" />
+                          Reprovação de Validação
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1 ml-auto">
+                      <Clock size={11} className="opacity-70" />
+                      {formatTimelineDate(note.createdAt)}
+                    </span>
+                  </div>
+
+                  <p className="whitespace-pre-wrap break-words leading-relaxed pl-7 text-slate-700 dark:text-slate-300">
+                    {note.content}
+                  </p>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
       {/* 4. Linha do Tempo: Histórico de Alterações de Status */}
       <div className="bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col gap-3.5">
         {/* Cabeçalho da Seção de Histórico */}
@@ -2043,6 +2219,32 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
             </div>
           </div>
         </div>
+      )}
+      {/* Modal de Edição de Relatório */}
+      {isEditModalOpen && (
+        <EditWorkLogModal
+          isOpen={isEditModalOpen}
+          workLog={currentLog}
+          onClose={() => setIsEditModalOpen(false)}
+          onSaveSuccess={(updated) => {
+            setCurrentLog(updated);
+            if (updated.statusHistory) {
+              setCurrentHistory(updated.statusHistory);
+            }
+            onRefresh?.();
+          }}
+        />
+      )}
+
+      {/* Modal de Justificativa de Reprovação de Validação */}
+      {isRejectionModalOpen && (
+        <ValidationRejectionModal
+          isOpen={isRejectionModalOpen}
+          targetColumnTitle="Em progresso"
+          cardTitle={currentLog.title || currentLog.reportedProblem}
+          onClose={() => setIsRejectionModalOpen(false)}
+          onConfirm={handleConfirmDetailRejection}
+        />
       )}
     </div>
   );
