@@ -7,11 +7,13 @@ import {
   Inbox,
   X,
   ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { WorkLogItem, WorkLogCategoryItem, api } from "@/services/api";
 import { getCategoryIconComponent } from "@/components/CategoryIconPicker";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
+import ValidationRejectionModal from "@/components/dashboard/ValidationRejectionModal";
 
 export type ColumnId = "backlog" | "pendencias" | "em_progresso" | "validacao" | "finalizadas";
 
@@ -138,6 +140,18 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   // Drag and Drop state
   const [draggingLogId, setDraggingLogId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<ColumnId | null>(null);
+
+  // Governança de Validação & Motivo de Reprovação
+  const [rejectionModalData, setRejectionModalData] = useState<{
+    isOpen: boolean;
+    logId: string;
+    targetColId: ColumnId;
+    newStatus: string;
+    targetColumnTitle: string;
+    cardTitle?: string;
+  } | null>(null);
+
+  const [validationWarning, setValidationWarning] = useState<string | null>(null);
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -389,9 +403,55 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
       return;
     }
 
+    // 1. REGRA DE VALIDAÇÃO OBRIGATÓRIA: Tentativa de arrasto direto para "Finalizadas"
+    if (targetColId === "finalizadas") {
+      setDraggingLogId(null);
+      setValidationWarning(
+        "Todo atendimento precisa obrigatoriamente passar pela coluna de Validação e ser aprovado pelo botão 'Aprovar Solução'. O chamado foi direcionado para a Validação."
+      );
+      setTimeout(() => setValidationWarning(null), 7000);
+
+      // Se já está na validação, não faz nada
+      if (currentColumn === "validacao") {
+        return;
+      }
+
+      // Direciona para a coluna de Validação
+      const validationStatus = "Validação";
+      setLogs((prev) =>
+        prev.map((l) => (l.id === logId ? { ...l, status: validationStatus } : l))
+      );
+
+      try {
+        await api.worklogs.updateStatus(logId, validationStatus);
+        onLogResolved?.();
+      } catch (err) {
+        console.error("[Kanban] Erro ao mover para validação:", err);
+        setLogs((prev) =>
+          prev.map((l) => (l.id === logId ? { ...l, status: log.status } : l))
+        );
+      }
+      return;
+    }
+
     const newStatus = getStatusForColumn(targetColId);
 
-    // Atualização otimista no estado local
+    // 2. REGRA DE REPROVAÇÃO: Card saindo da coluna de Validação para etapas anteriores
+    if (currentColumn === "validacao" && targetColId !== "validacao") {
+      setDraggingLogId(null);
+      const targetColumnDef = COLUMNS.find((c) => c.id === targetColId);
+      setRejectionModalData({
+        isOpen: true,
+        logId,
+        targetColId,
+        newStatus,
+        targetColumnTitle: targetColumnDef?.title || targetColId,
+        cardTitle: log.title || log.reportedProblem,
+      });
+      return;
+    }
+
+    // 3. Movimentação padrão entre as outras colunas
     setLogs((prev) =>
       prev.map((l) => (l.id === logId ? { ...l, status: newStatus } : l))
     );
@@ -399,11 +459,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
 
     // Persistência no backend via API
     try {
-      if (targetColId === "finalizadas") {
-        await api.worklogs.resolve(logId);
-      } else {
-        await api.worklogs.updateStatus(logId, newStatus);
-      }
+      await api.worklogs.updateStatus(logId, newStatus);
       onLogResolved?.();
     } catch (err) {
       console.error("[Kanban] Erro ao mover card:", err);
@@ -411,6 +467,38 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
       setLogs((prev) =>
         prev.map((l) => (l.id === logId ? { ...l, status: log.status } : l))
       );
+    }
+  };
+
+  const handleConfirmRejection = async (reason: string) => {
+    if (!rejectionModalData) return;
+    const { logId, newStatus } = rejectionModalData;
+
+    // Atualização otimista
+    setLogs((prev) =>
+      prev.map((l) =>
+        l.id === logId
+          ? {
+              ...l,
+              status: newStatus,
+              hasValidationRejection: true,
+            }
+          : l
+      )
+    );
+
+    try {
+      await api.worklogs.updateStatus(logId, newStatus, reason);
+      onLogResolved?.();
+    } catch (err) {
+      console.error("[Kanban] Erro ao registrar reprovação:", err);
+      const originalLog = logs.find((l) => l.id === logId);
+      if (originalLog) {
+        setLogs((prev) =>
+          prev.map((l) => (l.id === logId ? originalLog : l))
+        );
+      }
+      throw err;
     }
   };
 
@@ -648,6 +736,40 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
           );
         })}
       </div>
+
+      {/* Modal de Justificativa Obrigatória de Reprovação de Validação */}
+      {rejectionModalData && (
+        <ValidationRejectionModal
+          isOpen={rejectionModalData.isOpen}
+          targetColumnTitle={rejectionModalData.targetColumnTitle}
+          cardTitle={rejectionModalData.cardTitle}
+          onClose={() => setRejectionModalData(null)}
+          onConfirm={handleConfirmRejection}
+        />
+      )}
+
+      {/* Toast Flutuante de Alerta de Validação Obrigatória */}
+      {validationWarning && (
+        <div className="fixed top-5 right-5 z-50 max-w-md p-4 bg-purple-950/95 text-white rounded-2xl shadow-2xl border border-purple-500/50 flex items-start gap-3 animate-fade-in backdrop-blur-md">
+          <div className="w-8 h-8 rounded-xl bg-purple-800 text-purple-200 flex items-center justify-center shrink-0 shadow-2xs">
+            <ShieldAlert size={18} />
+          </div>
+          <div className="flex-1 text-xs leading-relaxed">
+            <strong className="block font-bold text-sm text-purple-100 mb-0.5">
+              Validação Obrigatória
+            </strong>
+            {validationWarning}
+          </div>
+          <button
+            type="button"
+            onClick={() => setValidationWarning(null)}
+            className="text-purple-300 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+            title="Fechar aviso"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Modal de Detalhes Completo ao Clicar no Card */}
       {selectedLogForModal && (
