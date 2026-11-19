@@ -101,6 +101,7 @@ export interface WorkLogItem {
   isPrompt?: boolean;
   isIdea?: boolean;
   hasValidationRejection?: boolean;
+  validationStartedAt?: string | null;
   notes?: WorkLogNoteItem[];
   media: string;
   userId: string;

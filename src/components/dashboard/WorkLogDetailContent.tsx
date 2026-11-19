@@ -95,6 +95,7 @@ export interface WorkLogDetailData {
   isPrompt?: boolean;
   isIdea?: boolean;
   hasValidationRejection?: boolean;
+  validationStartedAt?: Date | string | null;
   notes?: WorkLogNoteItem[];
   media?: string | null;
   userId?: string;
@@ -348,6 +349,70 @@ export function parseMediaPaths(media?: string | null): string[] {
   } catch {
     return [];
   }
+}
+
+export interface ValidationDurationInfo {
+  days: number;
+  hours: number;
+  label: string;
+  fullText: string;
+  urgencyLevel: "normal" | "warning" | "danger";
+}
+
+export function getValidationDuration(startDateInput?: string | Date | null): ValidationDurationInfo {
+  if (!startDateInput) {
+    return {
+      days: 0,
+      hours: 0,
+      label: "Hoje",
+      fullText: "Entrou recentemente em validação",
+      urgencyLevel: "normal",
+    };
+  }
+
+  const start = new Date(startDateInput).getTime();
+  if (isNaN(start)) {
+    return {
+      days: 0,
+      hours: 0,
+      label: "Hoje",
+      fullText: "Entrou recentemente em validação",
+      urgencyLevel: "normal",
+    };
+  }
+
+  const now = Date.now();
+  const diffMs = Math.max(0, now - start);
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+
+  let label: string;
+  let fullText: string;
+  let urgencyLevel: "normal" | "warning" | "danger" = "normal";
+
+  if (diffDays === 0) {
+    if (diffHours < 1) {
+      label = "Hoje (< 1h)";
+      fullText = "Parado em validação há menos de 1 hora";
+    } else {
+      label = `Hoje (${diffHours}h)`;
+      fullText = `Parado em validação há ${diffHours} hora${diffHours > 1 ? "s" : ""}`;
+    }
+  } else if (diffDays === 1) {
+    label = "1 dia";
+    fullText = "Parado em validação há 1 dia";
+  } else {
+    label = `${diffDays} dias`;
+    fullText = `Parado em validação há ${diffDays} dias`;
+  }
+
+  if (diffDays >= 5) {
+    urgencyLevel = "danger";
+  } else if (diffDays >= 3) {
+    urgencyLevel = "warning";
+  }
+
+  return { days: diffDays, hours: diffHours, label, fullText, urgencyLevel };
 }
 
 export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
@@ -768,6 +833,48 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
       norm === "em validacao"
     );
   }, [currentStatus]);
+
+  // Data de início do período atual em validação (com suporte a reset em caso de recusa)
+  const validationStartDate = useMemo(() => {
+    if (!isValidating) return null;
+
+    if (currentLog.validationStartedAt) {
+      return currentLog.validationStartedAt;
+    }
+
+    if (log.validationStartedAt) {
+      return log.validationStartedAt;
+    }
+
+    // Busca na linha do tempo a transição mais recente para "Validação"
+    const latestValHistory = currentHistory.find((h) => {
+      const norm = (h.toStatus || "").toLowerCase().trim();
+      return (
+        norm === "validação" ||
+        norm === "validacao" ||
+        norm === "em validação" ||
+        norm === "em validacao"
+      );
+    });
+
+    if (latestValHistory) {
+      return latestValHistory.createdAt;
+    }
+
+    return currentLog.createdAt || log.createdAt;
+  }, [
+    isValidating,
+    currentLog.validationStartedAt,
+    log.validationStartedAt,
+    currentHistory,
+    currentLog.createdAt,
+    log.createdAt,
+  ]);
+
+  const validationDuration = useMemo(
+    () => getValidationDuration(validationStartDate),
+    [validationStartDate]
+  );
 
   const canApproveOrRejectValidation = !!currentUser;
 
@@ -1367,6 +1474,23 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                   </h4>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 dark:bg-purple-900/70 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                     Aguardando homologação
+                  </span>
+
+                  {/* Contador discreto de dias em validação */}
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border shadow-2xs transition-all ${
+                      validationDuration.urgencyLevel === "danger"
+                        ? "bg-rose-100/90 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-300/80 dark:border-rose-800/80"
+                        : validationDuration.urgencyLevel === "warning"
+                        ? "bg-amber-100/90 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300/80 dark:border-amber-800/80"
+                        : "bg-purple-100/80 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/80"
+                    }`}
+                    title={`${validationDuration.fullText} ${
+                      validationStartDate ? `(desde ${formatTimelineDate(validationStartDate)})` : ""
+                    }`}
+                  >
+                    <Clock size={11} className="shrink-0" />
+                    <span>{validationDuration.label} em validação</span>
                   </span>
                 </div>
                 <p className="text-xs text-purple-900/80 dark:text-purple-300/80 mt-0.5 leading-relaxed">
