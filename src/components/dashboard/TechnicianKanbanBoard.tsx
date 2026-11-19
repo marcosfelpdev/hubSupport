@@ -123,6 +123,53 @@ export function getStatusForColumn(colId: ColumnId): string {
   }
 }
 
+/**
+ * Determina se um card da coluna Finalizadas foi concluído hoje.
+ * Verifica statusHistory (mais recente com toStatus finalizado),
+ * recorrendo ao fallback de updatedAt ou createdAt.
+ */
+export function isFinalizedToday(log: WorkLogItem): boolean {
+  if (!log) return false;
+
+  let targetDateStr: string | null | undefined = null;
+
+  if (log.statusHistory && Array.isArray(log.statusHistory) && log.statusHistory.length > 0) {
+    const finalizedEntries = log.statusHistory
+      .filter((h) => {
+        const norm = (h.toStatus || "").toLowerCase().trim();
+        return (
+          norm === "solucionado" ||
+          norm === "finalizadas" ||
+          norm === "finalizado" ||
+          norm === "concluído" ||
+          norm === "concluido" ||
+          getColumnForStatus(h.toStatus) === "finalizadas"
+        );
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    if (finalizedEntries.length > 0 && finalizedEntries[0].createdAt) {
+      targetDateStr = finalizedEntries[0].createdAt;
+    }
+  }
+
+  if (!targetDateStr) {
+    targetDateStr = log.updatedAt || log.createdAt;
+  }
+
+  if (!targetDateStr) return false;
+
+  const date = new Date(targetDateStr);
+  if (isNaN(date.getTime())) return false;
+
+  const today = new Date();
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  );
+}
+
 interface TechnicianKanbanBoardProps {
   logs: WorkLogItem[];
   currentUserId: string;
