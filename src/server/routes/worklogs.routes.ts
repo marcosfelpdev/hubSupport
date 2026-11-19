@@ -31,6 +31,14 @@ const defaultWorkLogInclude = {
     },
     orderBy: { createdAt: "desc" as const },
   },
+  notes: {
+    include: {
+      user: {
+        select: { id: true, name: true, email: true, role: true },
+      },
+    },
+    orderBy: { createdAt: "desc" as const },
+  },
 };
 
 interface InterleavedBlock {
@@ -681,6 +689,7 @@ router.patch(
             where: { id },
             data: {
               status: "Solucionado",
+              hasValidationRejection: false, // Aprovação formal limpa pendência de recusa
             },
           }),
           prisma.workLogStatusHistory.create({
@@ -712,6 +721,166 @@ router.patch(
   }
 );
 
+// PUT /api/worklogs/:id - Edição de dados do chamado com histórico
+router.put(
+  "/:id",
+  authenticateToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const {
+        title,
+        requester,
+        clientOrOffice,
+        reportedProblem,
+        actionTaken,
+        tagId,
+        categoryId,
+      } = req.body;
+
+      const existing = await prisma.workLog.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      const updateData: Record<string, unknown> = {};
+      const changedFields: string[] = [];
+
+      if (title !== undefined) {
+        const cleanTitle = typeof title === "string" ? title.trim() : "";
+        if (cleanTitle) {
+          updateData.title = cleanTitle;
+          if (existing.title !== cleanTitle) changedFields.push("título");
+        }
+      }
+      if (requester !== undefined) {
+        const cleanRequester = typeof requester === "string" ? requester.trim() : "";
+        if (cleanRequester) {
+          updateData.requester = cleanRequester;
+          if (existing.requester !== cleanRequester) changedFields.push("solicitante");
+        }
+      }
+      if (clientOrOffice !== undefined) {
+        const cleanClient = typeof clientOrOffice === "string" ? clientOrOffice.trim() : "";
+        if (cleanClient) {
+          updateData.clientOrOffice = cleanClient;
+          if (existing.clientOrOffice !== cleanClient) changedFields.push("escritório/cliente");
+        }
+      }
+      if (reportedProblem !== undefined) {
+        const cleanProblem = typeof reportedProblem === "string" ? reportedProblem.trim() : "";
+        if (cleanProblem) {
+          updateData.reportedProblem = cleanProblem;
+          if (existing.reportedProblem !== cleanProblem) changedFields.push("descrição/problema");
+        }
+      }
+      if (actionTaken !== undefined) {
+        const cleanAction = typeof actionTaken === "string" ? actionTaken.trim() : "";
+        updateData.actionTaken = cleanAction;
+        if (existing.actionTaken !== cleanAction) changedFields.push("ação/solução");
+      }
+      if (tagId !== undefined) {
+        updateData.tagId = tagId || null;
+        if (existing.tagId !== tagId) changedFields.push("tag");
+      }
+      if (categoryId !== undefined) {
+        updateData.categoryId = categoryId || null;
+        if (existing.categoryId !== categoryId) changedFields.push("categoria");
+      }
+
+      const [updatedLog] = await prisma.$transaction([
+        prisma.workLog.update({
+          where: { id },
+          data: updateData,
+          include: defaultWorkLogInclude,
+        }),
+        prisma.workLogStatusHistory.create({
+          data: {
+            workLogId: id,
+            fromStatus: existing.status,
+            toStatus: existing.status,
+            changedById: req.user!.id,
+          },
+        }),
+      ]);
+
+      res.json({ success: true, workLog: updatedLog });
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao editar atendimento:", error);
+      res.status(500).json({ error: "Erro ao atualizar dados do atendimento." });
+    }
+  }
+);
+
+// GET /api/worklogs/:id/notes - Lista de notas do atendimento
+router.get(
+  "/:id/notes",
+  authenticateToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const notes = await prisma.workLogNote.findMany({
+        where: { workLogId: id },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, role: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      res.json(notes);
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao buscar notas:", error);
+      res.status(500).json({ error: "Erro ao buscar notas do atendimento." });
+    }
+  }
+);
+
+// POST /api/worklogs/:id/notes - Adicionar nota ao atendimento
+router.post(
+  "/:id/notes",
+  authenticateToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const { content, type } = req.body;
+
+      if (!content || typeof content !== "string" || !content.trim()) {
+        res.status(400).json({ error: "O conteúdo da nota não pode ser vazio." });
+        return;
+      }
+
+      const existing = await prisma.workLog.findUnique({ where: { id } });
+      if (!existing) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      const note = await prisma.workLogNote.create({
+        data: {
+          workLogId: id,
+          userId: req.user!.id,
+          content: content.trim(),
+          type: type === "rejection" ? "rejection" : "general",
+        },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, role: true },
+          },
+        },
+      });
+
+      res.status(201).json(note);
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao salvar nota:", error);
+      res.status(500).json({ error: "Erro ao adicionar nota ao atendimento." });
+    }
+  }
+);
 
 // PATCH /api/worklogs/:id/assign
 router.patch(
@@ -777,7 +946,7 @@ router.patch(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const { status } = req.body;
+      const { status, rejectionReason } = req.body;
 
       if (!status || typeof status !== "string") {
         res.status(400).json({ error: "Status inválido ou não informado." });
@@ -793,10 +962,75 @@ router.patch(
         return;
       }
 
-      const newStatus = status.trim();
+      let newStatus = status.trim();
       const currentStatus = existing.status;
+      const currentNorm = currentStatus.toLowerCase().trim();
+      const isFromValidation =
+        currentNorm === "validação" ||
+        currentNorm === "validacao" ||
+        currentNorm === "em validação" ||
+        currentNorm === "em validacao";
 
-      if (currentStatus !== newStatus) {
+      const targetNorm = newStatus.toLowerCase().trim();
+      const isToFinished =
+        targetNorm === "solucionado" ||
+        targetNorm === "finalizadas" ||
+        targetNorm === "finalizado" ||
+        targetNorm === "concluído" ||
+        targetNorm === "concluido";
+
+      // 1. REGRA: Tentativa de finalização direta sem passar por validação prévia
+      if (isToFinished && !isFromValidation) {
+        // Redireciona para validação para homologação obrigatória
+        newStatus = "Validação";
+      }
+
+      // 2. REGRA: Recuo da coluna de Validação para trás exige justificativa obrigatória
+      const isMovingBackFromValidation =
+        isFromValidation &&
+        (targetNorm === "backlog" ||
+          targetNorm === "pendências" ||
+          targetNorm === "pendencias" ||
+          targetNorm === "pendente" ||
+          targetNorm === "em progresso" ||
+          targetNorm === "em andamento");
+
+      if (isMovingBackFromValidation) {
+        if (!rejectionReason || typeof rejectionReason !== "string" || rejectionReason.trim().length < 2) {
+          res.status(400).json({
+            error: "É obrigatório registrar o motivo da reprovação para retornar este atendimento da validação.",
+          });
+          return;
+        }
+
+        const cleanReason = rejectionReason.trim();
+
+        await prisma.$transaction([
+          prisma.workLog.update({
+            where: { id },
+            data: {
+              status: newStatus,
+              hasValidationRejection: true,
+            },
+          }),
+          prisma.workLogNote.create({
+            data: {
+              workLogId: id,
+              userId: req.user!.id,
+              content: cleanReason,
+              type: "rejection",
+            },
+          }),
+          prisma.workLogStatusHistory.create({
+            data: {
+              workLogId: id,
+              fromStatus: currentStatus,
+              toStatus: newStatus,
+              changedById: req.user!.id,
+            },
+          }),
+        ]);
+      } else if (currentStatus !== newStatus) {
         await prisma.$transaction([
           prisma.workLog.update({
             where: { id },
@@ -815,17 +1049,36 @@ router.patch(
         ]);
       }
 
-      const history = await prisma.workLogStatusHistory.findMany({
-        where: { workLogId: id },
-        include: {
-          changedBy: {
-            select: { id: true, name: true, role: true },
+      const [history, notes, updatedWorkLog] = await Promise.all([
+        prisma.workLogStatusHistory.findMany({
+          where: { workLogId: id },
+          include: {
+            changedBy: {
+              select: { id: true, name: true, role: true },
+            },
           },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.workLogNote.findMany({
+          where: { workLogId: id },
+          include: {
+            user: { select: { id: true, name: true, email: true, role: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.workLog.findUnique({
+          where: { id },
+          select: { hasValidationRejection: true, status: true },
+        }),
+      ]);
 
-      res.json({ success: true, status: newStatus, history });
+      res.json({
+        success: true,
+        status: newStatus,
+        history,
+        notes,
+        hasValidationRejection: updatedWorkLog?.hasValidationRejection ?? false,
+      });
     } catch (error) {
       console.error("[WorkLogs] Erro ao atualizar status:", error);
       res.status(500).json({ error: "Erro ao atualizar status do atendimento." });

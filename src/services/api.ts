@@ -70,6 +70,22 @@ export interface WorkLogCategoryItem {
   };
 }
 
+export interface WorkLogNoteItem {
+  id: string;
+  workLogId: string;
+  userId: string;
+  content: string;
+  type: "general" | "rejection";
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email?: string;
+    role?: string;
+  };
+}
+
 export interface WorkLogItem {
   id: string;
   title?: string;
@@ -84,6 +100,8 @@ export interface WorkLogItem {
   implementation: boolean;
   isPrompt?: boolean;
   isIdea?: boolean;
+  hasValidationRejection?: boolean;
+  notes?: WorkLogNoteItem[];
   media: string;
   userId: string;
   tagId?: string | null;
@@ -373,10 +391,58 @@ export const api = {
         }
       );
     },
-    async updateStatus(id: string, status: string): Promise<{ success: boolean; status: string; history?: WorkLogStatusHistoryItem[]; error?: string }> {
-      return request<{ success: boolean; status: string; error?: string }>(`/api/worklogs/${id}/status`, {
+    async update(
+      id: string,
+      data: Partial<{
+        title: string;
+        requester: string;
+        clientOrOffice: string;
+        reportedProblem: string;
+        actionTaken: string;
+        tagId: string | null;
+        categoryId: string | null;
+      }>
+    ): Promise<{ success: boolean; workLog: WorkLogItem }> {
+      return request<{ success: boolean; workLog: WorkLogItem }>(`/api/worklogs/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+    },
+    async getNotes(id: string): Promise<WorkLogNoteItem[]> {
+      return request<WorkLogNoteItem[]>(`/api/worklogs/${id}/notes`);
+    },
+    async addNote(
+      id: string,
+      content: string,
+      type: "general" | "rejection" = "general"
+    ): Promise<WorkLogNoteItem> {
+      return request<WorkLogNoteItem>(`/api/worklogs/${id}/notes`, {
+        method: "POST",
+        body: JSON.stringify({ content, type }),
+      });
+    },
+    async updateStatus(
+      id: string,
+      status: string,
+      rejectionReason?: string
+    ): Promise<{
+      success: boolean;
+      status: string;
+      history?: WorkLogStatusHistoryItem[];
+      notes?: WorkLogNoteItem[];
+      hasValidationRejection?: boolean;
+      error?: string;
+    }> {
+      return request<{
+        success: boolean;
+        status: string;
+        history?: WorkLogStatusHistoryItem[];
+        notes?: WorkLogNoteItem[];
+        hasValidationRejection?: boolean;
+        error?: string;
+      }>(`/api/worklogs/${id}/status`, {
         method: "PATCH",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, rejectionReason }),
       });
     },
     async retryAi(id: string): Promise<{ success: boolean }> {
