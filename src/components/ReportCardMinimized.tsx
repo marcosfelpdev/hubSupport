@@ -1,6 +1,17 @@
 import React from "react";
-import { Sparkles, Maximize2, Paperclip } from "lucide-react";
+import {
+  Sparkles,
+  Maximize2,
+  Paperclip,
+  Inbox,
+  Clock,
+  Hourglass,
+  ShieldAlert,
+  CheckCircle2,
+  RotateCcw,
+} from "lucide-react";
 import TagBadge from "./TagBadge";
+import { getCategoryIconComponent } from "./CategoryIconPicker";
 
 export interface ReportCardMinimizedLog {
   id: string;
@@ -15,6 +26,12 @@ export interface ReportCardMinimizedLog {
   implementation?: boolean;
   isPrompt?: boolean;
   isIdea?: boolean;
+  hasValidationRejection?: boolean;
+  notes?: Array<{
+    id: string;
+    type: string;
+    content: string;
+  }>;
   categoryId?: string | null;
   category?: {
     id?: string;
@@ -61,7 +78,7 @@ export interface ReportCardMinimizedProps {
   dataCardId?: string;
 }
 
-interface StatusPillConfig {
+export interface StatusPillConfig {
   label: string;
   badgeClass: string;
   dotClass: string;
@@ -77,7 +94,8 @@ export function getStatusPill(status: string): StatusPillConfig {
     norm === "concluído" ||
     norm === "concluido" ||
     norm === "realizado" ||
-    norm === "já realizado"
+    norm === "já realizado" ||
+    norm === "ja realizado"
   ) {
     return {
       label: "Solucionado",
@@ -94,8 +112,7 @@ export function getStatusPill(status: string): StatusPillConfig {
   ) {
     return {
       label: "Validação",
-      badgeClass:
-        "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800",
+      badgeClass: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800",
       dotClass: "bg-purple-500",
     };
   }
@@ -145,81 +162,77 @@ export function getStatusPill(status: string): StatusPillConfig {
   };
 }
 
-interface FooterConfig {
+export interface StatusIconDef {
   label: string;
-  badgeClass?: string;
-  badgeStyle?: React.CSSProperties;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+  colorClass: string;
+  bgClass: string;
 }
 
-function getFooterConfig(
-  technicalAction?: boolean,
-  implementation?: boolean,
-  isPrompt?: boolean,
-  isIdea?: boolean,
-  category?: { name: string; color?: string; icon?: string } | null
-): FooterConfig {
-  if (category && category.name) {
-    const color = category.color || "#3b82f6";
+export function getStatusIconDef(status: string): StatusIconDef {
+  const norm = (status || "").toLowerCase().trim();
+
+  if (
+    norm === "solucionado" ||
+    norm === "finalizadas" ||
+    norm === "finalizado" ||
+    norm === "concluído" ||
+    norm === "concluido" ||
+    norm === "realizado" ||
+    norm === "já realizado" ||
+    norm === "ja realizado"
+  ) {
     return {
-      label: category.name,
-      badgeStyle: {
-        backgroundColor: `${color}15`,
-        borderColor: `${color}40`,
-        color: color,
-      },
+      label: "Solucionado",
+      icon: CheckCircle2,
+      colorClass: "text-emerald-600 dark:text-emerald-400",
+      bgClass: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800",
     };
   }
 
-  const parts: string[] = [];
-  if (technicalAction) parts.push("Ação Técnica");
-  if (implementation) parts.push("Implementação");
-  if (isPrompt) parts.push("Prompt");
-  if (isIdea) parts.push("Ideia");
-
-  if (parts.length > 1) {
+  if (
+    norm === "validação" ||
+    norm === "validacao" ||
+    norm === "em validação" ||
+    norm === "em validacao"
+  ) {
     return {
-      label: parts.join(" · "),
-      badgeClass:
-        "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/80",
+      label: "Aguardando Validação",
+      icon: ShieldAlert,
+      colorClass: "text-purple-600 dark:text-purple-400",
+      bgClass: "bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800",
     };
   }
 
-  if (technicalAction) {
+  if (norm === "em progresso" || norm === "em andamento") {
     return {
-      label: "Ação Técnica",
-      badgeClass:
-        "bg-orange-50 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border-orange-200/80 dark:border-orange-800/80",
+      label: "Em progresso",
+      icon: Hourglass,
+      colorClass: "text-sky-600 dark:text-sky-400",
+      bgClass: "bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800",
     };
   }
 
-  if (implementation) {
+  if (
+    norm === "pendências" ||
+    norm === "pendencias" ||
+    norm === "pendente" ||
+    norm === "aguardando reunião" ||
+    norm === "aguardando reuniao"
+  ) {
     return {
-      label: "Implementação",
-      badgeClass:
-        "bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/80",
-    };
-  }
-
-  if (isPrompt) {
-    return {
-      label: "Prompt",
-      badgeClass:
-        "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/80",
-    };
-  }
-
-  if (isIdea) {
-    return {
-      label: "Ideia",
-      badgeClass:
-        "bg-violet-50 dark:bg-violet-950/40 text-violet-800 dark:text-violet-300 border-violet-200/80 dark:border-violet-800/80",
+      label: "Pendência",
+      icon: Clock,
+      colorClass: "text-amber-600 dark:text-amber-400",
+      bgClass: "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800",
     };
   }
 
   return {
-    label: "Atendimento",
-    badgeClass:
-      "bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/80",
+    label: "Backlog",
+    icon: Inbox,
+    colorClass: "text-indigo-600 dark:text-indigo-400",
+    bgClass: "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800",
   };
 }
 
@@ -286,14 +299,47 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
   id,
   dataCardId,
 }) => {
-  const statusPill = getStatusPill(log.status);
-  const footerConfig = getFooterConfig(
-    log.technicalAction,
-    log.implementation,
-    log.isPrompt,
-    log.isIdea,
-    log.category
-  );
+  const statusIconDef = getStatusIconDef(log.status);
+  const StatusIcon = statusIconDef.icon;
+
+  const categoryName =
+    log.category?.name ||
+    (log.technicalAction
+      ? "Ação Técnica"
+      : log.implementation
+      ? "Implementação"
+      : log.isPrompt
+      ? "Prompt"
+      : log.isIdea
+      ? "Ideia"
+      : "Atendimento");
+
+  const categoryColor =
+    log.category?.color ||
+    (log.technicalAction
+      ? "#0284c7"
+      : log.implementation
+      ? "#8b5cf6"
+      : log.isPrompt
+      ? "#10b981"
+      : log.isIdea
+      ? "#7c3aed"
+      : "#3b82f6");
+
+  const categoryIconKey =
+    log.category?.icon ||
+    (log.technicalAction
+      ? "cog"
+      : log.implementation
+      ? "rocket"
+      : log.isPrompt
+      ? "sparkles"
+      : log.isIdea
+      ? "lightbulb"
+      : "cog");
+
+  const CategoryIcon = getCategoryIconComponent(categoryIconKey);
+
   const formattedDate = formatDate(log.createdAt);
 
   const assignedName = log.assignedTo?.name;
@@ -322,6 +368,10 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
       return 0;
     }
   }, [log.media]);
+
+  const hasRejection = Boolean(
+    log.hasValidationRejection || log.notes?.some((n) => n.type === "rejection")
+  );
 
   const tagColor = log.tag?.color || "#0284c7";
   const tagName = log.tag?.name || "Geral";
@@ -354,11 +404,11 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
       onDrop={onDrop}
       onClick={onClick}
       style={style}
-      className={`group w-full shrink-0 min-h-[185px] h-[185px] ${surfaceClasses} border rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-200 select-none ${cursorClasses} ${stateClasses} ${className}`.trim()}
+      className={`group w-full shrink-0 min-h-[160px] h-[160px] ${surfaceClasses} border rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-200 select-none ${cursorClasses} ${stateClasses} ${className}`.trim()}
     >
       {/* Conteúdo interno do card */}
-      <div className="p-3.5 pb-2 flex flex-col justify-between flex-1 min-h-0 gap-1.5">
-        {/* Linha Superior: TagBadge com dot + Badge de status em pill com indicator dot */}
+      <div className="p-3.5 flex flex-col justify-between flex-1 min-h-0 gap-1.5">
+        {/* Linha Superior: TagBadge com dot + Ícones de status e categoria no topo direito */}
         <div className="flex items-center justify-between gap-2 shrink-0">
           <TagBadge name={tagName} color={tagColor} size="sm" />
 
@@ -374,7 +424,7 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
               </span>
             )}
 
-            {/* Símbolo de IA: piscando sutilmente enquanto processa, fixo quando concluído */}
+            {/* Símbolo de IA */}
             {isAiGenerating ? (
               <span
                 title="IA gerando relatório PDF em segundo plano..."
@@ -391,11 +441,35 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
               </span>
             ) : null}
 
+            {/* Indicador sutil de Validação Reprovada */}
+            {hasRejection && (
+              <span
+                className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shadow-2xs animate-fade-in cursor-help"
+                title="Atenção: Este atendimento foi reprovado na validação anterior e possui nota de recusa."
+              >
+                <RotateCcw size={12} className="shrink-0" />
+              </span>
+            )}
+
+            {/* Ícone de Categoria */}
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap shadow-xs ${statusPill.badgeClass}`}
+              className="inline-flex items-center justify-center w-6 h-6 rounded-lg border shadow-2xs cursor-help transition-all"
+              style={{
+                backgroundColor: `${categoryColor}15`,
+                borderColor: `${categoryColor}35`,
+                color: categoryColor,
+              }}
+              title={`Categoria: ${categoryName}`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusPill.dotClass}`} />
-              <span>{statusPill.label}</span>
+              <CategoryIcon size={13} className="shrink-0" style={{ color: categoryColor }} />
+            </span>
+
+            {/* Ícone de Status */}
+            <span
+              className={`inline-flex items-center justify-center w-6 h-6 rounded-lg border shadow-2xs cursor-help transition-all ${statusIconDef.bgClass} ${statusIconDef.colorClass}`}
+              title={`Status: ${statusIconDef.label}`}
+            >
+              <StatusIcon size={13} className="shrink-0" />
             </span>
           </div>
         </div>
@@ -461,14 +535,6 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
             )}
           </div>
         </div>
-      </div>
-
-      {/* Rodapé: Faixa de Categoria */}
-      <div
-        className={`w-full py-1.5 px-3 text-[9px] uppercase tracking-wider font-bold text-center shrink-0 border-t ${footerConfig.badgeClass || ""}`}
-        style={footerConfig.badgeStyle}
-      >
-        {footerConfig.label}
       </div>
     </div>
   );
