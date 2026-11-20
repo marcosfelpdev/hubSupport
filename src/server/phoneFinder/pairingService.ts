@@ -139,10 +139,12 @@ export class PairingService {
       };
     }
 
-    // 4. Card inexistente no repositório → remove do mapa + erro legível
+    // Consumo único atômico antes de qualquer await (evita TOCTOU em submissões concorrentes)
+    this.deleteCodeEntry(entry);
+
+    // 4. Card inexistente no repositório → erro legível
     const card = await this.cardRepository.findById(entry.cardId);
     if (!card) {
-      this.deleteCodeEntry(entry);
       this.recordFailedAttempt(clientKey);
       return {
         success: false,
@@ -150,9 +152,7 @@ export class PairingService {
       };
     }
 
-    // 5. Sucesso → consome código (uso único) e vincula novo deviceId
-    this.deleteCodeEntry(entry);
-
+    // 5. Sucesso → vincula novo deviceId
     const deviceId = crypto.randomUUID();
     const previousDeviceId = card.pairedDeviceId;
     const normalizedPushToken =

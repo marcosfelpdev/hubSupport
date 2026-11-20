@@ -164,25 +164,43 @@ export class CommandService {
       this.inFlightByCard.set(cardId, commandId);
 
       // Entrega dupla simultânea — Canal 1: WebSocket (target emit exclusivo)
+      let deliveredViaSocket = false;
       if (hasOnlineSocket) {
-        if (action === "locate") {
-          const payload: AlertLocatePayload = {
-            commandId,
-            action: "locate",
-            durationMs,
-            timestamp,
-            cardName: card.name,
-          };
-          this.hooks.emitToDevice?.(deviceId, "alert:locate", payload);
-        } else {
-          const payload: AlertVibratePayload = {
-            commandId,
-            action: "vibrate",
-            durationMs,
-            timestamp,
-            cardName: card.name,
-          };
-          this.hooks.emitToDevice?.(deviceId, "alert:vibrate", payload);
+        try {
+          if (action === "locate") {
+            const payload: AlertLocatePayload = {
+              commandId,
+              action: "locate",
+              durationMs,
+              timestamp,
+              cardName: card.name,
+            };
+            this.hooks.emitToDevice?.(deviceId, "alert:locate", payload);
+          } else {
+            const payload: AlertVibratePayload = {
+              commandId,
+              action: "vibrate",
+              durationMs,
+              timestamp,
+              cardName: card.name,
+            };
+            this.hooks.emitToDevice?.(deviceId, "alert:vibrate", payload);
+          }
+          deliveredViaSocket = true;
+        } catch (err) {
+          console.error(
+            `[PhoneFinder][Command] Erro ao emitir ${action} via socket para device=${deviceId}:`,
+            err
+          );
+          if (!canSendPush) {
+            this.finishPending(
+              commandId,
+              503,
+              "error",
+              "Falha ao enviar comando pelo canal em tempo real."
+            );
+            return;
+          }
         }
       }
 
@@ -197,7 +215,7 @@ export class CommandService {
           durationMs,
           timestamp,
           cardName: card.name,
-          hasOnlineSocket,
+          hasOnlineSocket: deliveredViaSocket,
         });
       }
     });
@@ -284,27 +302,53 @@ export class CommandService {
         cardName: params.cardName,
       });
 
+      // Cancela timer de 7s imediatamente antes de qualquer await no banco se for fail-fast offline
+      if (!result.sent && !params.hasOnlineSocket) {
+        const pending = this.pendingCommands.get(params.commandId);
+        if (pending) {
+          clearTimeout(pending.timer);
+        }
+      }
+
       if (result.invalidToken) {
-        await this.cardRepository
-          .updatePushToken(params.cardId, null)
+        const currentCard = await this.cardRepository
+          .findById(params.cardId)
           .catch((err) => {
             console.error(
-              "[PhoneFinder][Command] Falha ao limpar pushToken inválido:",
+              "[PhoneFinder][Command] Falha ao reconsultar card antes de limpar pushToken:",
               err
             );
+            return null;
           });
 
-        const appVersion = this.presenceService.getAppVersion(params.deviceId);
-        this.hooks.broadcastDeviceStatus?.({
-          cardId: params.cardId,
-          status: this.presenceService.isOnline(params.deviceId)
-            ? "online"
-            : "offline",
-          deviceId: params.deviceId,
-          hasPushToken: false,
-          appVersionCode: appVersion?.appVersionCode ?? null,
-          appVersionName: appVersion?.appVersionName ?? null,
-        });
+        if (
+          currentCard &&
+          currentCard.pairedDeviceId === params.deviceId &&
+          currentCard.pushToken === params.pushToken
+        ) {
+          await this.cardRepository
+            .updatePushToken(params.cardId, null)
+            .catch((err) => {
+              console.error(
+                "[PhoneFinder][Command] Falha ao limpar pushToken inválido:",
+                err
+              );
+            });
+
+          const appVersion = this.presenceService.getAppVersion(
+            params.deviceId
+          );
+          this.hooks.broadcastDeviceStatus?.({
+            cardId: params.cardId,
+            status: this.presenceService.isOnline(params.deviceId)
+              ? "online"
+              : "offline",
+            deviceId: params.deviceId,
+            hasPushToken: false,
+            appVersionCode: appVersion?.appVersionCode ?? null,
+            appVersionName: appVersion?.appVersionName ?? null,
+          });
+        }
       }
 
       if (!result.sent) {

@@ -100,6 +100,9 @@ export class PresenceService {
     level: number,
     isCharging: boolean
   ): BatteryTelemetry {
+    if (typeof level !== "number" || !Number.isFinite(level)) {
+      throw new RangeError("O nível de bateria deve ser um número finito.");
+    }
     const normalizedLevel = Math.max(0, Math.min(100, Math.round(level)));
     const telemetry: BatteryTelemetry = {
       level: normalizedLevel,

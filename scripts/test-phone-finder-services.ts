@@ -153,6 +153,31 @@ async function testPairingService() {
     const afterInvalidate = await pairing.submitCode(toInvalidate.code, undefined, "client-inv");
     assert.equal(afterInvalidate.success, false);
 
+    // Concorrência (TOCTOU): dois submitCode simultâneos com o mesmo código -> exatamente 1 vence
+    const concurrentPairing = new PairingService(repo, {
+      ttlMs: 60_000,
+      cleanupIntervalMs: 30_000,
+      maxFailedAttemptsPerMinute: 10,
+    });
+    try {
+      const raceCode = await concurrentPairing.generateCode(card.id);
+      assert.ok(raceCode);
+      const [resA, resB] = await Promise.all([
+        concurrentPairing.submitCode(raceCode.code, "token-a", "client-race-a"),
+        concurrentPairing.submitCode(raceCode.code, "token-b", "client-race-b"),
+      ]);
+      const successes = [resA, resB].filter((r) => r.success);
+      const failures = [resA, resB].filter((r) => !r.success);
+      assert.equal(
+        successes.length,
+        1,
+        "Exatamente uma submissão concorrente deve vencer o consumo único"
+      );
+      assert.equal(failures.length, 1);
+    } finally {
+      concurrentPairing.stop();
+    }
+
     // Rate limit: 10 tentativas inválidas por minuto bloqueiam a 11ª (mesmo com código válido)
     const ratePairing = new PairingService(repo, {
       ttlMs: 60_000,
@@ -238,6 +263,17 @@ async function testPresenceService() {
   assert.equal(battery.isCharging, true);
   assert.equal(Number.isNaN(Date.parse(battery.updatedAt)), false);
   assert.deepEqual(presence.getBattery(deviceId), battery);
+
+  assert.throws(
+    () => presence.setBattery(deviceId, Number.NaN, false),
+    RangeError,
+    "setBattery deve rejeitar NaN"
+  );
+  assert.throws(
+    () => presence.setBattery(deviceId, Number.POSITIVE_INFINITY, false),
+    RangeError,
+    "setBattery deve rejeitar Infinity"
+  );
 
   // clearDevice retorna sockets ativos e limpa presença + bateria + versão
   presence.registerSocket(deviceId, "socket-3");
@@ -630,6 +666,157 @@ async function testCommandServiceScenarios() {
       commands.stop();
     }
     console.log("✔ Cenário 10 (CommandService ACK de erro -> 502) passou");
+  }
+
+  // Cenário 11 (Race condition): Token atualizado durante FCM lento não é apagado por invalidToken antigo
+  {
+    const repo = new InMemoryPhoneCardRepository();
+    const presence = new PresenceService();
+    let releaseFcm!: () => void;
+    const fcmGate = new Promise<void>((resolve) => {
+      releaseFcm = resolve;
+    });
+    const fcm = new MockFcmService(true, async () => {
+      await fcmGate;
+      return {
+        sent: false,
+        invalidToken: true,
+        error: "Old token was revoked",
+      };
+    });
+    const commands = new CommandService(repo, presence, fcm, { ackTimeoutMs: 5000 });
+
+    const statusUpdates: DeviceStatusPayload[] = [];
+    commands.setTransportHooks({
+      broadcastDeviceStatus: (payload) => statusUpdates.push(payload),
+    });
+
+    try {
+      const card = await repo.create({ name: "Motorola Edge" });
+      const deviceId = crypto.randomUUID();
+      await repo.pairDevice(card.id, deviceId, "old-fcm-token");
+
+      const dispatchPromise = commands.dispatchCommand(card.id, "locate");
+      await sleep(15);
+
+      // Enquanto a chamada FCM lenta ainda está em andamento, o dispositivo renova seu token
+      await repo.updatePushToken(card.id, "brand-new-fcm-token");
+
+      releaseFcm();
+      const outcome = await dispatchPromise;
+      assert.equal(outcome.httpStatus, 503);
+
+      const persisted = await repo.findById(card.id);
+      assert.ok(persisted);
+      assert.equal(
+        persisted.pushToken,
+        "brand-new-fcm-token",
+        "Novo pushToken não pode ser apagado por resposta invalidToken de token antigo"
+      );
+      assert.equal(
+        statusUpdates.length,
+        0,
+        "Não deve emitir broadcastDeviceStatus(hasPushToken: false) quando token já foi renovado"
+      );
+    } finally {
+      commands.stop();
+    }
+    console.log("✔ Cenário 11 (Race condition: token renovado preservado) passou");
+  }
+
+  // Cenário 12 (Race condition): ACK chega antes de chamada FCM lenta terminar -> 1 feedback, sem duplicidade
+  {
+    const repo = new InMemoryPhoneCardRepository();
+    const presence = new PresenceService();
+    let releaseFcm!: () => void;
+    const fcmGate = new Promise<void>((resolve) => {
+      releaseFcm = resolve;
+    });
+    const fcm = new MockFcmService(true, async () => {
+      await fcmGate;
+      return {
+        sent: false,
+        error: "Late FCM failure",
+      };
+    });
+    const commands = new CommandService(repo, presence, fcm, { ackTimeoutMs: 500 });
+
+    let capturedCommandId = "";
+    const feedbacks: CommandFeedbackPayload[] = [];
+    commands.setTransportHooks({
+      emitToDevice: (_deviceId, _event, payload) => {
+        capturedCommandId = payload.commandId;
+      },
+      broadcastCommandFeedback: (_action, feedback) => {
+        feedbacks.push(feedback);
+      },
+    });
+
+    try {
+      const card = await repo.create({ name: "Galaxy A55" });
+      const deviceId = crypto.randomUUID();
+      await repo.pairDevice(card.id, deviceId, "fcm-token-a55");
+      presence.registerSocket(deviceId, "sock-a55");
+
+      const dispatchPromise = commands.dispatchCommand(card.id, "locate");
+      await sleep(15);
+
+      // ACK chega via WebSocket antes do FCM responder
+      const ackAccepted = commands.handleAck(
+        capturedCommandId,
+        "ok",
+        Date.now(),
+        deviceId
+      );
+      assert.equal(ackAccepted, true);
+
+      const outcome = await dispatchPromise;
+      assert.equal(outcome.httpStatus, 200);
+      assert.equal(outcome.feedback.status, "success");
+
+      // Agora a chamada FCM lenta finalmente resolve com falha
+      releaseFcm();
+      await sleep(25);
+
+      assert.equal(
+        feedbacks.length,
+        1,
+        "Falha tardia de FCM não deve emitir segundo feedback após ACK já concluído"
+      );
+      assert.equal(commands.hasInFlight(card.id), false);
+    } finally {
+      commands.stop();
+    }
+    console.log("✔ Cenário 12 (Race condition: ACK antes de FCM lento sem duplicidade) passou");
+  }
+
+  // Cenário 13 (Robustez): exceção em emitToDevice sem push limpa estado e resolve com 503
+  {
+    const repo = new InMemoryPhoneCardRepository();
+    const presence = new PresenceService();
+    const fcm = new MockFcmService(false);
+    const commands = new CommandService(repo, presence, fcm, { ackTimeoutMs: 5000 });
+
+    commands.setTransportHooks({
+      emitToDevice: () => {
+        throw new Error("Socket transport failure");
+      },
+    });
+
+    try {
+      const card = await repo.create({ name: "Device Hook Error" });
+      const deviceId = crypto.randomUUID();
+      await repo.pairDevice(card.id, deviceId, null);
+      presence.registerSocket(deviceId, "sock-err");
+
+      const outcome = await commands.dispatchCommand(card.id, "locate");
+      assert.equal(outcome.httpStatus, 503);
+      assert.equal(outcome.feedback.status, "error");
+      assert.equal(commands.hasInFlight(card.id), false);
+    } finally {
+      commands.stop();
+    }
+    console.log("✔ Cenário 13 (Robustez: exceção em emitToDevice limpa estado) passou");
   }
 }
 
