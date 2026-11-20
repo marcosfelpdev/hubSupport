@@ -267,6 +267,68 @@ export default function PhoneFinderPage() {
     [setCardFeedback]
   );
 
+  const handleCardCreated = useCallback((newCard: PhoneCardItem) => {
+    setCards((prev) => {
+      if (prev.some((c) => c.id === newCard.id)) return prev;
+      return [newCard, ...prev];
+    });
+  }, []);
+
+  const handleCardUpdated = useCallback((updatedCard: PhoneCardItem) => {
+    setCards((prev) =>
+      prev.map((c) => {
+        if (c.id !== updatedCard.id) return c;
+        const isUnpaired =
+          updatedCard.status === "unpaired" ||
+          (updatedCard.pairedDeviceId === null &&
+            updatedCard.pairedDeviceId !== undefined);
+
+        return {
+          ...c,
+          ...updatedCard,
+          status: updatedCard.status || c.status,
+          battery: isUnpaired
+            ? null
+            : (updatedCard.battery ?? c.battery),
+          pairedDeviceId:
+            updatedCard.pairedDeviceId !== undefined
+              ? updatedCard.pairedDeviceId
+              : c.pairedDeviceId,
+          hasPushToken:
+            updatedCard.hasPushToken !== undefined
+              ? updatedCard.hasPushToken
+              : c.hasPushToken,
+          appVersionCode: isUnpaired
+            ? null
+            : (updatedCard.appVersionCode ?? c.appVersionCode),
+          appVersionName: isUnpaired
+            ? null
+            : (updatedCard.appVersionName ?? c.appVersionName),
+        };
+      })
+    );
+
+    // Se o modal de pareamento estiver aberto para este card, detecta confirmação automática
+    if (pairingCardIdRef.current === updatedCard.id) {
+      const baseline = pairingBaselineDeviceIdRef.current;
+      const isNewPairedDevice =
+        Boolean(updatedCard.pairedDeviceId) &&
+        updatedCard.pairedDeviceId !== baseline;
+      const becameOnlineFromUnpaired =
+        baseline === null && updatedCard.status === "online";
+
+      if (isNewPairedDevice || becameOnlineFromUnpaired) {
+        setPairedJustNow(true);
+      }
+    }
+  }, []);
+
+  const handleCardDeleted = useCallback((payload: { cardId: string }) => {
+    if (payload?.cardId) {
+      setCards((prev) => prev.filter((c) => c.id !== payload.cardId));
+    }
+  }, []);
+
   const handleSocketReconnect = useCallback(() => {
     fetchCards(true);
   }, [fetchCards]);
@@ -277,6 +339,9 @@ export default function PhoneFinderPage() {
     onCardBattery: handleCardBattery,
     onLocateFeedback: handleRealtimeFeedback,
     onVibrateFeedback: handleRealtimeFeedback,
+    onCardCreated: handleCardCreated,
+    onCardUpdated: handleCardUpdated,
+    onCardDeleted: handleCardDeleted,
     onReconnect: handleSocketReconnect,
   });
 
@@ -303,14 +368,21 @@ export default function PhoneFinderPage() {
   // Cards filtrados por status + busca
   const filteredCards = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
+    const queryDigits = query.replace(/\D/g, "");
+
     return cards.filter((card) => {
       if (statusFilter !== "all" && card.status !== statusFilter) {
         return false;
       }
       if (!query) return true;
+
       const inName = card.name.toLowerCase().includes(query);
       const inDesc = (card.description || "").toLowerCase().includes(query);
-      return inName || inDesc;
+      const cardDigits = card.name.replace(/\D/g, "");
+      const inDigits =
+        queryDigits.length >= 2 && cardDigits.includes(queryDigits);
+
+      return inName || inDesc || inDigits;
     });
   }, [cards, statusFilter, searchTerm]);
 

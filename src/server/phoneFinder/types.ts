@@ -68,6 +68,22 @@ export interface CommandFeedbackPayload {
   message: string;     // descrição legível em português
 }
 
+export interface FormatCardTitleSuccess {
+  success: true;
+  title: string;
+  validNumbers: string[];
+}
+
+export interface FormatCardTitleError {
+  success: false;
+  error: string;
+}
+
+export type FormatCardTitleResult =
+  | FormatCardTitleSuccess
+  | FormatCardTitleError;
+
+
 // -----------------------------------------------------------------------------
 // Payloads dos 18 Eventos Socket.IO (Seção 5.4 da Spec)
 // -----------------------------------------------------------------------------
@@ -123,6 +139,14 @@ export interface DeviceIdentifyPayload {
   pushToken?: string;
   appVersionCode?: number;
   appVersionName?: string;
+}
+
+export interface DeviceSelfRegisterPayload {
+  deviceId: string;
+  numbers: string[];
+  pushToken?: string | null;
+  appVersionCode?: number | null;
+  appVersionName?: string | null;
 }
 
 export interface DeviceBatteryPayload {
@@ -203,10 +227,13 @@ export interface PanelServerToClientEvents {
   "card:battery": (payload: CardBatteryPayload) => void;
   "locate:feedback": (payload: LocateFeedbackPayload) => void;
   "vibrate:feedback": (payload: VibrateFeedbackPayload) => void;
+  "card:created": (payload: CardWithStatus) => void;
+  "card:updated": (payload: CardWithStatus) => void;
 }
 
 export interface DeviceClientToServerEvents {
   "pairing:submit": (payload: PairingSubmitPayload) => void;
+  "device:self-register": (payload: DeviceSelfRegisterPayload) => void;
   "device:identify": (payload: DeviceIdentifyPayload) => void;
   "device:battery": (payload: DeviceBatteryPayload) => void;
   "alert:ack": (payload: AlertAckPayload) => void;
