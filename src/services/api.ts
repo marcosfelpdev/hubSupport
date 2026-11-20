@@ -245,6 +245,58 @@ export interface ClientProfileData {
   };
 }
 
+export type PhonePresenceStatus = "unpaired" | "online" | "offline";
+
+export interface PhoneBatteryInfo {
+  level: number;
+  isCharging: boolean;
+  updatedAt: string;
+}
+
+export interface PhoneCardItem {
+  id: string;
+  name: string;
+  description: string | null;
+  pairedDeviceId: string | null;
+  hasPushToken: boolean;
+  createdAt: string;
+  updatedAt: string;
+  status: PhonePresenceStatus;
+  battery: PhoneBatteryInfo | null;
+  appVersionCode: number | null;
+  appVersionName: string | null;
+}
+
+export interface PhonePairingCodeResponse {
+  cardId: string;
+  code: string;
+  expiresAt: string;
+}
+
+export interface PhoneCommandFeedback {
+  cardId: string;
+  commandId: string;
+  status: "success" | "timeout" | "error";
+  message: string;
+}
+
+export interface PhoneDeviceStatusEvent {
+  cardId: string;
+  status: PhonePresenceStatus;
+  deviceId?: string | null;
+  hasPushToken?: boolean;
+  appVersionCode?: number | null;
+  appVersionName?: string | null;
+}
+
+export interface PhoneCardBatteryEvent {
+  cardId: string;
+  deviceId: string;
+  level: number;
+  isCharging: boolean;
+  updatedAt: string;
+}
+
 const DEFAULT_PROD_API = "https://hubsupport-api.onrender.com";
 const isLocal =
   typeof window !== "undefined" &&
@@ -261,6 +313,10 @@ export function resolveApiUrl(path: string): string {
     return path;
   }
   return API_BASE ? `${API_BASE}${path}` : path;
+}
+
+export function getSocketBaseUrl(): string {
+  return API_BASE || (typeof window !== "undefined" ? window.location.origin : "");
 }
 
 async function request<T>(
@@ -314,6 +370,100 @@ async function request<T>(
   }
 
   return data as T;
+}
+
+const PHONE_COMMAND_FEEDBACK_STATUSES = new Set([200, 408, 409, 502, 503]);
+
+function getPhoneCommandFallbackStatus(
+  httpStatus: number
+): PhoneCommandFeedback["status"] {
+  if (httpStatus === 200) return "success";
+  if (httpStatus === 408) return "timeout";
+  return "error";
+}
+
+function getPhoneCommandFallbackMessage(httpStatus: number): string {
+  switch (httpStatus) {
+    case 200:
+      return "Comando confirmado pelo dispositivo.";
+    case 408:
+      return "Tempo limite excedido aguardando confirmação do dispositivo.";
+    case 409:
+      return "Já existe um comando em andamento para este dispositivo.";
+    case 502:
+      return "O dispositivo reportou erro ao executar o comando.";
+    case 503:
+      return "Dispositivo indisponível para receber o comando.";
+    default:
+      return "Não foi possível processar o comando.";
+  }
+}
+
+async function requestPhoneCommand(
+  cardId: string,
+  action: "locate" | "vibrate"
+): Promise<PhoneCommandFeedback> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const fullUrl = resolveApiUrl(`/api/cards/${cardId}/${action}`);
+  const response = await fetch(fullUrl, {
+    method: "POST",
+    headers,
+    credentials: "include",
+  });
+
+  if (response.status === 401) {
+    removeToken();
+    if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+  }
+
+  let data: any = {};
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+  }
+
+  if (PHONE_COMMAND_FEEDBACK_STATUSES.has(response.status)) {
+    const parsedStatus: PhoneCommandFeedback["status"] =
+      data?.status === "success" ||
+      data?.status === "timeout" ||
+      data?.status === "error"
+        ? data.status
+        : getPhoneCommandFallbackStatus(response.status);
+
+    const parsedMessage =
+      typeof data?.message === "string" && data.message.trim().length > 0
+        ? data.message
+        : typeof data?.error === "string" && data.error.trim().length > 0
+          ? data.error
+          : getPhoneCommandFallbackMessage(response.status);
+
+    return {
+      cardId: typeof data?.cardId === "string" ? data.cardId : cardId,
+      commandId: typeof data?.commandId === "string" ? data.commandId : "",
+      status: parsedStatus,
+      message: parsedMessage,
+    };
+  }
+
+  throw new Error(
+    data?.message ||
+      data?.error ||
+      `Erro na requisição (${response.status}): ${response.statusText || "Falha na comunicação"}`
+  );
 }
 
 export const api = {
@@ -721,6 +871,55 @@ export const api = {
       return request<{ message: string; id: string }>(`/api/categories/${id}`, {
         method: "DELETE",
       });
+    },
+  },
+
+  // Phone Finder
+  phoneFinder: {
+    async getCards(): Promise<PhoneCardItem[]> {
+      return request<PhoneCardItem[]>("/api/cards");
+    },
+    async getCard(id: string): Promise<PhoneCardItem> {
+      return request<PhoneCardItem>(`/api/cards/${id}`);
+    },
+    async createCard(payload: {
+      name: string;
+      description?: string;
+    }): Promise<PhoneCardItem> {
+      return request<PhoneCardItem>("/api/cards", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    },
+    async updateCard(
+      id: string,
+      payload: { name?: string; description?: string | null }
+    ): Promise<PhoneCardItem> {
+      return request<PhoneCardItem>(`/api/cards/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+    },
+    async deleteCard(id: string): Promise<{ success: boolean }> {
+      return request<{ success: boolean }>(`/api/cards/${id}`, {
+        method: "DELETE",
+      });
+    },
+    async generatePairingCode(id: string): Promise<PhonePairingCodeResponse> {
+      return request<PhonePairingCodeResponse>(`/api/cards/${id}/pairing-code`, {
+        method: "POST",
+      });
+    },
+    async unpairCard(id: string): Promise<{ success: boolean }> {
+      return request<{ success: boolean }>(`/api/cards/${id}/unpair`, {
+        method: "POST",
+      });
+    },
+    async locateCard(id: string): Promise<PhoneCommandFeedback> {
+      return requestPhoneCommand(id, "locate");
+    },
+    async vibrateCard(id: string): Promise<PhoneCommandFeedback> {
+      return requestPhoneCommand(id, "vibrate");
     },
   },
 };

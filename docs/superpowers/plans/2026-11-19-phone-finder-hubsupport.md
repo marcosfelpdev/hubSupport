@@ -231,22 +231,22 @@ git commit -m "feat(phone-finder): adicionar namespaces Socket.IO, rotas REST /a
   - `PhoneCardItem` (= `CardWithStatus`), `PhoneBatteryInfo`, `PhonePairingCodeResponse`, `PhoneCommandFeedback`, `getSocketBaseUrl()`, `api.phoneFinder` (`getCards`, `getCard`, `createCard`, `updateCard`, `deleteCard`, `generatePairingCode`, `unpairCard`, `locateCard`, `vibrateCard`) em `src/services/api.ts`
   - `usePhoneFinderSocket(handlers): { connectionState: "connecting" | "connected" | "disconnected" }` em `src/hooks/usePhoneFinderSocket.ts`
 
-- [ ] **Step 1: Adicionar tipos, `getSocketBaseUrl()` e `api.phoneFinder` em `src/services/api.ts`**
+- [x] **Step 1: Adicionar tipos, `getSocketBaseUrl()` e `api.phoneFinder` em `src/services/api.ts`**
 
 - `getSocketBaseUrl()` retorna `API_BASE || (typeof window !== "undefined" ? window.location.origin : "")`.
 - Em `locateCard(id)` e `vibrateCard(id)`, usar `fetch(resolveApiUrl(...))` com credenciais/Authorization tratando explicitamente status `200`, `408`, `409`, `502`, `503` para retornar o `PhoneCommandFeedback` estruturado (em vez de jogar erro genérico), mantendo redirecionamento em `401`.
 
-- [ ] **Step 2: Criar `src/hooks/usePhoneFinderSocket.ts`**
+- [x] **Step 2: Criar `src/hooks/usePhoneFinderSocket.ts`**
 
 Conecta em `${getSocketBaseUrl()}/panel` com `{ auth: { token: getToken() }, withCredentials: true, transports: ["websocket", "polling"], reconnection: true }`.
 Usa refs para callbacks (`onDeviceStatus`, `onCardBattery`, `onLocateFeedback`, `onVibrateFeedback`) para evitar reconexões desnecessárias quando o componente re-renderizar, atualiza `connectionState` em `connect`, `disconnect`, `connect_error`, `reconnect_attempt`, e desconecta limpo no unmount.
 
-- [ ] **Step 3: Verificar compilação TypeScript**
+- [x] **Step 3: Verificar compilação TypeScript**
 
 Run: `npx tsc --noEmit`
 Expected: 0 erros.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/services/api.ts src/hooks/usePhoneFinderSocket.ts
