@@ -334,6 +334,9 @@ export function attachPhoneFinderSocketServer(
           runtime.presenceService.clearDevice(result.previousDeviceId);
         }
 
+        // Cache deviceId -> cardId em memória para zerar queries no banco em device:battery
+        runtime.presenceService.setCardId(result.deviceId, result.card.id);
+
         // Previne leak permanente de presença caso o socket tenha desconectado durante o await
         if (!socket.connected) {
           broadcastDeviceStatus({
@@ -347,7 +350,12 @@ export function attachPhoneFinderSocketServer(
           return;
         }
 
-        runtime.presenceService.registerSocket(result.deviceId, socket.id);
+        runtime.presenceService.registerSocket(
+          result.deviceId,
+          socket.id,
+          undefined,
+          result.card.id
+        );
 
         socket.emit("pairing:result", {
           success: true,
@@ -438,7 +446,8 @@ export function attachPhoneFinderSocketServer(
                     ? payload.appVersionName.trim()
                     : null,
               }
-            : undefined
+            : undefined,
+          card.id
         );
 
         const appVersion = runtime.presenceService.getAppVersion(deviceId);
@@ -491,9 +500,17 @@ export function attachPhoneFinderSocketServer(
           return;
         }
 
-        const card = await runtime.cardRepository.findByDeviceId(deviceId);
-        if (!card) {
-          return;
+        let cardId = runtime.presenceService.getCardId(deviceId);
+        if (cardId === null) {
+          const card = await runtime.cardRepository.findByDeviceId(deviceId);
+          if (!card) {
+            return;
+          }
+          if (runtime.presenceService.getDeviceBySocket(socket.id) !== deviceId) {
+            return;
+          }
+          cardId = card.id;
+          runtime.presenceService.setCardId(deviceId, card.id);
         }
 
         const telemetry = runtime.presenceService.setBattery(
@@ -503,7 +520,7 @@ export function attachPhoneFinderSocketServer(
         );
 
         broadcastBattery({
-          cardId: card.id,
+          cardId,
           deviceId,
           level: telemetry.level,
           isCharging: telemetry.isCharging,

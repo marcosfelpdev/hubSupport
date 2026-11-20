@@ -15,11 +15,13 @@ export class PresenceService {
   private readonly socketToDevice = new Map<string, string>();
   private readonly batteryMap = new Map<string, BatteryTelemetry>();
   private readonly appVersionMap = new Map<string, AppVersionInfo>();
+  private readonly deviceToCardId = new Map<string, string>();
 
   registerSocket(
     deviceId: string,
     socketId: string,
-    version?: SocketVersionInput
+    version?: SocketVersionInput,
+    cardId?: string
   ): void {
     const previousDeviceId = this.socketToDevice.get(socketId);
     if (previousDeviceId && previousDeviceId !== deviceId) {
@@ -39,6 +41,10 @@ export class PresenceService {
     }
     sockets.add(socketId);
     this.socketToDevice.set(socketId, deviceId);
+
+    if (cardId) {
+      this.setCardId(deviceId, cardId);
+    }
 
     if (
       version &&
@@ -123,6 +129,14 @@ export class PresenceService {
     return info ? { ...info } : null;
   }
 
+  setCardId(deviceId: string, cardId: string): void {
+    this.deviceToCardId.set(deviceId, cardId);
+  }
+
+  getCardId(deviceId: string): string | null {
+    return this.deviceToCardId.get(deviceId) ?? null;
+  }
+
   clearDevice(deviceId: string): string[] {
     const activeSockets = this.getSockets(deviceId);
     for (const socketId of activeSockets) {
@@ -131,6 +145,7 @@ export class PresenceService {
     this.deviceSockets.delete(deviceId);
     this.batteryMap.delete(deviceId);
     this.appVersionMap.delete(deviceId);
+    this.deviceToCardId.delete(deviceId);
     return activeSockets;
   }
 }
