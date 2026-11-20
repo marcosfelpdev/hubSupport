@@ -5,6 +5,7 @@ import {
   Check,
   Loader2,
   Plus,
+  QrCode,
   RefreshCw,
   Search,
   Smartphone,
@@ -25,6 +26,7 @@ import {
 import { usePhoneFinderSocket } from "../hooks/usePhoneFinderSocket";
 import PhoneCardFormModal from "../components/phoneFinder/PhoneCardFormModal";
 import PairingCodeModal from "../components/phoneFinder/PairingCodeModal";
+import AppDownloadModal from "../components/phoneFinder/AppDownloadModal";
 import PhoneCardTile, {
   type PhoneDispatchAction,
 } from "../components/phoneFinder/PhoneCardTile";
@@ -46,6 +48,9 @@ export default function PhoneFinderPage() {
   // Banner de sucesso global
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const successTimerRef = useRef<number | null>(null);
+
+  // Modal de download do App Android (QR Code)
+  const [appDownloadOpen, setAppDownloadOpen] = useState(false);
 
   // Modal de criar/editar card
   const [formOpen, setFormOpen] = useState(false);
@@ -569,6 +574,16 @@ export default function PhoneFinderPage() {
         <div className="flex items-center gap-2.5">
           <button
             type="button"
+            onClick={() => setAppDownloadOpen(true)}
+            title="Baixar App Android (QR Code)"
+            aria-label="Baixar App Android via QR Code"
+            className="p-2.5 rounded-xl bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors shadow-xs cursor-pointer"
+          >
+            <QrCode className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
             disabled={loading || refreshing}
             onClick={() => fetchCards(true)}
             title="Atualizar lista de dispositivos"
@@ -946,6 +961,11 @@ export default function PhoneFinderPage() {
           </div>,
           document.body
         )}
+
+      <AppDownloadModal
+        isOpen={appDownloadOpen}
+        onClose={() => setAppDownloadOpen(false)}
+      />
     </main>
   );
 }
