@@ -269,11 +269,11 @@ git commit -m "feat(phone-finder): adicionar cliente REST api.phoneFinder e hook
 - Consumes: `api.phoneFinder`, `PhoneCardItem`, `PhoneCommandFeedback`, `PhonePairingCodeResponse` (`src/services/api.ts`), `usePhoneFinderSocket` (`src/hooks/usePhoneFinderSocket.ts`)
 - Produces: Rota `/dashboard/phone-finder` acessível pela Sidebar logo abaixo de **Atendimentos**
 
-- [ ] **Step 1: Criar `src/components/phoneFinder/PhoneCardFormModal.tsx`**
+- [x] **Step 1: Criar `src/components/phoneFinder/PhoneCardFormModal.tsx`**
 
 Modal limpo no padrão HubSupport (`bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl`) para criar ou editar um card (`name` obrigatório, `description` opcional), com loading state e validação inline.
 
-- [ ] **Step 2: Criar `src/components/phoneFinder/PairingCodeModal.tsx`**
+- [x] **Step 2: Criar `src/components/phoneFinder/PairingCodeModal.tsx`**
 
 Exibe:
 - Código de 6 dígitos formatado (`tracking-[0.25em] font-mono text-4xl font-bold`) com botão **Copiar** (feedback "Copiado!").
@@ -281,7 +281,7 @@ Exibe:
 - Estado "Código expirado" com botão **Gerar novo código** (também disponível a qualquer momento para regenerar).
 - Detecção automática de pareamento: quando o card vinculado mudar para `online` (ou receber novo `pairedDeviceId` diferente do anterior), exibe tela de confirmação em esmeralda ("Dispositivo pareado com sucesso!") e botão para fechar (ou fecha automaticamente após breve confirmação).
 
-- [ ] **Step 3: Criar `src/components/phoneFinder/PhoneCardTile.tsx`**
+- [x] **Step 3: Criar `src/components/phoneFinder/PhoneCardTile.tsx`**
 
 Card estilizado no padrão HubSupport (`bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs hover:shadow-md transition-all`):
 - Topo: nome + descrição + badge de presença (`Online` esmeralda com dot pulsante, `Offline` âmbar, `Não pareado` slate) + menu/botões discretos de gerenciamento (Editar, Parear/Trocar aparelho, Desvincular, Excluir).
@@ -291,7 +291,7 @@ Card estilizado no padrão HubSupport (`bg-white dark:bg-[#111726] border border
   - Se pareado (`online` **ou** `offline`): botões **Localizar** (destaque rose/red, `BellRing`) e **Vibrar** (secundário polido, `Vibrate`) **sempre habilitados**, ficando com spinner/desabilitados apenas enquanto `isDispatching` para aquele card.
 - Faixa de feedback recente do comando (`success` esmeralda, `timeout` âmbar, `error` rose) com auto-limpeza suave.
 
-- [ ] **Step 4: Criar `src/pages/PhoneFinderPage.tsx`**
+- [x] **Step 4: Criar `src/pages/PhoneFinderPage.tsx`**
 
 Estrutura alinhada com `ClientsPage` / `TechnicianPage` (`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8`):
 - Header com título **Phone Finder**, subtítulo conciso, indicador discreto de status do WebSocket (`Tempo real ativo` / `Reconectando...`) e botão **+ Novo Card**.
@@ -299,17 +299,17 @@ Estrutura alinhada com `ClientsPage` / `TechnicianPage` (`max-w-[1400px] mx-auto
 - Grid responsivo (`grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4`) + empty state amigável.
 - Sincronização em tempo real via `usePhoneFinderSocket` atualizando presença, bateria e feedbacks de comando sem reload de página + modais de formulário, pareamento e confirmação de desvincular/excluir.
 
-- [ ] **Step 5: Registrar aba na `src/components/Sidebar.tsx` e rota em `src/App.tsx`**
+- [x] **Step 5: Registrar aba na `src/components/Sidebar.tsx` e rota em `src/App.tsx`**
 
 - Em `src/components/Sidebar.tsx`: no grupo `OPERAÇÃO`, imediatamente abaixo de `Atendimentos`, adicionar `{ href: "/dashboard/phone-finder", label: "Phone Finder", exact: false, icon: <Smartphone className="w-5 h-5 shrink-0" /> }`.
 - Em `src/App.tsx`: importar `PhoneFinderPage` e adicionar `<Route path="/dashboard/phone-finder" element={<PhoneFinderPage />} />`.
 
-- [ ] **Step 6: Verificar tipagem e build de produção**
+- [x] **Step 6: Verificar tipagem e build de produção**
 
 Run: `npx tsc --noEmit && npx vite build`
 Expected: 0 erros TypeScript e bundle Vite compilado sem warnings críticos.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/components/phoneFinder/ src/pages/PhoneFinderPage.tsx src/components/Sidebar.tsx src/App.tsx

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Sun, Moon, Building2 } from "lucide-react";
+import { Sun, Moon, Building2, Smartphone } from "lucide-react";
 
 interface User {
   id?: string | null;
@@ -97,6 +97,12 @@ export default function Sidebar({ user }: { user: User }) {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           ),
+        },
+        {
+          href: "/dashboard/phone-finder",
+          label: "Phone Finder",
+          exact: false,
+          icon: <Smartphone className="w-5 h-5 shrink-0" />,
         },
       ],
     },
