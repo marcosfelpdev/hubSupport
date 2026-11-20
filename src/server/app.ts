@@ -14,6 +14,7 @@ import tagsRoutes from "./routes/tags.routes";
 import agendaRoutes from "./routes/agenda.routes";
 import clientsRoutes from "./routes/clients.routes";
 import categoriesRoutes from "./routes/categories.routes";
+import cardsRoutes from "./routes/cards.routes";
 import { getFileStream } from "./services/r2Storage";
 
 export const app = express();
@@ -67,6 +68,7 @@ app.use("/api/tags", tagsRoutes);
 app.use("/api/agenda", agendaRoutes);
 app.use("/api/clients", clientsRoutes);
 app.use("/api/categories", categoriesRoutes);
+app.use("/api/cards", cardsRoutes);
 
 // Servir frontend SPA compilado se existir (Modo Produção ou Build Estática)
 const DIST_DIR = path.join(process.cwd(), "dist");
@@ -75,8 +77,8 @@ if (!fs.existsSync(DIST_DIR)) {
 } else {
   app.use(express.static(DIST_DIR));
   app.use((req: Request, res: Response, next: NextFunction) => {
-    // Se a rota começar com /api, não serve o index.html
-    if (req.path.startsWith("/api")) {
+    // Se a rota começar com /api ou /socket.io, não serve o index.html
+    if (req.path.startsWith("/api") || req.path.startsWith("/socket.io")) {
       return next();
     }
     res.sendFile(path.join(DIST_DIR, "index.html"));

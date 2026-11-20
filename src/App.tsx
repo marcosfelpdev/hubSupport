@@ -8,6 +8,7 @@ import { DashboardLayout } from "./layouts/DashboardLayout";
 import LoginPage from "./pages/LoginPage";
 import DashboardOverviewPage from "./pages/DashboardOverviewPage";
 import DashboardPage from "./pages/DashboardPage";
+import PhoneFinderPage from "./pages/PhoneFinderPage";
 import TechnicianPage from "./pages/TechnicianPage";
 import EmployeesPage from "./pages/EmployeesPage";
 import ClientsPage from "./pages/ClientsPage";
@@ -39,6 +40,9 @@ export default function App() {
 
             {/* Menu Atendimentos (registro e feed diário) */}
             <Route path="/dashboard/atendimentos" element={<DashboardPage />} />
+
+            {/* Menu Phone Finder */}
+            <Route path="/dashboard/phone-finder" element={<PhoneFinderPage />} />
             
             <Route path="/dashboard/tecnico" element={<TechnicianPage />} />
 
