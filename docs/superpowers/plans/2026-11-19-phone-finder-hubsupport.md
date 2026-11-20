@@ -174,7 +174,7 @@ git commit -m "feat(phone-finder): implementar servicos de pareamento, presenca,
   - `createCardsRouter(runtime: PhoneFinderRuntime): Router` e default router em `src/server/routes/cards.routes.ts`
   - Endpoints REST `/api/cards/*` e namespaces Socket.IO `/panel` e `/device` ativos no servidor Express
 
-- [ ] **Step 1: Escrever teste de integração ponta a ponta em `scripts/test-phone-finder-integration.ts`**
+- [x] **Step 1: Escrever teste de integração ponta a ponta em `scripts/test-phone-finder-integration.ts`**
 
 Sobe um servidor HTTP efêmero (`port: 0`) com Express + `createCardsRouter(runtime)` + `attachPhoneFinderSocketServer(httpServer, runtime)` (usando `InMemoryPhoneCardRepository`, `verifySessionToken` com usuário real ou mockado via token de teste, e `ackTimeoutMs: 400` para testes rápidos de timeout), conectando clientes `socket.io-client` reais em `/panel` e `/device`:
 1. **Segurança REST e `/panel`:** `GET /api/cards` sem token retorna `401`; conexão em `/panel` sem token ou com token inválido falha com `"UNAUTHORIZED"`; conexão em `/panel` com token válido conecta.
@@ -185,12 +185,12 @@ Sobe um servidor HTTP efêmero (`port: 0`) com Express + `createCardsRouter(runt
 6. **Review Focus #1 (desvinculação + reconexão offline):** `POST /api/cards/:id/unpair` envia `device:unpaired` ao celular e broadcast `status: "unpaired"` em `/panel`; se o celular reconectar e emitir `device:identify` com o `deviceId` antigo, recebe imediatamente `device:unpaired` e não altera status no `/panel`.
 7. **Delete de card pareado:** `DELETE /api/cards/:id` em card pareado envia `device:unpaired` ao celular conectado e remove o card (`GET` retorna `404`).
 
-- [ ] **Step 2: Executar teste de integração para confirmar falha inicial**
+- [x] **Step 2: Executar teste de integração para confirmar falha inicial**
 
 Run: `npx tsx scripts/test-phone-finder-integration.ts`
 Expected: FAIL (arquivos `socketServer.ts` e `cards.routes.ts` ainda não existem).
 
-- [ ] **Step 3: Implementar `src/server/phoneFinder/socketServer.ts`**
+- [x] **Step 3: Implementar `src/server/phoneFinder/socketServer.ts`**
 
 Implementar `attachPhoneFinderSocketServer(httpServer, runtime)` com:
 - `cors: { origin: true, credentials: true }`, `pingTimeout: 120_000`, `pingInterval: 45_000`.
@@ -198,19 +198,19 @@ Implementar `attachPhoneFinderSocketServer(httpServer, runtime)` com:
 - Todos os 18 eventos da Seção 5.4 da spec (target emit exclusivo em `/device`, broadcast em `/panel`).
 - Integração dos transport hooks no `runtime` (`emitToDevice`, `broadcastDeviceStatus`, `broadcastBattery`, `broadcastCommandFeedback`) para que tanto rotas REST quanto eventos Socket.IO compartilhem a mesma orquestração.
 
-- [ ] **Step 4: Implementar `src/server/routes/cards.routes.ts` e acoplar em `app.ts`, `index.ts` e `vite.config.mts`**
+- [x] **Step 4: Implementar `src/server/routes/cards.routes.ts` e acoplar em `app.ts`, `index.ts` e `vite.config.mts`**
 
 - `cards.routes.ts`: montar os 9 endpoints REST com `authenticateToken`, validação de `name.trim()`, e mapeamento HTTP exato da Seção 5.5.
 - `app.ts`: `app.use("/api/cards", cardsRoutes);` (e garantir que `req.path.startsWith("/socket.io")` não caia no fallback SPA `index.html`).
 - `index.ts`: usar `http.createServer(app)`, manter `requestTimeout = 15 * 60 * 1000` e `headersTimeout = 16 * 60 * 1000`, chamar `attachPhoneFinderSocketServer(server, phoneFinderRuntime)` e encerrar `io.close()` + `phoneFinderRuntime.stop()` em `SIGTERM`/`SIGINT`.
 - `vite.config.mts`: adicionar proxy `"/socket.io": { target: "http://localhost:4000", ws: true, changeOrigin: true }`.
 
-- [ ] **Step 5: Executar testes de integração e typecheck**
+- [x] **Step 5: Executar testes de integração e typecheck**
 
 Run: `npx tsx scripts/test-phone-finder-integration.ts && npx tsc --noEmit`
 Expected: Todos os cenários de integração PASS e `tsc` código 0.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/server/phoneFinder/socketServer.ts src/server/routes/cards.routes.ts src/server/app.ts src/server/index.ts vite.config.mts scripts/test-phone-finder-integration.ts
