@@ -116,7 +116,7 @@ git commit -m "feat(phone-finder): adicionar model PhoneCard, repositorio e cont
   - `CommandService` (`dispatchCommand(cardId, action): Promise<CommandDispatchOutcome>`, `handleAck(commandId, status, timestamp, socketDeviceId?)`, `hasInFlight(cardId)`, `stop()`)
   - `PhoneFinderRuntime` & `createPhoneFinderRuntime(overrides?)` + singleton `phoneFinderRuntime` em `src/server/phoneFinder/index.ts`
 
-- [ ] **Step 1: Escrever suíte de testes unitários em `scripts/test-phone-finder-services.ts`**
+- [x] **Step 1: Escrever suíte de testes unitários em `scripts/test-phone-finder-services.ts`**
 
 Usar `InMemoryPhoneCardRepository`, mock de `IFcmService`, emissores mockados e timers configuráveis (`timeoutMs`, `ttlMs`) para testar todos os cenários:
 1. **PairingService:** gera código 6 dígitos (`^\d{6}$`), invalida código anterior do mesmo card, rejeita formato inválido / inexistente / expirado / card deletado na ordem da SPEC, consumo único (segunda tentativa falha), troca de aparelho em card já pareado retorna `previousDeviceId`, e rate limit bloqueia após 10 tentativas inválidas por minuto para o mesmo `clientKey`.
@@ -130,12 +130,12 @@ Usar `InMemoryPhoneCardRepository`, mock de `IFcmService`, emissores mockados e 
 9. **CommandService — online com falha FCM:** quando socket está online e FCM falha, **não** faz fail-fast e continua aguardando ACK do WebSocket.
 10. **CommandService — ACK de erro do dispositivo:** `handleAck(commandId, "error", Date.now(), deviceId)` resolve `{ httpStatus: 502, feedback: { status: "error" } }`.
 
-- [ ] **Step 2: Executar o teste para confirmar falha inicial**
+- [x] **Step 2: Executar o teste para confirmar falha inicial**
 
 Run: `npx tsx scripts/test-phone-finder-services.ts`
 Expected: FAIL (serviços ainda não existem).
 
-- [ ] **Step 3: Implementar `pairingService.ts`, `presenceService.ts`, `fcmService.ts`, `commandService.ts` e `index.ts`**
+- [x] **Step 3: Implementar `pairingService.ts`, `presenceService.ts`, `fcmService.ts`, `commandService.ts` e `index.ts`**
 
 - `PairingService`: aceita opções opcionais `{ ttlMs?: number; cleanupIntervalMs?: number; maxFailedAttemptsPerMinute?: number }` com defaults da spec (`300_000`, `30_000`, `10`), usando `crypto.randomInt(100000, 1000000)`.
 - `PresenceService`: mapas `deviceSockets: Map<string, Set<string>>`, `socketToDevice`, `batteryMap`, `appVersionMap`.
@@ -143,12 +143,12 @@ Expected: FAIL (serviços ainda não existem).
 - `CommandService`: aceita `{ ackTimeoutMs?: number }` (default `7000`), durações `LOCATE_DURATION_MS = 5000`, `VIBRATE_DURATION_MS = 3000`, suporta `setTransportHooks(...)` para o servidor Socket.IO plugar `emitToDevice` e `broadcastToPanel`.
 - `index.ts`: exporta `createPhoneFinderRuntime` e `phoneFinderRuntime` + helper `enrichCardWithStatus(card, presenceService): CardWithStatus`.
 
-- [ ] **Step 4: Executar testes e typecheck**
+- [x] **Step 4: Executar testes e typecheck**
 
 Run: `npx tsx scripts/test-phone-finder-services.ts && npx tsc --noEmit`
 Expected: 100% dos cenários PASS e `tsc` código 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/server/phoneFinder/ scripts/test-phone-finder-services.ts
