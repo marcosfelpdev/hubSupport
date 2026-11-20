@@ -17,6 +17,7 @@ export interface IPhoneCardRepository {
   findAll(): Promise<PhoneCardRecord[]>;
   findById(id: string): Promise<PhoneCardRecord | null>;
   findByDeviceId(deviceId: string): Promise<PhoneCardRecord | null>;
+  findByName(name: string): Promise<PhoneCardRecord | null>;
   create(data: CreatePhoneCardInput): Promise<PhoneCardRecord>;
   update(id: string, data: UpdatePhoneCardInput): Promise<PhoneCardRecord | null>;
   delete(id: string): Promise<boolean>;
@@ -68,6 +69,17 @@ export class PrismaPhoneCardRepository implements IPhoneCardRepository {
   async findByDeviceId(deviceId: string): Promise<PhoneCardRecord | null> {
     const row = await prisma.phoneCard.findUnique({
       where: { pairedDeviceId: deviceId },
+    });
+    return row ? mapPrismaCard(row) : null;
+  }
+
+  async findByName(name: string): Promise<PhoneCardRecord | null> {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const row = await prisma.phoneCard.findFirst({
+      where: { name: trimmed },
     });
     return row ? mapPrismaCard(row) : null;
   }
@@ -202,6 +214,19 @@ export class InMemoryPhoneCardRepository implements IPhoneCardRepository {
   async findByDeviceId(deviceId: string): Promise<PhoneCardRecord | null> {
     for (const card of this.cards.values()) {
       if (card.pairedDeviceId === deviceId) {
+        return this.clone(card);
+      }
+    }
+    return null;
+  }
+
+  async findByName(name: string): Promise<PhoneCardRecord | null> {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      return null;
+    }
+    for (const card of this.cards.values()) {
+      if (card.name.trim() === trimmed) {
         return this.clone(card);
       }
     }

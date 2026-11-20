@@ -68,6 +68,22 @@ export interface CommandFeedbackPayload {
   message: string;     // descrição legível em português
 }
 
+export interface FormatCardTitleSuccess {
+  success: true;
+  title: string;
+  validNumbers: string[];
+}
+
+export interface FormatCardTitleError {
+  success: false;
+  error: string;
+}
+
+export type FormatCardTitleResult =
+  | FormatCardTitleSuccess
+  | FormatCardTitleError;
+
+
 // -----------------------------------------------------------------------------
 // Payloads dos 18 Eventos Socket.IO (Seção 5.4 da Spec)
 // -----------------------------------------------------------------------------
