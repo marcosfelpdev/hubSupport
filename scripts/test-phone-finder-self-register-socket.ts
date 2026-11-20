@@ -225,10 +225,10 @@ async function runTests() {
       "card:updated"
     );
 
+    // Emite sem pushToken: deve desvincular device-1 e zerar o pushToken herdado (pushToken: null)
     deviceSocket2.emit("device:self-register", {
       deviceId: "device-test-2",
       numbers: ["8299", "1234", "0845"],
-      pushToken: "token-fcm-2",
     });
 
     const unpairedNotice = await pUnpairedPromise;
@@ -247,8 +247,20 @@ async function runTests() {
     assert.equal(transferredCard.id, result1.cardId);
     assert.equal(transferredCard.pairedDeviceId, "device-test-2");
     assert.equal(transferredCard.status, "online");
+    assert.equal(
+      transferredCard.hasPushToken,
+      false,
+      "hasPushToken deve ser false no painel quando o novo aparelho não informa pushToken"
+    );
 
-    console.log("  ✓ Transferência de titularidade desvinculou device-1 e atualizou para device-2");
+    const cardInRepo = await repo.findById(result1.cardId);
+    assert.equal(
+      cardInRepo?.pushToken,
+      null,
+      "O pushToken do aparelho substituído deve ser resetado para null no banco"
+    );
+
+    console.log("  ✓ Transferência de titularidade desvinculou device-1, atualizou para device-2 e resetou pushToken para null");
 
     // -------------------------------------------------------------------------
     // Cenário 5: Validação de entradas inválidas

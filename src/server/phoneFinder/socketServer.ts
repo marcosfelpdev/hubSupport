@@ -471,15 +471,12 @@ export function attachPhoneFinderSocketServer(
                 runtime.presenceService.clearDevice(card.pairedDeviceId);
               }
 
-              const pushTokenToSet =
-                payload?.pushToken !== undefined
-                  ? normalizedPushToken
-                  : card.pushToken;
-
+              // Durante takeover por novo aparelho físico, o pushToken do aparelho antigo
+              // não pode ser herdado para evitar envio indevido de FCM para hardware substituído.
               const updated = await runtime.cardRepository.pairDevice(
                 card.id,
                 deviceId,
-                pushTokenToSet
+                normalizedPushToken
               );
               if (updated) {
                 card = updated;
