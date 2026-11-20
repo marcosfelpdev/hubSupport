@@ -275,16 +275,31 @@ async function testPresenceService() {
     "setBattery deve rejeitar Infinity"
   );
 
-  // clearDevice retorna sockets ativos e limpa presença + bateria + versão
-  presence.registerSocket(deviceId, "socket-3");
+  // Cache deviceId -> cardId em memória
+  assert.equal(presence.getCardId(deviceId), null);
+  presence.setCardId(deviceId, "card-alpha");
+  assert.equal(presence.getCardId(deviceId), "card-alpha");
+
+  // clearDevice retorna sockets ativos e limpa presença + bateria + versão + cache cardId
+  presence.registerSocket(deviceId, "socket-3", undefined, "card-beta");
+  assert.equal(presence.getCardId(deviceId), "card-beta");
   const clearedSockets = presence.clearDevice(deviceId);
   assert.deepEqual(clearedSockets, ["socket-3"]);
   assert.equal(presence.isOnline(deviceId), false);
   assert.equal(presence.getDeviceBySocket("socket-3"), null);
   assert.equal(presence.getBattery(deviceId), null);
   assert.equal(presence.getAppVersion(deviceId), null);
+  assert.equal(presence.getCardId(deviceId), null);
 
-  console.log("✔ Cenário 2 (PresenceService / Review Focus #2) passou");
+  // unregisterSocket preserva o cache cardId (reconexão transitória não desvincula o card)
+  presence.registerSocket(deviceId, "socket-4", undefined, "card-gamma");
+  assert.equal(presence.getCardId(deviceId), "card-gamma");
+  presence.unregisterSocket("socket-4");
+  assert.equal(presence.getCardId(deviceId), "card-gamma");
+  presence.clearDevice(deviceId);
+  assert.equal(presence.getCardId(deviceId), null);
+
+  console.log("✔ Cenário 2 (PresenceService / Review Focus #2 + cache cardId) passou");
 }
 
 async function testFcmServiceFallback() {

@@ -362,25 +362,59 @@ async function runIntegrationTests() {
     console.log("✔ Cenário 3: Fluxo completo de pareamento via Socket.IO + REST OK");
 
     // -------------------------------------------------------------------------
-    // Cenário 4: Telemetria de bateria (identificado vs não identificado)
+    // Cenário 4: Telemetria de bateria (identificado vs não identificado + 0 queries no banco)
     // -------------------------------------------------------------------------
-    const batteryPromise = waitForEvent<CardBatteryPayload>(
-      panelSocket,
-      "card:battery",
-      3000,
-      (ev) => ev.cardId === card1.id && ev.level === 84
+    assert.equal(
+      runtime.presenceService.getCardId(device1Id),
+      card1.id,
+      "pairing:submit deve popular o cache deviceId -> cardId"
     );
-    device1.emit("device:battery", {
-      deviceId: device1Id,
-      level: 84,
-      isCharging: true,
-    });
-    const batteryEv = await batteryPromise;
-    assert.equal(batteryEv.cardId, card1.id);
-    assert.equal(batteryEv.deviceId, device1Id);
-    assert.equal(batteryEv.level, 84);
-    assert.equal(batteryEv.isCharging, true);
-    assert.equal(Number.isNaN(Date.parse(batteryEv.updatedAt)), false);
+
+    let findByDeviceIdCalls = 0;
+    const origFindForBatteryPairing = repo.findByDeviceId.bind(repo);
+    repo.findByDeviceId = async (devId) => {
+      findByDeviceIdCalls += 1;
+      return origFindForBatteryPairing(devId);
+    };
+
+    try {
+      const batteryReadings = [
+        { level: 84, isCharging: true },
+        { level: 85, isCharging: true },
+        { level: 83, isCharging: false },
+      ];
+
+      for (const reading of batteryReadings) {
+        const batteryPromise = waitForEvent<CardBatteryPayload>(
+          panelSocket,
+          "card:battery",
+          3000,
+          (ev) =>
+            ev.cardId === card1.id &&
+            ev.level === reading.level &&
+            ev.isCharging === reading.isCharging
+        );
+        device1.emit("device:battery", {
+          deviceId: device1Id,
+          level: reading.level,
+          isCharging: reading.isCharging,
+        });
+        const batteryEv = await batteryPromise;
+        assert.equal(batteryEv.cardId, card1.id);
+        assert.equal(batteryEv.deviceId, device1Id);
+        assert.equal(batteryEv.level, reading.level);
+        assert.equal(batteryEv.isCharging, reading.isCharging);
+        assert.equal(Number.isNaN(Date.parse(batteryEv.updatedAt)), false);
+      }
+
+      assert.equal(
+        findByDeviceIdCalls,
+        0,
+        `device:battery após pairing:submit deve fazer 0 chamadas a findByDeviceId (fez ${findByDeviceIdCalls})`
+      );
+    } finally {
+      repo.findByDeviceId = origFindForBatteryPairing;
+    }
 
     // Socket não identificado tentando emitir bateria com device1Id → deve ser ignorado
     const rogueDevice = track(await connectSocket(`${baseUrl}/device`));
@@ -397,7 +431,9 @@ async function runIntegrationTests() {
     });
     await noRogueBattery;
     rogueDevice.disconnect();
-    console.log("✔ Cenário 4: Telemetria de bateria OK");
+    console.log(
+      "✔ Cenário 4: Telemetria de bateria OK (findByDeviceId calls pós-pairing = 0)"
+    );
 
     // -------------------------------------------------------------------------
     // Cenário 5: Localizar e Vibrar com ACK + Timeout + Target-only (anti-broadcast)
@@ -541,6 +577,11 @@ async function runIntegrationTests() {
     assert.equal(panelUnpairedEv.status, "unpaired");
     assert.equal(panelUnpairedEv.deviceId, null);
     assert.equal(panelUnpairedEv.hasPushToken, false);
+    assert.equal(
+      runtime.presenceService.getCardId(device1Id),
+      null,
+      "unpairCard deve limpar cache deviceId -> cardId"
+    );
 
     device1.disconnect();
 
@@ -600,6 +641,13 @@ async function runIntegrationTests() {
 
     const panelDelEv = await panelDeleteStatusPromise;
     assert.equal(panelDelEv.status, "unpaired");
+    if (pair2Result.success) {
+      assert.equal(
+        runtime.presenceService.getCardId(pair2Result.deviceId),
+        null,
+        "deleteCard deve limpar cache deviceId -> cardId"
+      );
+    }
 
     const getDeletedRes = await apiFetch(`/api/cards/${card2.id}`);
     assert.equal(getDeletedRes.status, 404);
@@ -696,6 +744,53 @@ async function runIntegrationTests() {
     const reBatteryEv = await reBatteryPromise;
     assert.equal(reBatteryEv.level, 67);
 
+    // Após device:identify, múltiplos eventos device:battery devem executar 0 queries no banco
+    assert.equal(
+      runtime.presenceService.getCardId(pair3.deviceId),
+      card3.id,
+      "device:identify deve manter/popular cache deviceId -> cardId"
+    );
+    let identifyBatteryDbCalls = 0;
+    const origFindForIdentifyBattery = repo.findByDeviceId.bind(repo);
+    repo.findByDeviceId = async (devId) => {
+      identifyBatteryDbCalls += 1;
+      return origFindForIdentifyBattery(devId);
+    };
+    try {
+      for (const [level, isCharging] of [
+        [68, true],
+        [69, true],
+        [70, false],
+      ] as const) {
+        const nextBatPromise = waitForEvent<CardBatteryPayload>(
+          panelSocket,
+          "card:battery",
+          3000,
+          (ev) =>
+            ev.cardId === card3.id &&
+            ev.level === level &&
+            ev.isCharging === isCharging
+        );
+        device3Re.emit("device:battery", {
+          deviceId: pair3.deviceId,
+          level,
+          isCharging,
+        });
+        const nextBatEv = await nextBatPromise;
+        assert.equal(nextBatEv.cardId, card3.id);
+        assert.equal(nextBatEv.deviceId, pair3.deviceId);
+        assert.equal(nextBatEv.level, level);
+        assert.equal(nextBatEv.isCharging, isCharging);
+      }
+      assert.equal(
+        identifyBatteryDbCalls,
+        0,
+        `device:battery após device:identify deve fazer 0 chamadas a findByDeviceId (fez ${identifyBatteryDbCalls})`
+      );
+    } finally {
+      repo.findByDeviceId = origFindForIdentifyBattery;
+    }
+
     // Trigger via /panel socket (locate:trigger + alert:ack)
     const dev3LocatePromise = waitForEvent<AlertLocatePayload>(
       device3Re,
@@ -729,7 +824,14 @@ async function runIntegrationTests() {
     );
     assert.equal(ackUnpair.ok, true);
     await dev3UnpairedPromise;
-    console.log("✔ Cenário 8: Eventos /panel + reconexão device:identify com versão/bateria OK");
+    assert.equal(
+      runtime.presenceService.getCardId(pair3.deviceId),
+      null,
+      "device:unpair via /panel deve limpar cache deviceId -> cardId"
+    );
+    console.log(
+      "✔ Cenário 8: Eventos /panel + reconexão device:identify com versão/bateria OK (findByDeviceId calls pós-identify = 0)"
+    );
 
     // -------------------------------------------------------------------------
     // Cenário 9: Regressão — ack não-função em /panel & disconnect durante await
@@ -800,6 +902,11 @@ async function runIntegrationTests() {
       runtime.presenceService.isOnline(offlineAfterDisconnect.deviceId),
       false,
       "Socket morto durante pairing:submit não pode ficar registrado como online"
+    );
+    assert.equal(
+      runtime.presenceService.getCardId(offlineAfterDisconnect.deviceId),
+      card3.id,
+      "pairing:submit com disconnect durante await ainda deve popular cache deviceId -> cardId"
     );
 
     // 9c) Disconnect durante await em device:identify → não registra presença nem emite online
