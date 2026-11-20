@@ -58,6 +58,33 @@ app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Download público do APK Android do Phone Finder (via QR Code no painel)
+app.get("/api/phone-finder/apk", async (req: Request, res: Response) => {
+  try {
+    const fileInfo = await getFileStream("phone-finder/hubsupport-phone-finder.apk");
+    res.setHeader("Content-Type", "application/vnd.android.package-archive");
+    res.setHeader("Content-Disposition", 'attachment; filename="hubsupport-phone-finder.apk"');
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    if (fileInfo.contentLength) {
+      res.setHeader("Content-Length", String(fileInfo.contentLength));
+    }
+    fileInfo.stream.on("error", (streamErr) => {
+      console.error("[PhoneFinder] Erro ao transmitir APK:", streamErr);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Erro ao transmitir o arquivo APK." });
+      } else {
+        res.end();
+      }
+    });
+    fileInfo.stream.pipe(res);
+  } catch (err) {
+    console.error("[PhoneFinder] APK indisponível para download:", err);
+    res.status(404).json({
+      error: "APK do Phone Finder ainda não foi publicado no servidor.",
+    });
+  }
+});
+
 // Rotas da API REST
 app.use("/api/auth", authRoutes);
 app.use("/api/worklogs", worklogsRoutes);
