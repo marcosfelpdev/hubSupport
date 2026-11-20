@@ -214,54 +214,56 @@ export function attachPhoneFinderSocketServer(
     socket.on(
       "pairing:generate",
       async (payload: PairingGeneratePayload, ack) => {
+        const reply = typeof ack === "function" ? ack : undefined;
         try {
           const cardId =
             typeof payload?.cardId === "string" ? payload.cardId.trim() : "";
           if (!cardId) {
-            ack?.({ ok: false, error: "cardId é obrigatório." });
+            reply?.({ ok: false, error: "cardId é obrigatório." });
             return;
           }
 
           const generated = await runtime.pairingService.generateCode(cardId);
           if (!generated) {
-            ack?.({ ok: false, error: "Card não encontrado." });
+            reply?.({ ok: false, error: "Card não encontrado." });
             return;
           }
 
           socket.emit("pairing:generated", generated);
-          ack?.({ ok: true, data: generated });
+          reply?.({ ok: true, data: generated });
         } catch (err) {
           console.error(
             "[PhoneFinder][Socket][/panel] Erro em pairing:generate:",
             err
           );
-          ack?.({ ok: false, error: "Erro ao gerar código de pareamento." });
+          reply?.({ ok: false, error: "Erro ao gerar código de pareamento." });
         }
       }
     );
 
     socket.on("device:unpair", async (payload: DeviceUnpairPayload, ack) => {
+      const reply = typeof ack === "function" ? ack : undefined;
       try {
         const cardId =
           typeof payload?.cardId === "string" ? payload.cardId.trim() : "";
         if (!cardId) {
-          ack?.({ ok: false, error: "cardId é obrigatório." });
+          reply?.({ ok: false, error: "cardId é obrigatório." });
           return;
         }
 
         const updated = await runtime.unpairCard(cardId);
         if (!updated) {
-          ack?.({ ok: false, error: "Card não encontrado." });
+          reply?.({ ok: false, error: "Card não encontrado." });
           return;
         }
 
-        ack?.({ ok: true });
+        reply?.({ ok: true });
       } catch (err) {
         console.error(
           "[PhoneFinder][Socket][/panel] Erro em device:unpair:",
           err
         );
-        ack?.({ ok: false, error: "Erro ao desvincular dispositivo." });
+        reply?.({ ok: false, error: "Erro ao desvincular dispositivo." });
       }
     });
 
@@ -332,6 +334,19 @@ export function attachPhoneFinderSocketServer(
           runtime.presenceService.clearDevice(result.previousDeviceId);
         }
 
+        // Previne leak permanente de presença caso o socket tenha desconectado durante o await
+        if (!socket.connected) {
+          broadcastDeviceStatus({
+            cardId: result.card.id,
+            status: "offline",
+            deviceId: result.deviceId,
+            hasPushToken: Boolean(result.card.pushToken),
+            appVersionCode: null,
+            appVersionName: null,
+          });
+          return;
+        }
+
         runtime.presenceService.registerSocket(result.deviceId, socket.id);
 
         socket.emit("pairing:result", {
@@ -354,10 +369,12 @@ export function attachPhoneFinderSocketServer(
           "[PhoneFinder][Socket][/device] Erro em pairing:submit:",
           err
         );
-        socket.emit("pairing:result", {
-          success: false,
-          error: "Erro interno ao processar pareamento.",
-        });
+        if (socket.connected) {
+          socket.emit("pairing:result", {
+            success: false,
+            error: "Erro interno ao processar pareamento.",
+          });
+        }
       }
     });
 
@@ -375,9 +392,11 @@ export function attachPhoneFinderSocketServer(
 
         let card = await runtime.cardRepository.findByDeviceId(deviceId);
         if (!card) {
-          socket.emit("device:unpaired", {
-            message: "Este dispositivo foi desvinculado do painel.",
-          });
+          if (socket.connected) {
+            socket.emit("device:unpaired", {
+              message: "Este dispositivo foi desvinculado do painel.",
+            });
+          }
           return;
         }
 
@@ -392,6 +411,11 @@ export function attachPhoneFinderSocketServer(
           if (updated) {
             card = updated;
           }
+        }
+
+        // Previne leak permanente de presença caso o socket tenha desconectado durante os awaits no banco
+        if (!socket.connected) {
+          return;
         }
 
         const hasVersionInfo =

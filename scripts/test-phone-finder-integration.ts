@@ -731,6 +731,119 @@ async function runIntegrationTests() {
     await dev3UnpairedPromise;
     console.log("✔ Cenário 8: Eventos /panel + reconexão device:identify com versão/bateria OK");
 
+    // -------------------------------------------------------------------------
+    // Cenário 9: Regressão — ack não-função em /panel & disconnect durante await
+    // -------------------------------------------------------------------------
+    // 9a) ack não-função em pairing:generate e device:unpair não pode derrubar o servidor
+    const nonFnGenPromise = waitForEvent<PairingCodeResponse>(
+      panelSocket,
+      "pairing:generated",
+      3000,
+      (ev) => ev.cardId === card3.id
+    );
+    panelSocket.emit("pairing:generate", { cardId: card3.id }, "not-a-function");
+    const nonFnGen = await nonFnGenPromise;
+    assert.match(nonFnGen.code, /^\d{6}$/);
+
+    const nonFnUnpairStatusPromise = waitForEvent<DeviceStatusPayload>(
+      panelSocket,
+      "device:status",
+      3000,
+      (ev) => ev.cardId === card3.id && ev.status === "unpaired"
+    );
+    panelSocket.emit("device:unpair", { cardId: card3.id }, 12345);
+    await nonFnUnpairStatusPromise;
+
+    // Também testa payload inválido com ack não-função (garante ramo de erro seguro)
+    panelSocket.emit("pairing:generate", { cardId: "" }, { invalid: true });
+    panelSocket.emit("device:unpair", { cardId: "inexistente" }, "bad-ack");
+    await sleep(60);
+
+    // 9b) Disconnect durante await em pairing:submit → não vaza presença online e emite offline
+    const slowCodeRes = await apiFetch(`/api/cards/${card3.id}/pairing-code`, {
+      method: "POST",
+    });
+    const slowCodeData = (await slowCodeRes.json()) as PairingCodeResponse;
+
+    const origPairDevice = repo.pairDevice.bind(repo);
+    let releasePairDevice!: () => void;
+    let pairDeviceStartedResolve!: () => void;
+    const pairDeviceStarted = new Promise<void>((r) => {
+      pairDeviceStartedResolve = r;
+    });
+    repo.pairDevice = async (id, deviceId, pushToken) => {
+      pairDeviceStartedResolve();
+      await new Promise<void>((r) => {
+        releasePairDevice = r;
+      });
+      return origPairDevice(id, deviceId, pushToken);
+    };
+
+    const ephemeralPairSocket = track(await connectSocket(`${baseUrl}/device`));
+    const offlineAfterDisconnectPromise = waitForEvent<DeviceStatusPayload>(
+      panelSocket,
+      "device:status",
+      3000,
+      (ev) => ev.cardId === card3.id && ev.status === "offline"
+    );
+    ephemeralPairSocket.emit("pairing:submit", { code: slowCodeData.code });
+    await pairDeviceStarted;
+    ephemeralPairSocket.disconnect();
+    await sleep(50);
+    releasePairDevice();
+    repo.pairDevice = origPairDevice;
+
+    const offlineAfterDisconnect = await offlineAfterDisconnectPromise;
+    assert.equal(offlineAfterDisconnect.status, "offline");
+    assert.ok(offlineAfterDisconnect.deviceId);
+    assert.equal(
+      runtime.presenceService.isOnline(offlineAfterDisconnect.deviceId),
+      false,
+      "Socket morto durante pairing:submit não pode ficar registrado como online"
+    );
+
+    // 9c) Disconnect durante await em device:identify → não registra presença nem emite online
+    const pairedDeviceId3 = offlineAfterDisconnect.deviceId;
+    const origFindByDeviceId = repo.findByDeviceId.bind(repo);
+    let releaseIdentify!: () => void;
+    let identifyStartedResolve!: () => void;
+    const identifyStarted = new Promise<void>((r) => {
+      identifyStartedResolve = r;
+    });
+    repo.findByDeviceId = async (devId) => {
+      if (devId === pairedDeviceId3) {
+        identifyStartedResolve();
+        await new Promise<void>((r) => {
+          releaseIdentify = r;
+        });
+      }
+      return origFindByDeviceId(devId);
+    };
+
+    const ephemeralIdentifySocket = track(await connectSocket(`${baseUrl}/device`));
+    const noOnlineLeak = expectNoEvent<DeviceStatusPayload>(
+      panelSocket,
+      "device:status",
+      250,
+      (ev) => ev.cardId === card3.id && ev.status === "online"
+    );
+    ephemeralIdentifySocket.emit("device:identify", {
+      deviceId: pairedDeviceId3,
+    });
+    await identifyStarted;
+    ephemeralIdentifySocket.disconnect();
+    await sleep(50);
+    releaseIdentify();
+    repo.findByDeviceId = origFindByDeviceId;
+
+    await noOnlineLeak;
+    assert.equal(
+      runtime.presenceService.isOnline(pairedDeviceId3),
+      false,
+      "Socket morto durante device:identify não pode vazar presença online"
+    );
+    console.log("✔ Cenário 9: Regressão ack não-função + disconnect durante await OK");
+
     console.log("\n✅ Todos os cenários de integração do Phone Finder passaram!");
   } finally {
     for (const socket of activeSockets) {
