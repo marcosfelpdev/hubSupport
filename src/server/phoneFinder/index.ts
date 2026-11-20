@@ -25,6 +25,8 @@ export interface PhoneFinderRealtimeTransport {
     action: CommandAction,
     feedback: CommandFeedbackPayload
   ) => void;
+  broadcastCardCreated?: (card: CardWithStatus) => void;
+  broadcastCardUpdated?: (card: CardWithStatus) => void;
 }
 
 export interface PhoneFinderRuntime {

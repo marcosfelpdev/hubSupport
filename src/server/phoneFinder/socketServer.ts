@@ -1,17 +1,20 @@
 import type { Server as HttpServer } from "node:http";
 import { Namespace, Server as SocketIOServer, Socket } from "socket.io";
 import { AuthenticatedUser, verifySessionToken } from "../auth";
-import type { PhoneFinderRuntime } from "./index";
+import { enrichCardWithStatus, type PhoneFinderRuntime } from "./index";
+import { formatCardTitleFromNumbers } from "./titleFormatter";
 import {
   AlertAckPayload,
   AlertLocatePayload,
   AlertVibratePayload,
   CardBatteryPayload,
+  CardWithStatus,
   CommandAction,
   CommandFeedbackPayload,
   DeviceBatteryPayload,
   DeviceClientToServerEvents,
   DeviceIdentifyPayload,
+  DeviceSelfRegisterPayload,
   DeviceServerToClientEvents,
   DeviceStatusPayload,
   DeviceUnpairPayload,
@@ -162,6 +165,14 @@ export function attachPhoneFinderSocketServer(
     panelNs.emit("card:battery", payload);
   };
 
+  const broadcastCardCreated = (card: CardWithStatus): void => {
+    panelNs.emit("card:created", card);
+  };
+
+  const broadcastCardUpdated = (card: CardWithStatus): void => {
+    panelNs.emit("card:updated", card);
+  };
+
   const broadcastCommandFeedback = (
     action: CommandAction,
     feedback: CommandFeedbackPayload
@@ -184,6 +195,8 @@ export function attachPhoneFinderSocketServer(
     broadcastDeviceStatus,
     broadcastBattery,
     broadcastCommandFeedback,
+    broadcastCardCreated,
+    broadcastCardUpdated,
   });
 
   // ---------------------------------------------------------------------------
@@ -385,6 +398,205 @@ export function attachPhoneFinderSocketServer(
         }
       }
     });
+
+    socket.on(
+      "device:self-register",
+      async (payload: DeviceSelfRegisterPayload) => {
+        try {
+          const deviceId =
+            typeof payload?.deviceId === "string" ? payload.deviceId.trim() : "";
+
+          if (!deviceId) {
+            if (socket.connected) {
+              socket.emit("pairing:result", {
+                success: false,
+                error: "deviceId é obrigatório.",
+              });
+            }
+            return;
+          }
+
+          const formatResult = formatCardTitleFromNumbers(payload?.numbers);
+          if (!formatResult.success) {
+            if (socket.connected) {
+              socket.emit("pairing:result", {
+                success: false,
+                error: formatResult.error,
+              });
+            }
+            return;
+          }
+
+          const formattedTitle = formatResult.title;
+          const normalizedPushToken =
+            typeof payload?.pushToken === "string" &&
+            payload.pushToken.trim().length > 0
+              ? payload.pushToken.trim()
+              : null;
+
+          let isNewCard = false;
+          let card = await runtime.cardRepository.findByDeviceId(deviceId);
+
+          if (card) {
+            // 1. Já existe card com este deviceId: atualiza título se alterado e pushToken se informado
+            if (card.name !== formattedTitle) {
+              const updated = await runtime.cardRepository.update(card.id, {
+                name: formattedTitle,
+              });
+              if (updated) {
+                card = updated;
+              }
+            }
+
+            if (payload?.pushToken !== undefined) {
+              const updated = await runtime.cardRepository.updatePushToken(
+                card.id,
+                normalizedPushToken
+              );
+              if (updated) {
+                card = updated;
+              }
+            }
+          } else {
+            // 2. Não encontrado por deviceId: busca por nome formatado
+            card = await runtime.cardRepository.findByName(formattedTitle);
+
+            if (card) {
+              // Encontrou card com o mesmo nome: transfere a titularidade para este deviceId
+              if (card.pairedDeviceId && card.pairedDeviceId !== deviceId) {
+                notifyDeviceUnpaired(
+                  card.pairedDeviceId,
+                  "Este dispositivo foi substituído por outro aparelho no painel."
+                );
+                runtime.presenceService.clearDevice(card.pairedDeviceId);
+              }
+
+              const pushTokenToSet =
+                payload?.pushToken !== undefined
+                  ? normalizedPushToken
+                  : card.pushToken;
+
+              const updated = await runtime.cardRepository.pairDevice(
+                card.id,
+                deviceId,
+                pushTokenToSet
+              );
+              if (updated) {
+                card = updated;
+              }
+            } else {
+              // 3. Não existe: cria novo card e associa deviceId + pushToken
+              isNewCard = true;
+              const created = await runtime.cardRepository.create({
+                name: formattedTitle,
+              });
+              const paired = await runtime.cardRepository.pairDevice(
+                created.id,
+                deviceId,
+                normalizedPushToken
+              );
+              card = paired ?? created;
+            }
+          }
+
+          // Previne vazamento de presença caso o socket tenha desconectado durante os awaits
+          if (!socket.connected) {
+            const cardWithStatus = enrichCardWithStatus(
+              card,
+              runtime.presenceService
+            );
+            if (isNewCard) {
+              broadcastCardCreated(cardWithStatus);
+            } else {
+              broadcastCardUpdated(cardWithStatus);
+            }
+            broadcastDeviceStatus({
+              cardId: card.id,
+              status: "offline",
+              deviceId,
+              hasPushToken: Boolean(card.pushToken),
+              appVersionCode: null,
+              appVersionName: null,
+            });
+            return;
+          }
+
+          const hasVersionInfo =
+            payload?.appVersionCode !== undefined ||
+            payload?.appVersionName !== undefined;
+
+          runtime.presenceService.setCardId(deviceId, card.id);
+          runtime.presenceService.registerSocket(
+            deviceId,
+            socket.id,
+            hasVersionInfo
+              ? {
+                  appVersionCode:
+                    typeof payload.appVersionCode === "number" &&
+                    Number.isFinite(payload.appVersionCode)
+                      ? payload.appVersionCode
+                      : null,
+                  appVersionName:
+                    typeof payload.appVersionName === "string" &&
+                    payload.appVersionName.trim().length > 0
+                      ? payload.appVersionName.trim()
+                      : null,
+                }
+              : undefined,
+            card.id
+          );
+
+          socket.emit("pairing:result", {
+            success: true,
+            deviceId,
+            cardId: card.id,
+            cardName: card.name,
+          });
+
+          const cardWithStatus = enrichCardWithStatus(
+            card,
+            runtime.presenceService
+          );
+          if (isNewCard) {
+            broadcastCardCreated(cardWithStatus);
+          } else {
+            broadcastCardUpdated(cardWithStatus);
+          }
+
+          const appVersion = runtime.presenceService.getAppVersion(deviceId);
+          broadcastDeviceStatus({
+            cardId: card.id,
+            status: "online",
+            deviceId,
+            hasPushToken: Boolean(card.pushToken),
+            appVersionCode: appVersion?.appVersionCode ?? null,
+            appVersionName: appVersion?.appVersionName ?? null,
+          });
+
+          const battery = runtime.presenceService.getBattery(deviceId);
+          if (battery) {
+            broadcastBattery({
+              cardId: card.id,
+              deviceId,
+              level: battery.level,
+              isCharging: battery.isCharging,
+              updatedAt: battery.updatedAt,
+            });
+          }
+        } catch (err) {
+          console.error(
+            "[PhoneFinder][Socket][/device] Erro em device:self-register:",
+            err
+          );
+          if (socket.connected) {
+            socket.emit("pairing:result", {
+              success: false,
+              error: "Erro interno ao processar cadastro do aparelho.",
+            });
+          }
+        }
+      }
+    );
 
     socket.on("device:identify", async (payload: DeviceIdentifyPayload) => {
       try {

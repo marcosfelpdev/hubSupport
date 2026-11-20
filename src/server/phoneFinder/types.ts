@@ -141,6 +141,14 @@ export interface DeviceIdentifyPayload {
   appVersionName?: string;
 }
 
+export interface DeviceSelfRegisterPayload {
+  deviceId: string;
+  numbers: string[];
+  pushToken?: string | null;
+  appVersionCode?: number | null;
+  appVersionName?: string | null;
+}
+
 export interface DeviceBatteryPayload {
   deviceId: string;
   level: number;
@@ -219,10 +227,13 @@ export interface PanelServerToClientEvents {
   "card:battery": (payload: CardBatteryPayload) => void;
   "locate:feedback": (payload: LocateFeedbackPayload) => void;
   "vibrate:feedback": (payload: VibrateFeedbackPayload) => void;
+  "card:created": (payload: CardWithStatus) => void;
+  "card:updated": (payload: CardWithStatus) => void;
 }
 
 export interface DeviceClientToServerEvents {
   "pairing:submit": (payload: PairingSubmitPayload) => void;
+  "device:self-register": (payload: DeviceSelfRegisterPayload) => void;
   "device:identify": (payload: DeviceIdentifyPayload) => void;
   "device:battery": (payload: DeviceBatteryPayload) => void;
   "alert:ack": (payload: AlertAckPayload) => void;
