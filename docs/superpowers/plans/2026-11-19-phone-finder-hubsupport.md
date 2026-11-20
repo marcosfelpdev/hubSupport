@@ -51,44 +51,44 @@
   - `PhoneCardRecord`, `PublicPhoneCard`, `CardWithStatus`, `DevicePresenceStatus`, `BatteryTelemetry`, `CommandAction`, `CommandAckStatus`, `CommandFeedbackStatus`, `CommandFeedbackPayload`, `PairingCodeResponse`, `toPublicPhoneCard(card: PhoneCardRecord): PublicPhoneCard` em `src/server/phoneFinder/types.ts`
   - `IPhoneCardRepository`, `PrismaPhoneCardRepository`, `InMemoryPhoneCardRepository` em `src/server/phoneFinder/cardRepository.ts`
 
-- [ ] **Step 1: Instalar dependências de runtime**
+- [x] **Step 1: Instalar dependências de runtime**
 
 Run: `npm install socket.io socket.io-client firebase-admin`
 Expected: Instalação concluída sem erros e entradas adicionadas em `package.json`.
 
-- [ ] **Step 2: Adicionar `PhoneCard` em `prisma/schema.prisma` e sincronizar com o banco**
+- [x] **Step 2: Adicionar `PhoneCard` em `prisma/schema.prisma` e sincronizar com o banco**
 
 Adicionar o modelo `PhoneCard` conforme Seção 5.1 da spec (`id String @id @default(uuid())`, `name String`, `description String? @db.Text`, `pairedDeviceId String? @unique`, `pushToken String? @db.Text`, `createdAt DateTime @default(now())`, `updatedAt DateTime @updatedAt`).
 
 Run: `npx prisma db push && npx prisma generate`
 Expected: Schema sincronizado no PostgreSQL e Prisma Client regenerado.
 
-- [ ] **Step 3: Escrever teste de unidade e persistência em `scripts/test-phone-finder-repo.ts`**
+- [x] **Step 3: Escrever teste de unidade e persistência em `scripts/test-phone-finder-repo.ts`**
 
 Assertions obrigatórias:
 - `toPublicPhoneCard(record)` retorna `hasPushToken: true` quando `pushToken` existe e **não** contém a chave `"pushToken"` (`"pushToken" in pub === false`).
 - `PrismaPhoneCardRepository`: `create`, `findById`, `findAll`, `update`, `pairDevice(id, deviceId, pushToken)`, `findByDeviceId(deviceId)`, `updatePushToken(id, null)`, `unpairDevice(id)`, `delete(id)` (com limpeza em bloco `finally`).
 - `InMemoryPhoneCardRepository`: espelha exatamente o contrato de `IPhoneCardRepository` (incluindo unicidade de `pairedDeviceId`).
 
-- [ ] **Step 4: Executar o teste para confirmar falha inicial**
+- [x] **Step 4: Executar o teste para confirmar falha inicial**
 
 Run: `npx tsx scripts/test-phone-finder-repo.ts`
 Expected: FAIL (módulos `types.ts` / `cardRepository.ts` ainda não existem).
 
-- [ ] **Step 5: Extrair `verifySessionToken(token: string)` em `src/server/auth.ts`**
+- [x] **Step 5: Extrair `verifySessionToken(token: string)` em `src/server/auth.ts`**
 
 Extrair a verificação JWT + lookup do usuário ativo no Prisma para `export async function verifySessionToken(token: string): Promise<AuthenticatedUser | null>` e fazer `authenticateToken` reutilizá-la sem alterar nenhuma mensagem HTTP ou comportamento existente.
 
-- [ ] **Step 6: Implementar `src/server/phoneFinder/types.ts` e `src/server/phoneFinder/cardRepository.ts`**
+- [x] **Step 6: Implementar `src/server/phoneFinder/types.ts` e `src/server/phoneFinder/cardRepository.ts`**
 
 Definir todos os DTOs da Seção 5.2 da spec, os payloads dos 18 eventos da Seção 5.4, `toPublicPhoneCard` e as implementações `PrismaPhoneCardRepository` e `InMemoryPhoneCardRepository`.
 
-- [ ] **Step 7: Executar testes e typecheck**
+- [x] **Step 7: Executar testes e typecheck**
 
 Run: `npx tsx scripts/test-phone-finder-repo.ts && npx tsc --noEmit`
 Expected: Todos os testes do repositório PASS e `tsc` sai com código 0.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add package.json package-lock.json prisma/schema.prisma src/server/auth.ts src/server/phoneFinder/types.ts src/server/phoneFinder/cardRepository.ts scripts/test-phone-finder-repo.ts

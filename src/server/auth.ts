@@ -41,6 +41,43 @@ export function generateToken(user: { id: string; name: string; email: string; r
   );
 }
 
+export async function verifySessionToken(token: string): Promise<AuthenticatedUser | null> {
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      id: string;
+      email: string;
+      role: string;
+    };
+
+    if (!decoded?.id) {
+      return null;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        active: true,
+      },
+    });
+
+    if (!user || !user.active) {
+      return null;
+    }
+
+    return user;
+  } catch {
+    return null;
+  }
+}
+
 export async function authenticateToken(
   req: Request,
   res: Response,
@@ -63,24 +100,11 @@ export async function authenticateToken(
       return;
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      id: string;
-      email: string;
-      role: string;
-    };
+    jwt.verify(token, JWT_SECRET);
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        active: true,
-      },
-    });
+    const user = await verifySessionToken(token);
 
-    if (!user || !user.active) {
+    if (!user) {
       res.status(401).json({ error: "Sessão inválida ou usuário inativo." });
       return;
     }

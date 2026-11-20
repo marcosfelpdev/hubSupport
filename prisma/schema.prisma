@@ -170,3 +170,13 @@ model WorkLogNote {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model PhoneCard {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?  @db.Text
+  pairedDeviceId String?  @unique
+  pushToken      String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
