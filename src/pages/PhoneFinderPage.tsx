@@ -212,7 +212,12 @@ export default function PhoneFinderPage() {
               : event.status === "unpaired"
                 ? null
                 : card.appVersionName,
-          battery: event.status === "unpaired" ? null : card.battery,
+          battery:
+            event.status === "unpaired" ||
+            (event.deviceId !== undefined &&
+              event.deviceId !== card.pairedDeviceId)
+              ? null
+              : card.battery,
         };
       })
     );

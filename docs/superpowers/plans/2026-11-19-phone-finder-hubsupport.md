@@ -327,7 +327,7 @@ git commit -m "feat(phone-finder): criar pagina Phone Finder, componentes e aba 
 - Consumes: Namespace `/device` do servidor Socket.IO (Task 3)
 - Produces: Script CLI interativo para simular um celular Android real conectando ao HubSupport local ou em produção
 
-- [ ] **Step 1: Criar `scripts/simulate-phone-finder-device.ts`**
+- [x] **Step 1: Criar `scripts/simulate-phone-finder-device.ts`**
 
 Script CLI executável via `npx tsx scripts/simulate-phone-finder-device.ts --url http://localhost:4000 --code 123456` (ou `--device-id <uuid>` para testar reconexão):
 - Conecta em `${url}/device`.
@@ -337,7 +337,7 @@ Script CLI executável via `npx tsx scripts/simulate-phone-finder-device.ts --ur
 - Ao receber `alert:locate` ou `alert:vibrate`: aplica deduplicação em `Set<string>` por `commandId`, exibe banner colorido no terminal, e envia `alert:ack` / `vibrate:ack` com `{ commandId, status: "ok", timestamp: Date.now() }`.
 - Ao receber `device:unpaired`: imprime aviso e encerra o processo limpo.
 
-- [ ] **Step 2: Executar toda a suíte de verificação e build**
+- [x] **Step 2: Executar toda a suíte de verificação e build**
 
 Run:
 ```bash
@@ -349,7 +349,7 @@ npm run build
 ```
 Expected: Todas as suítes de teste com 0 falhas, `tsc --noEmit` código 0, e `npm run build` gerando Prisma Client + `dist/` com sucesso.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add scripts/simulate-phone-finder-device.ts
