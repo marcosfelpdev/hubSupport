@@ -45,13 +45,22 @@ sequenceDiagram
 
 ---
 
-## 2. Captura no Navegador (`ScreenRecorderButton.tsx`)
+## 2. Captura no Navegador (`ScreenRecorderButton.tsx`) & Travas de Atendimento
 - **APIs Nativas:** `navigator.mediaDevices.getDisplayMedia` (vídeo e áudio da tela) e `navigator.mediaDevices.getUserMedia` (microfone).
+- **Trava Obrigatória de Áudio do Sistema:**
+  - Configuração via Chromium: `displaySurface: "monitor"`, `systemAudio: "include"`, `selfBrowserSurface: "exclude"`.
+  - Validação imediata: se `displayStream.getAudioTracks().length === 0`, o início da gravação é abortado na hora, os tracks são finalizados (`track.stop()`) e é exibido um modal explicativo orientando o operador a selecionar a aba "Tela inteira" e marcar a chave "Compartilhar com áudio do sistema".
+  - Sem fallback sem áudio: gravações só iniciam com garantia de áudio do sistema para permitir a transcrição correta pelo Gemini.
+- **Trava Obrigatória de Mídia / Contexto Visual (`WorkLogForm.tsx` & `POST /api/worklogs`):**
+  - Todo chamado/relatório criado no sistema exige obrigatoriamente a presença de ao menos uma mídia anexada (print, imagem, documento, vídeo) OU uma gravação de tela (`recordedVideo`).
+  - Objetivo: Garantir contexto técnico suficiente e referência visual permanente para a análise da IA e geração do relatório PDF.
+  - Validação Client-Side: bloqueio do botão "Salvar Atendimento", badges informativos em tempo real e mensagem de aviso orientando o operador.
+  - Validação Server-Side: verificação estrita em `POST /api/worklogs`, rejeitando com HTTP 400 Bad Request caso a soma de mídias + vídeo seja 0.
 - **Mixagem com Web Audio API:**
   - Cria `AudioContext`.
-  - Conecta `displayStream` e `micStream` em `createMediaStreamSource`.
+  - Conecta `displayStream` (áudio do sistema prioritário) e `micStream` (voz do atendente) em `createMediaStreamSource`.
   - Direciona para `createMediaStreamDestination`.
-  - Insere o track mixado no `MediaStream` final para gravar simultaneamente o áudio da aplicação e a voz do atendente.
+  - Insere o track mixado no `MediaStream` final para gravar simultaneamente o áudio da aplicação/reunião e a voz do atendente.
 - **MIME Types Suportados:**
   - Preferencial: `video/webm;codecs=vp9,opus` ou `video/webm`.
   - Fallback: `video/mp4;codecs=avc1,mp4a.40.2`.

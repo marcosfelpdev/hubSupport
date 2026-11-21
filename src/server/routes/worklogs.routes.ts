@@ -370,6 +370,22 @@ router.post(
         return;
       }
 
+      // =========================================================================
+      // TRAVA OBRIGATÓRIA: Todo atendimento/relatório requer ao menos 1 mídia ou gravação
+      // Garante contexto suficiente e referência visual para análise do chamado
+      // =========================================================================
+      const totalMediaCount =
+        (files?.media ? files.media.length : 0) +
+        (files?.recordedVideo ? files.recordedVideo.length : 0);
+
+      if (totalMediaCount === 0) {
+        res.status(400).json({
+          error:
+            "Trava obrigatória: É necessário anexar ao menos uma mídia (imagem, print, vídeo) ou gravação de tela como referência visual para registrar o atendimento.",
+        });
+        return;
+      }
+
       // Processar mídias adicionais via streaming do disco para o R2 (RAM constante)
       const mediaPaths: string[] = [];
       if (files?.media) {
