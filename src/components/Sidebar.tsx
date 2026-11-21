@@ -101,7 +101,7 @@ export default function Sidebar({ user }: { user: User }) {
         },
         {
           href: "/dashboard/phone-finder",
-          label: "Phone Finder",
+          label: "Localizador",
           exact: false,
           icon: <Smartphone className="w-5 h-5 shrink-0" />,
         },

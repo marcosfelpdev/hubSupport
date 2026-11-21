@@ -288,7 +288,7 @@ export default function PhoneCardTile({
             {formattedVersion && (
               <span
                 className="px-2 py-0.5 rounded-md font-mono text-[11px] font-medium bg-white dark:bg-[#111726] text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80"
-                title="Versão do app Phone Finder instalada no aparelho"
+                title="Versão do app instalada no aparelho"
               >
                 {formattedVersion}
               </span>
