@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LogIn, AlertCircle } from "lucide-react";
+import RelixLogo from "@/components/common/RelixLogo";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -42,25 +43,11 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative z-10 animate-fade-in">
         {/* Brand Header */}
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xs text-white mx-auto mb-3.5">
-            <svg
-              className="w-6 h-6"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            HubSupport
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Log de Atendimentos — Equipe de Suporte
+        <div className="text-center mb-6 flex flex-col items-center">
+          <RelixLogo variant="full" height={48} className="mb-2" />
+          <h1 className="sr-only">Relix</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Acesse sua conta no Relix
           </p>
         </div>
 

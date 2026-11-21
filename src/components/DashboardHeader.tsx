@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import RelixLogo from "@/components/common/RelixLogo";
 
 interface User {
   name?: string | null;
@@ -55,42 +56,16 @@ export default function DashboardHeader({ user }: { user: User }) {
       >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <div
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "9px",
-              background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(99,102,241,0.35)",
-            }}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          </div>
+          <RelixLogo variant="symbol" height={32} />
           <div>
             <span
               style={{
                 fontWeight: 700,
                 fontSize: "1rem",
-                background: "linear-gradient(135deg, #6366f1, #a78bfa)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
+                color: "var(--text-primary)",
               }}
             >
-              HubSupport
+              Relix
             </span>
             <span
               style={{

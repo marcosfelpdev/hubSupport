@@ -4,6 +4,7 @@ import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Sun, Moon, Building2, Smartphone } from "lucide-react";
+import RelixLogo from "@/components/common/RelixLogo";
 
 interface User {
   id?: string | null;
@@ -204,33 +205,15 @@ export default function Sidebar({ user }: { user: User }) {
         {/* Topo: Logo da Marca e Navegação */}
         <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
           {/* Header da Marca */}
-          <div className="flex items-center min-h-[40px]">
-            <div
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xs text-white shrink-0"
-              title={!isHovered ? "HubSupport - Portal da Equipe" : undefined}
-            >
-              <svg
-                className="w-5 h-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-            </div>
-            {isHovered && (
-              <div className="ml-3 min-w-0 overflow-hidden whitespace-nowrap animate-fade-in">
-                <h1 className="text-slate-900 dark:text-white font-bold text-base tracking-tight leading-none truncate">
-                  HubSupport
-                </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 truncate">
-                  Portal da Equipe
-                </p>
-              </div>
-            )}
+          <div
+            className="flex items-center min-h-[40px] px-1"
+            title={!isHovered ? "Relix - Portal da Equipe" : undefined}
+          >
+            <RelixLogo
+              variant={isHovered ? "full" : "symbol"}
+              height={32}
+              className="shrink-0 transition-all duration-200"
+            />
           </div>
 
           {/* Indicador de Gravação de Tela Ativa */}

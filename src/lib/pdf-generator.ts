@@ -229,7 +229,7 @@ export async function generateReportPdf(options: GeneratePdfOptions): Promise<st
       bufferPages: true,
       info: {
         Title: docTitle,
-        Author: "HubSupport AI",
+        Author: "Relix AI",
         Subject: `Atendimento ${workLogId}`,
       },
     });
@@ -1121,7 +1121,7 @@ export async function generateReportPdf(options: GeneratePdfOptions): Promise<st
         .stroke();
 
       // Texto institucional à esquerda
-      const platformFooter = context.platform || data.platformAnalyzed || "HubSupport";
+      const platformFooter = context.platform || data.platformAnalyzed || "Relix";
       const clientFooter = context.clientOrOffice || data.department || "Atendimento Geral";
       const leftFooterText = `Relatório Técnico de Suporte - ${platformFooter} (${clientFooter})`;
 

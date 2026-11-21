@@ -83,10 +83,10 @@ export default function AppDownloadModal({
                 id="app-download-modal-title"
                 className="text-sm font-bold text-slate-900 dark:text-white leading-tight"
               >
-                Instalar App Android
+                Instalar Relix Mobile
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                HubSupport Phone Finder • Android 8.0+
+                Relix Mobile • Android 8.0+
               </p>
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function AppDownloadModal({
               <span>Aponte a câmera do celular para baixar o APK</span>
             </p>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
-              Após instalar, abra o aplicativo e digite o código de 6 dígitos
+              Instale o aplicativo Relix Mobile no celular e digite o código de 6 dígitos
               gerado em qualquer card desta tela.
             </p>
           </div>
@@ -127,7 +127,7 @@ export default function AppDownloadModal({
           {isLocalhostUrl && (
             <div className="w-full text-left text-[11px] bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 rounded-xl px-3 py-2">
               Você está acessando via <strong>localhost</strong>. Para escanear
-              pelo celular, abra o HubSupport na URL de produção ou pelo IP da
+              pelo celular, abra o Relix na URL de produção ou pelo IP da
               rede local.
             </div>
           )}
@@ -154,7 +154,7 @@ export default function AppDownloadModal({
 
             <a
               href={downloadUrl}
-              download="hubsupport-phone-finder.apk"
+              download="relix-mobile.apk"
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-xs transition-colors"
             >
               <Download className="w-3.5 h-3.5" />

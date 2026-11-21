@@ -122,7 +122,7 @@ export function formatReportAsText(
     sections.push(`🎙️ TRANSCRIÇÃO / REGISTRO DE DIÁLOGO\n${transcriptLines.join("\n")}`);
   }
 
-  sections.push("--------------------------------------------------\nGerado via HubSupport");
+  sections.push("--------------------------------------------------\nGerado via Relix");
 
   return sections.join("\n\n").trim();
 }
