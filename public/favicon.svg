@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#DE1D4B" />
+  <g transform="translate(84.125, 86.625) scale(1.25)">
+    <!-- Bracket -->
+    <path
+      d="M 17 251 L 17 60 C 17 37 37 20 60 20 L 239 20 C 239 28 228 48 202 64 L 60 64 L 60 251 Z"
+      fill="#FFFFFF"
+    />
+    <!-- Ribbon R/X -->
+    <path
+      fill-rule="evenodd"
+      d="M 84 87 L 200 87 C 224 87 240 103 240 127 C 240 148 226 163 202 188 L 258 251 L 204 251 L 171 219 L 138 251 L 84 251 L 140 188 L 84 131 L 84 87 Z M 147 133 L 195 133 L 171 157 Z"
+      fill="#FFFFFF"
+    />
+  </g>
+</svg>
