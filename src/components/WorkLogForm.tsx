@@ -19,6 +19,7 @@ import {
   ChevronDown,
   PlusCircle,
   Rocket,
+  AlertCircle,
 } from "lucide-react";
 import {
   InlineMediaEditor,
@@ -90,6 +91,10 @@ export default function WorkLogForm({
   const [activeRecordedVideo, setActiveRecordedVideo] = useState<File | null>(recordedVideo);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showVideoPreview, setShowVideoPreview] = useState(false);
+
+  // Trava de Mídia Obrigatória: arquivos anexados + gravação de tela
+  const totalMediaCount = attachedMedia.length + (activeRecordedVideo ? 1 : 0);
+  const hasMedia = totalMediaCount > 0;
 
   // Tags Mestre para Contextualização de Plataformas
   const [tags, setTags] = useState<TagItem[]>([]);
@@ -321,6 +326,14 @@ export default function WorkLogForm({
       setMessage({
         type: "error",
         text: "Por favor, selecione uma tag de plataforma obrigatória.",
+      });
+      return;
+    }
+
+    if (totalMediaCount === 0) {
+      setMessage({
+        type: "error",
+        text: "Trava obrigatória: Anexe ao menos uma mídia (imagem, print, vídeo) ou realize uma gravação de tela para contextualizar o atendimento.",
       });
       return;
     }
@@ -611,13 +624,19 @@ export default function WorkLogForm({
 
         {/* Anexo de Mídia - Drag and Drop e Sincronização */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-              Anexar Mídia <span className="text-slate-400 dark:text-slate-500 lowercase font-normal">(opcional)</span>
+              Anexar Mídia / Referência Visual <span className="text-rose-500 font-bold">*</span>
             </label>
-            {attachedMedia.length > 0 && (
-              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                {attachedMedia.length} {attachedMedia.length === 1 ? "arquivo selecionado" : "arquivos selecionados"}
+            {hasMedia ? (
+              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
+                <Check className="w-3 h-3" />
+                {totalMediaCount} {totalMediaCount === 1 ? "mídia anexada" : "mídias anexadas"} (Contexto visual OK)
+              </span>
+            ) : (
+              <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
+                <AlertCircle className="w-3 h-3" />
+                Obrigatório (0 anexadas)
               </span>
             )}
           </div>
@@ -642,12 +661,18 @@ export default function WorkLogForm({
             className={`border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer select-none flex flex-col items-center justify-center gap-2 ${
               isDraggingOver
                 ? "border-slate-900 dark:border-slate-400 bg-slate-100/80 dark:bg-slate-800/80 shadow-xs"
+                : !hasMedia
+                ? "border-amber-300 dark:border-amber-500/40 hover:border-amber-400 dark:hover:border-amber-500/60 bg-amber-50/20 dark:bg-amber-950/10 hover:bg-amber-50/40 dark:hover:bg-amber-950/20"
                 : "border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-[#0b0f19]/40 hover:bg-slate-50 dark:hover:bg-[#0b0f19]/70"
             } ${isPending ? "opacity-60 cursor-not-allowed" : ""}`}
           >
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-2xs ${
-                isDraggingOver ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                isDraggingOver
+                  ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900"
+                  : !hasMedia
+                  ? "bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400"
+                  : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
               }`}
             >
               <UploadCloud className="w-5 h-5" />
@@ -671,6 +696,15 @@ export default function WorkLogForm({
               </p>
             </div>
           </div>
+
+          {!hasMedia && (
+            <div className="mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+              <span>
+                <strong>Trava obrigatória de atendimento:</strong> É necessário anexar ao menos uma imagem, print, documento, vídeo ou gravação de tela para garantir contexto e referência visual na criação do relatório.
+              </span>
+            </div>
+          )}
 
           {/* Lista de arquivos selecionados em Grid Quadrado */}
           {attachedMedia.length > 0 && (
@@ -943,24 +977,41 @@ export default function WorkLogForm({
         )}
 
         {/* Submit */}
-        <button
-          id="btn-submit-log"
-          type="submit"
-          disabled={isPending}
-          className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-xl py-3 px-6 text-sm shadow-xs transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer mt-1"
-        >
-          {isPending ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>Salvando...</span>
-            </>
-          ) : (
-            <>
-              <Check className="w-4 h-4" />
-              <span>Salvar Atendimento</span>
-            </>
+        <div className="flex flex-col gap-2 mt-1">
+          <button
+            id="btn-submit-log"
+            type="submit"
+            disabled={isPending || !hasMedia}
+            className={`w-full font-semibold rounded-xl py-3 px-6 text-sm shadow-xs transition-all flex items-center justify-center gap-2 ${
+              !hasMedia
+                ? "bg-slate-300 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300/80 dark:border-slate-700/60"
+                : "bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white active:scale-[0.99] cursor-pointer"
+            }`}
+            title={
+              !hasMedia
+                ? "Trava de atendimento: Anexe ao menos uma mídia ou gravação de tela para habilitar o salvamento"
+                : undefined
+            }
+          >
+            {isPending ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Salvando...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Salvar Atendimento</span>
+              </>
+            )}
+          </button>
+
+          {!hasMedia && (
+            <p className="text-center text-xs text-amber-600 dark:text-amber-400 font-medium">
+              ⚠️ Anexe ao menos uma mídia ou gravação de tela para salvar o atendimento.
+            </p>
           )}
-        </button>
+        </div>
       </form>
     </div>
   );
