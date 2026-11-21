@@ -16,6 +16,7 @@ import clientsRoutes from "./routes/clients.routes";
 import categoriesRoutes from "./routes/categories.routes";
 import cardsRoutes from "./routes/cards.routes";
 import { getFileStream } from "./services/r2Storage";
+import { getLatestApkVersion } from "./phoneFinder/apkVersionService";
 
 export const app = express();
 
@@ -81,6 +82,29 @@ app.get("/api/phone-finder/apk", async (req: Request, res: Response) => {
     console.error("[PhoneFinder] APK indisponível para download:", err);
     res.status(404).json({
       error: "APK do Phone Finder ainda não foi publicado no servidor.",
+    });
+  }
+});
+
+// Metadados públicos da versão atual do APK Android do Phone Finder
+app.get("/api/phone-finder/version", async (req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  const bypassCache = req.query.fresh === "1";
+
+  try {
+    const versionInfo = await getLatestApkVersion({ bypassCache });
+    if (!versionInfo) {
+      res.status(404).json({
+        error: "Metadados de versão ainda não publicados.",
+      });
+      return;
+    }
+
+    res.status(200).json(versionInfo);
+  } catch (err) {
+    console.error("[PhoneFinder] Erro ao consultar metadados de versão do APK:", err);
+    res.status(404).json({
+      error: "Metadados de versão ainda não publicados.",
     });
   }
 });
