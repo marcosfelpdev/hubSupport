@@ -325,7 +325,7 @@ export default function PairingCodeModal({
                   </div>
                 ) : (
                   <p className="text-xs text-slate-500 dark:text-slate-400 text-center leading-relaxed px-2">
-                    Digite este código no app Phone Finder no celular. O pareamento será confirmado automaticamente.
+                    Digite este código no app Relix Mobile no celular. O pareamento será confirmado automaticamente.
                   </p>
                 )}
               </div>

@@ -168,7 +168,7 @@ export default function PhoneFinderPage() {
       const message =
         err instanceof Error
           ? err.message
-          : "Erro ao carregar dispositivos do Phone Finder.";
+          : "Erro ao carregar dispositivos do Localizador.";
       if (!silent) {
         setPageError(message);
       }
@@ -607,7 +607,7 @@ export default function PhoneFinderPage() {
               <span className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs">
                 <Smartphone className="w-5 h-5" />
               </span>
-              <span>Phone Finder</span>
+              <span>Localizador</span>
             </h1>
 
             {/* Pílula discreta de status da conexão WebSocket */}
@@ -758,7 +758,7 @@ export default function PhoneFinderPage() {
         <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3 shadow-xs">
           <Loader2 className="w-8 h-8 text-slate-700 dark:text-slate-300 animate-spin" />
           <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            Carregando dispositivos do Phone Finder...
+            Carregando dispositivos do Localizador...
           </span>
         </div>
       ) : pageError ? (
