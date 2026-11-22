@@ -6,7 +6,7 @@ import { renderToString } from "react-dom/server";
 import BrandLogo from "../src/components/common/BrandLogo";
 import ThemeSettingsSection from "../src/components/settings/ThemeSettingsSection";
 import { ThemeProvider } from "../src/contexts/ThemeContext";
-import { BRAND_THEME_STORAGE_KEY } from "../src/themes/themeRegistry";
+import { BRAND_THEMES, BRAND_THEME_STORAGE_KEY } from "../src/themes/themeRegistry";
 
 const projectRoot = process.cwd();
 
@@ -206,6 +206,10 @@ async function runTests() {
     // Ribbon ciano gradients: #22D3EE -> #0891B2, fold: #0891B2 -> #06B6D4
     assert(cyberpunkLightFull.includes("#22D3EE") && cyberpunkLightFull.includes("#0891B2"), "Cyberpunk light full must include cyan main gradient #22D3EE -> #0891B2");
     assert(cyberpunkLightFull.includes("#06B6D4"), "Cyberpunk light full must include cyan fold gradient #06B6D4");
+    assert(
+      /<polygon\b[^>]*fill="#684ECB"/.test(cyberpunkLightFull),
+      'Cyberpunk light full must explicitly assign fill="#684ECB" to the xStroke <polygon'
+    );
 
     const cyberpunkDarkFull = renderToString(
       React.createElement(BrandLogo, { themeId: "relix-cyberpunk", variant: "full", mode: "dark" })
@@ -231,6 +235,42 @@ async function runTests() {
       React.createElement(BrandLogo, { themeId: "relix-cyberpunk", variant: "app-icon" })
     );
     assert(cyberpunkAppIcon.includes("#6B42FF"), "Cyberpunk app-icon must use violet #6B42FF background");
+  });
+
+  test("BrandLogo relix-cyberpunk in mode='auto' renders static Tailwind fill classes for bracket and xStroke", () => {
+    const cyberpunkAutoFull = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-cyberpunk", variant: "full", mode: "auto" })
+    );
+    assert(
+      cyberpunkAutoFull.includes("fill-[#684ECB] dark:fill-[#6B42FF]"),
+      "Cyberpunk auto full must include static class 'fill-[#684ECB] dark:fill-[#6B42FF]' on bracket"
+    );
+    assert(
+      cyberpunkAutoFull.includes("fill-[#684ECB] dark:fill-[#22D3EE]"),
+      "Cyberpunk auto full must include static class 'fill-[#684ECB] dark:fill-[#22D3EE]' on xStroke"
+    );
+  });
+
+  test("BrandLogo generates unique linearGradient ids across multiple coexisting instances", () => {
+    const multiLogoHtml = renderToString(
+      React.createElement(
+        "div",
+        null,
+        BRAND_THEMES.map((theme) =>
+          React.createElement(BrandLogo, { key: theme.id, themeId: theme.id, variant: "full" })
+        )
+      )
+    );
+    const gradientMatches = [...multiLogoHtml.matchAll(/<linearGradient\b[^>]*\bid="([^"]+)"/g)].map(
+      (m) => m[1]
+    );
+    assert(gradientMatches.length > 0, "Must find linearGradient ids");
+    const uniqueIds = new Set(gradientMatches);
+    assert.strictEqual(
+      uniqueIds.size,
+      gradientMatches.length,
+      `All linearGradient ids across coexisting BrandLogos must be unique. Total found: ${gradientMatches.length}, unique: ${uniqueIds.size}`
+    );
   });
 
   test("BrandLogo reads active brandTheme from ThemeProvider when themeId is omitted", () => {
@@ -344,7 +384,24 @@ async function runTests() {
     });
   });
 
-  // 3. Source inspection: ThemeSettingsSection.tsx
+  // 3. Source inspection: RelixLogo.tsx
+  const relixLogoPath = path.join(
+    projectRoot,
+    "src",
+    "components",
+    "common",
+    "RelixLogo.tsx"
+  );
+  const relixLogoSrc = fs.readFileSync(relixLogoPath, "utf8");
+
+  test("RelixLogo.tsx does not contain dynamic Tailwind arbitrary value interpolations", () => {
+    assert(
+      !relixLogoSrc.includes("fill-[${"),
+      "RelixLogo.tsx must not contain dynamic interpolation with `fill-[${` so Tailwind v4 can extract classes statically"
+    );
+  });
+
+  // 4. Source inspection: ThemeSettingsSection.tsx
   const themeSectionPath = path.join(
     projectRoot,
     "src",
@@ -382,7 +439,7 @@ async function runTests() {
     );
   });
 
-  // 4. Source inspection: SettingsPage.tsx
+  // 5. Source inspection: SettingsPage.tsx
   const settingsPagePath = path.join(projectRoot, "src", "pages", "SettingsPage.tsx");
   const settingsSrc = fs.readFileSync(settingsPagePath, "utf8");
 

@@ -98,7 +98,7 @@ export const RelixLogo: React.FC<RelixLogoProps> = ({
     // mode === 'auto'
     if (isCyberpunk) {
       bracketFill = palette.bracket.light;
-      bracketClassName = `fill-[${palette.bracket.light}] dark:fill-[${palette.bracket.dark}]`;
+      bracketClassName = 'fill-[#684ECB] dark:fill-[#6B42FF]';
     } else {
       bracketFill = 'currentColor';
     }
@@ -116,7 +116,7 @@ export const RelixLogo: React.FC<RelixLogoProps> = ({
     // mode === 'auto'
     if (isCyberpunk) {
       xStrokeFill = palette.xStroke.light;
-      xStrokeClassName = `fill-[${palette.xStroke.light}] dark:fill-[${palette.xStroke.dark}]`;
+      xStrokeClassName = 'fill-[#684ECB] dark:fill-[#22D3EE]';
     } else {
       xStrokeFill = palette.xStroke.light;
     }
