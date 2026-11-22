@@ -706,10 +706,10 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
               onDragOver={(e) => handleDragOver(col.id, e)}
               onDragLeave={(e) => handleDragLeave(col.id, e)}
               onDrop={(e) => handleDrop(col.id, e)}
-              className={`bg-slate-100/75 dark:bg-[#111726]/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl flex flex-col h-[calc(100vh-270px)] min-h-[500px] max-h-[calc(100vh-270px)] overflow-hidden shadow-xs transition-all duration-200 ${
+              className={`rounded-2xl flex flex-col h-[calc(100vh-270px)] min-h-[500px] max-h-[calc(100vh-270px)] overflow-hidden shadow-xs transition-all duration-200 ${
                 isOver
                   ? "border-2 border-dashed border-brand-card-selected-border dark:border-sky-500 bg-brand-card-selected-bg dark:bg-sky-950/30"
-                  : ""
+                  : "bg-slate-100/75 dark:bg-[#111726]/60 border border-slate-200/80 dark:border-slate-800"
               }`}
             >
               {/* Cabeçalho da Coluna */}

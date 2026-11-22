@@ -518,7 +518,7 @@ function runStaticAudit() {
     const strippedCss = stripCssComments(globalsCss);
 
     const relixSelector = ':root[data-brand-theme="relix"]:not(.dark)';
-    const collapseSelector = ':root[data-brand-theme]:not([data-brand-theme="default"]):not(.dark)';
+    const collapseSelector = ':root:where([data-brand-theme]:not([data-brand-theme="default"])):not(.dark)';
 
     const relixBlock = extractCssBlock(strippedCss, relixSelector);
     assert(relixBlock.includes("--brand-accent"), "Relix block must define --brand-accent");

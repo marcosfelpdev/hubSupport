@@ -33,6 +33,10 @@ const BrandLogoByThemeId: React.FC<BrandLogoByThemeIdProps> = ({
           {...restProps}
         />
       );
+    default: {
+      const _exhaustive: never = themeDef.logoId;
+      throw new Error(`Unsupported brand logo id: ${String(_exhaustive)}`);
+    }
   }
 };
 

@@ -316,7 +316,7 @@ async function runTests() {
       ":root"
     );
 
-    const collapseSelector = ':root[data-brand-theme]:not([data-brand-theme="default"]):not(.dark)';
+    const collapseSelector = ':root:where([data-brand-theme]:not([data-brand-theme="default"])):not(.dark)';
     const collapseBlock = extractCssBlock(strippedCss, collapseSelector);
     assertCssTokens(
       collapseBlock,

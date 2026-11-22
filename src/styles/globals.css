@@ -121,7 +121,7 @@
 }
 
 /* Colapso automático de tokens legados em temas customizados (apenas modo claro) */
-:root[data-brand-theme]:not([data-brand-theme="default"]):not(.dark) {
+:root:where([data-brand-theme]:not([data-brand-theme="default"])):not(.dark) {
   --brand-action-blue: var(--brand-accent);
   --brand-action-blue-hover: var(--brand-accent-hover);
   --brand-focus-blue: var(--brand-focus-border);

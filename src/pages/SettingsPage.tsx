@@ -306,11 +306,11 @@ export default function SettingsPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 mt-6">
+        <div className="flex gap-2 overflow-x-auto border-b border-slate-200 dark:border-slate-800 mt-6">
           <button
             type="button"
             onClick={() => setActiveTab("appearance")}
-            className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
               activeTab === "appearance"
                 ? "border-brand-accent text-brand-accent dark:border-white dark:text-white"
                 : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
@@ -326,7 +326,7 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("tags")}
-            className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
               activeTab === "tags"
                 ? "border-brand-accent text-brand-accent dark:border-white dark:text-white"
                 : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
@@ -343,7 +343,7 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setActiveTab("categories")}
-              className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
                 activeTab === "categories"
                   ? "border-brand-accent text-brand-accent dark:border-white dark:text-white"
                   : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"

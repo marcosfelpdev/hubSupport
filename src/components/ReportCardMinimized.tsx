@@ -385,9 +385,12 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
     ? "cursor-pointer"
     : "";
 
-  const surfaceClasses = isSelected
-    ? ""
-    : "bg-white dark:bg-[#111726] hover:bg-white dark:hover:bg-[#161f33]";
+  const surfaceClasses =
+    isSelected && !isDragging
+      ? ""
+      : isSelected
+      ? "bg-brand-card-selected-bg dark:bg-sky-950/20"
+      : "bg-white dark:bg-[#111726] hover:bg-white dark:hover:bg-[#161f33]";
 
   const stateClasses = isDragging
     ? "opacity-50 scale-[0.98] border-dashed border-brand-card-selected-border dark:border-sky-500 shadow-md"
