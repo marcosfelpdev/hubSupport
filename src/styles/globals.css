@@ -168,6 +168,126 @@
   --brand-danger-hover: #7f1d1d;
 }
 
+/* Tema Relix Cobalto (estritamente modo claro) */
+:root[data-brand-theme="relix-cobalt"]:not(.dark) {
+  --brand-accent: #2563eb;
+  --brand-accent-hover: #1d4ed8;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #eff6ff;
+  --brand-accent-soft-hover: #dbeafe;
+  --brand-accent-border: #93c5fd;
+  --brand-accent-text: #1e40af;
+  --brand-focus-border: #2563eb;
+  --brand-focus-ring: rgba(37, 99, 235, 0.35);
+  --brand-card-selected-bg: rgba(239, 246, 255, 0.45);
+  --brand-card-selected-bg-hover: rgba(219, 234, 254, 0.52);
+  --brand-card-selected-border: #2563eb;
+  --brand-card-selected-ring: rgba(37, 99, 235, 0.35);
+  --brand-card-selected-shadow: rgba(37, 99, 235, 0.14);
+  --brand-card-selected-pill: #2563eb;
+  --brand-recorder-bg: rgba(37, 99, 235, 0.08);
+  --brand-recorder-bg-hover: rgba(37, 99, 235, 0.14);
+  --brand-recorder-text: #2563eb;
+  --brand-recorder-border: rgba(37, 99, 235, 0.32);
+  --brand-highlight-bg: rgba(239, 246, 255, 0.75);
+  --brand-highlight-bg-soft: rgba(239, 246, 255, 0.5);
+  --brand-highlight-border: #60a5fa;
+  --brand-highlight-text: #1d4ed8;
+  --brand-highlight-dot: #2563eb;
+  --brand-danger: #e11d48;
+  --brand-danger-hover: #be123c;
+}
+
+/* Tema Relix Esmeralda (estritamente modo claro) */
+:root[data-brand-theme="relix-emerald"]:not(.dark) {
+  --brand-accent: #059669;
+  --brand-accent-hover: #047857;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #ecfdf5;
+  --brand-accent-soft-hover: #d1fae5;
+  --brand-accent-border: #6ee7b7;
+  --brand-accent-text: #065f46;
+  --brand-focus-border: #059669;
+  --brand-focus-ring: rgba(5, 150, 105, 0.35);
+  --brand-card-selected-bg: rgba(236, 253, 245, 0.45);
+  --brand-card-selected-bg-hover: rgba(209, 250, 229, 0.52);
+  --brand-card-selected-border: #059669;
+  --brand-card-selected-ring: rgba(5, 150, 105, 0.35);
+  --brand-card-selected-shadow: rgba(5, 150, 105, 0.14);
+  --brand-card-selected-pill: #059669;
+  --brand-recorder-bg: rgba(5, 150, 105, 0.08);
+  --brand-recorder-bg-hover: rgba(5, 150, 105, 0.14);
+  --brand-recorder-text: #059669;
+  --brand-recorder-border: rgba(5, 150, 105, 0.32);
+  --brand-highlight-bg: rgba(236, 253, 245, 0.75);
+  --brand-highlight-bg-soft: rgba(236, 253, 245, 0.5);
+  --brand-highlight-border: #34d399;
+  --brand-highlight-text: #047857;
+  --brand-highlight-dot: #059669;
+  --brand-danger: #e11d48;
+  --brand-danger-hover: #be123c;
+}
+
+/* Tema Relix Âmbar (estritamente modo claro) */
+:root[data-brand-theme="relix-amber"]:not(.dark) {
+  --brand-accent: #d97706;
+  --brand-accent-hover: #b45309;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #fffbeb;
+  --brand-accent-soft-hover: #fef3c7;
+  --brand-accent-border: #fcd34d;
+  --brand-accent-text: #92400e;
+  --brand-focus-border: #d97706;
+  --brand-focus-ring: rgba(217, 119, 6, 0.35);
+  --brand-card-selected-bg: rgba(255, 251, 235, 0.45);
+  --brand-card-selected-bg-hover: rgba(254, 243, 199, 0.52);
+  --brand-card-selected-border: #d97706;
+  --brand-card-selected-ring: rgba(217, 119, 6, 0.35);
+  --brand-card-selected-shadow: rgba(217, 119, 6, 0.14);
+  --brand-card-selected-pill: #d97706;
+  --brand-recorder-bg: rgba(217, 119, 6, 0.08);
+  --brand-recorder-bg-hover: rgba(217, 119, 6, 0.14);
+  --brand-recorder-text: #d97706;
+  --brand-recorder-border: rgba(217, 119, 6, 0.32);
+  --brand-highlight-bg: rgba(255, 251, 235, 0.75);
+  --brand-highlight-bg-soft: rgba(255, 251, 235, 0.5);
+  --brand-highlight-border: #fbbf24;
+  --brand-highlight-text: #b45309;
+  --brand-highlight-dot: #d97706;
+  --brand-danger: #e11d48;
+  --brand-danger-hover: #be123c;
+}
+
+/* Tema Relix Cyberpunk (estritamente modo claro) */
+:root[data-brand-theme="relix-cyberpunk"]:not(.dark) {
+  --brand-accent: #0891b2;
+  --brand-accent-hover: #0e7490;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #ecfeff;
+  --brand-accent-soft-hover: #cffafe;
+  --brand-accent-border: #67e8f9;
+  --brand-accent-text: #155e75;
+  --brand-focus-border: #0891b2;
+  --brand-focus-ring: rgba(8, 145, 178, 0.35);
+  --brand-card-selected-bg: rgba(236, 254, 255, 0.45);
+  --brand-card-selected-bg-hover: rgba(207, 250, 254, 0.52);
+  --brand-card-selected-border: #0891b2;
+  --brand-card-selected-ring: rgba(8, 145, 178, 0.35);
+  --brand-card-selected-shadow: rgba(8, 145, 178, 0.14);
+  --brand-card-selected-pill: #0891b2;
+  --brand-recorder-bg: rgba(8, 145, 178, 0.08);
+  --brand-recorder-bg-hover: rgba(8, 145, 178, 0.14);
+  --brand-recorder-text: #0891b2;
+  --brand-recorder-border: rgba(8, 145, 178, 0.32);
+  --brand-highlight-bg: rgba(236, 254, 255, 0.75);
+  --brand-highlight-bg-soft: rgba(236, 254, 255, 0.5);
+  --brand-highlight-border: #22d3ee;
+  --brand-highlight-text: #0e7490;
+  --brand-highlight-dot: #0891b2;
+  --brand-danger: #e11d48;
+  --brand-danger-hover: #be123c;
+}
+
 @layer base {
   *, ::before, ::after {
     box-sizing: border-box;

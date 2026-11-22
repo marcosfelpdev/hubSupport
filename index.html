@@ -31,7 +31,7 @@
           }
 
           var savedBrandTheme = localStorage.getItem("relix_brand_theme");
-          var allowedBrandThemes = ["relix"];
+          var allowedBrandThemes = ["relix", "relix-cobalt", "relix-emerald", "relix-amber", "relix-cyberpunk"];
           if (savedBrandTheme && allowedBrandThemes.indexOf(savedBrandTheme) !== -1) {
             root.dataset.brandTheme = savedBrandTheme;
           }

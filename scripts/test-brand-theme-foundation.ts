@@ -152,15 +152,15 @@ async function runTests() {
   console.log("Running Brand Theme Foundation tests...\n");
 
   // 1. Theme Registry
-  test("BRAND_THEMES exposes exactly ['default', 'relix'] with required metadata and previews", () => {
+  test("BRAND_THEMES exposes exactly ['default', 'relix', 'relix-cobalt', 'relix-emerald', 'relix-amber', 'relix-cyberpunk'] with required metadata and previews", () => {
     assert.strictEqual(DEFAULT_BRAND_THEME_ID, "default");
     assert.strictEqual(BRAND_THEME_STORAGE_KEY, "relix_brand_theme");
     assert.deepStrictEqual(
       BRAND_THEMES.map((t) => t.id),
-      ["default", "relix"]
+      ["default", "relix", "relix-cobalt", "relix-emerald", "relix-amber", "relix-cyberpunk"]
     );
 
-    const [defaultTheme, relixTheme] = BRAND_THEMES;
+    const [defaultTheme, relixTheme, cobaltTheme, emeraldTheme, amberTheme, cyberpunkTheme] = BRAND_THEMES;
     assert.strictEqual(defaultTheme.name, "Padrão do Sistema");
     assert.strictEqual(defaultTheme.badge, "Clássico");
     assert.strictEqual(defaultTheme.logoId, "relix-crimson");
@@ -192,11 +192,79 @@ async function runTests() {
       recorderBg: "rgba(225, 29, 72, 0.08)",
       recorderText: "#E11D48",
     });
+
+    assert.strictEqual(cobaltTheme.name, "Relix Cobalto");
+    assert.strictEqual(cobaltTheme.badge, "Cobalto");
+    assert.strictEqual(cobaltTheme.logoId, "relix-cobalt");
+    assert.strictEqual(cobaltTheme.accentHex, "#2563EB");
+    assert(cobaltTheme.description.trim().length > 0, "cobalt theme must have description");
+    assert.deepStrictEqual(cobaltTheme.preview, {
+      accent: "#2563eb",
+      accentHover: "#1d4ed8",
+      softBg: "#eff6ff",
+      cardBorder: "#2563eb",
+      cardBg: "rgba(239, 246, 255, 0.45)",
+      cardPill: "#2563eb",
+      recorderBg: "rgba(37, 99, 235, 0.08)",
+      recorderText: "#2563eb",
+    });
+
+    assert.strictEqual(emeraldTheme.name, "Relix Esmeralda");
+    assert.strictEqual(emeraldTheme.badge, "Esmeralda");
+    assert.strictEqual(emeraldTheme.logoId, "relix-emerald");
+    assert.strictEqual(emeraldTheme.accentHex, "#059669");
+    assert(emeraldTheme.description.trim().length > 0, "emerald theme must have description");
+    assert.deepStrictEqual(emeraldTheme.preview, {
+      accent: "#059669",
+      accentHover: "#047857",
+      softBg: "#ecfdf5",
+      cardBorder: "#059669",
+      cardBg: "rgba(236, 253, 245, 0.45)",
+      cardPill: "#059669",
+      recorderBg: "rgba(5, 150, 105, 0.08)",
+      recorderText: "#059669",
+    });
+
+    assert.strictEqual(amberTheme.name, "Relix Âmbar");
+    assert.strictEqual(amberTheme.badge, "Âmbar");
+    assert.strictEqual(amberTheme.logoId, "relix-amber");
+    assert.strictEqual(amberTheme.accentHex, "#D97706");
+    assert(amberTheme.description.trim().length > 0, "amber theme must have description");
+    assert.deepStrictEqual(amberTheme.preview, {
+      accent: "#d97706",
+      accentHover: "#b45309",
+      softBg: "#fffbeb",
+      cardBorder: "#d97706",
+      cardBg: "rgba(255, 251, 235, 0.45)",
+      cardPill: "#d97706",
+      recorderBg: "rgba(217, 119, 6, 0.08)",
+      recorderText: "#d97706",
+    });
+
+    assert.strictEqual(cyberpunkTheme.name, "Relix Cyberpunk");
+    assert.strictEqual(cyberpunkTheme.badge, "Cyberpunk");
+    assert.strictEqual(cyberpunkTheme.logoId, "relix-cyberpunk");
+    assert.strictEqual(cyberpunkTheme.accentHex, "#0891B2");
+    assert(cyberpunkTheme.description.trim().length > 0, "cyberpunk theme must have description");
+    assert.deepStrictEqual(cyberpunkTheme.preview, {
+      accent: "#0891b2",
+      accentHover: "#0e7490",
+      softBg: "#ecfeff",
+      cardBorder: "#0891b2",
+      cardBg: "rgba(236, 254, 255, 0.45)",
+      cardPill: "#0891b2",
+      recorderBg: "rgba(8, 145, 178, 0.08)",
+      recorderText: "#0891b2",
+    });
   });
 
   test("isValidBrandThemeId validates known IDs and rejects invalid inputs", () => {
     assert.strictEqual(isValidBrandThemeId("default"), true);
     assert.strictEqual(isValidBrandThemeId("relix"), true);
+    assert.strictEqual(isValidBrandThemeId("relix-cobalt"), true);
+    assert.strictEqual(isValidBrandThemeId("relix-emerald"), true);
+    assert.strictEqual(isValidBrandThemeId("relix-amber"), true);
+    assert.strictEqual(isValidBrandThemeId("relix-cyberpunk"), true);
     assert.strictEqual(isValidBrandThemeId(""), false);
     assert.strictEqual(isValidBrandThemeId(null), false);
     assert.strictEqual(isValidBrandThemeId(undefined), false);
@@ -208,6 +276,10 @@ async function runTests() {
   test("getBrandThemeById returns matching theme and falls back safely to default", () => {
     assert.strictEqual(getBrandThemeById("relix").id, "relix");
     assert.strictEqual(getBrandThemeById("default").id, "default");
+    assert.strictEqual(getBrandThemeById("relix-cobalt").id, "relix-cobalt");
+    assert.strictEqual(getBrandThemeById("relix-emerald").id, "relix-emerald");
+    assert.strictEqual(getBrandThemeById("relix-amber").id, "relix-amber");
+    assert.strictEqual(getBrandThemeById("relix-cyberpunk").id, "relix-cyberpunk");
     assert.strictEqual(getBrandThemeById("unknown-theme").id, "default");
     assert.strictEqual(getBrandThemeById(null).id, "default");
     assert.strictEqual(getBrandThemeById(undefined).id, "default");
@@ -373,12 +445,152 @@ async function runTests() {
       },
       relixSelector
     );
+
+    const cobaltSelector = ':root[data-brand-theme="relix-cobalt"]:not(.dark)';
+    const cobaltBlock = extractCssBlock(strippedCss, cobaltSelector);
+    assertCssTokens(
+      cobaltBlock,
+      {
+        "--brand-accent": "#2563eb",
+        "--brand-accent-hover": "#1d4ed8",
+        "--brand-accent-foreground": "#ffffff",
+        "--brand-accent-soft": "#eff6ff",
+        "--brand-accent-soft-hover": "#dbeafe",
+        "--brand-accent-border": "#93c5fd",
+        "--brand-accent-text": "#1e40af",
+        "--brand-focus-border": "#2563eb",
+        "--brand-focus-ring": "rgba(37, 99, 235, 0.35)",
+        "--brand-card-selected-bg": "rgba(239, 246, 255, 0.45)",
+        "--brand-card-selected-bg-hover": "rgba(219, 234, 254, 0.52)",
+        "--brand-card-selected-border": "#2563eb",
+        "--brand-card-selected-ring": "rgba(37, 99, 235, 0.35)",
+        "--brand-card-selected-shadow": "rgba(37, 99, 235, 0.14)",
+        "--brand-card-selected-pill": "#2563eb",
+        "--brand-recorder-bg": "rgba(37, 99, 235, 0.08)",
+        "--brand-recorder-bg-hover": "rgba(37, 99, 235, 0.14)",
+        "--brand-recorder-text": "#2563eb",
+        "--brand-recorder-border": "rgba(37, 99, 235, 0.32)",
+        "--brand-highlight-bg": "rgba(239, 246, 255, 0.75)",
+        "--brand-highlight-bg-soft": "rgba(239, 246, 255, 0.5)",
+        "--brand-highlight-border": "#60a5fa",
+        "--brand-highlight-text": "#1d4ed8",
+        "--brand-highlight-dot": "#2563eb",
+        "--brand-danger": "#e11d48",
+        "--brand-danger-hover": "#be123c",
+      },
+      cobaltSelector
+    );
+
+    const emeraldSelector = ':root[data-brand-theme="relix-emerald"]:not(.dark)';
+    const emeraldBlock = extractCssBlock(strippedCss, emeraldSelector);
+    assertCssTokens(
+      emeraldBlock,
+      {
+        "--brand-accent": "#059669",
+        "--brand-accent-hover": "#047857",
+        "--brand-accent-foreground": "#ffffff",
+        "--brand-accent-soft": "#ecfdf5",
+        "--brand-accent-soft-hover": "#d1fae5",
+        "--brand-accent-border": "#6ee7b7",
+        "--brand-accent-text": "#065f46",
+        "--brand-focus-border": "#059669",
+        "--brand-focus-ring": "rgba(5, 150, 105, 0.35)",
+        "--brand-card-selected-bg": "rgba(236, 253, 245, 0.45)",
+        "--brand-card-selected-bg-hover": "rgba(209, 250, 229, 0.52)",
+        "--brand-card-selected-border": "#059669",
+        "--brand-card-selected-ring": "rgba(5, 150, 105, 0.35)",
+        "--brand-card-selected-shadow": "rgba(5, 150, 105, 0.14)",
+        "--brand-card-selected-pill": "#059669",
+        "--brand-recorder-bg": "rgba(5, 150, 105, 0.08)",
+        "--brand-recorder-bg-hover": "rgba(5, 150, 105, 0.14)",
+        "--brand-recorder-text": "#059669",
+        "--brand-recorder-border": "rgba(5, 150, 105, 0.32)",
+        "--brand-highlight-bg": "rgba(236, 253, 245, 0.75)",
+        "--brand-highlight-bg-soft": "rgba(236, 253, 245, 0.5)",
+        "--brand-highlight-border": "#34d399",
+        "--brand-highlight-text": "#047857",
+        "--brand-highlight-dot": "#059669",
+        "--brand-danger": "#e11d48",
+        "--brand-danger-hover": "#be123c",
+      },
+      emeraldSelector
+    );
+
+    const amberSelector = ':root[data-brand-theme="relix-amber"]:not(.dark)';
+    const amberBlock = extractCssBlock(strippedCss, amberSelector);
+    assertCssTokens(
+      amberBlock,
+      {
+        "--brand-accent": "#d97706",
+        "--brand-accent-hover": "#b45309",
+        "--brand-accent-foreground": "#ffffff",
+        "--brand-accent-soft": "#fffbeb",
+        "--brand-accent-soft-hover": "#fef3c7",
+        "--brand-accent-border": "#fcd34d",
+        "--brand-accent-text": "#92400e",
+        "--brand-focus-border": "#d97706",
+        "--brand-focus-ring": "rgba(217, 119, 6, 0.35)",
+        "--brand-card-selected-bg": "rgba(255, 251, 235, 0.45)",
+        "--brand-card-selected-bg-hover": "rgba(254, 243, 199, 0.52)",
+        "--brand-card-selected-border": "#d97706",
+        "--brand-card-selected-ring": "rgba(217, 119, 6, 0.35)",
+        "--brand-card-selected-shadow": "rgba(217, 119, 6, 0.14)",
+        "--brand-card-selected-pill": "#d97706",
+        "--brand-recorder-bg": "rgba(217, 119, 6, 0.08)",
+        "--brand-recorder-bg-hover": "rgba(217, 119, 6, 0.14)",
+        "--brand-recorder-text": "#d97706",
+        "--brand-recorder-border": "rgba(217, 119, 6, 0.32)",
+        "--brand-highlight-bg": "rgba(255, 251, 235, 0.75)",
+        "--brand-highlight-bg-soft": "rgba(255, 251, 235, 0.5)",
+        "--brand-highlight-border": "#fbbf24",
+        "--brand-highlight-text": "#b45309",
+        "--brand-highlight-dot": "#d97706",
+        "--brand-danger": "#e11d48",
+        "--brand-danger-hover": "#be123c",
+      },
+      amberSelector
+    );
+
+    const cyberpunkSelector = ':root[data-brand-theme="relix-cyberpunk"]:not(.dark)';
+    const cyberpunkBlock = extractCssBlock(strippedCss, cyberpunkSelector);
+    assertCssTokens(
+      cyberpunkBlock,
+      {
+        "--brand-accent": "#0891b2",
+        "--brand-accent-hover": "#0e7490",
+        "--brand-accent-foreground": "#ffffff",
+        "--brand-accent-soft": "#ecfeff",
+        "--brand-accent-soft-hover": "#cffafe",
+        "--brand-accent-border": "#67e8f9",
+        "--brand-accent-text": "#155e75",
+        "--brand-focus-border": "#0891b2",
+        "--brand-focus-ring": "rgba(8, 145, 178, 0.35)",
+        "--brand-card-selected-bg": "rgba(236, 254, 255, 0.45)",
+        "--brand-card-selected-bg-hover": "rgba(207, 250, 254, 0.52)",
+        "--brand-card-selected-border": "#0891b2",
+        "--brand-card-selected-ring": "rgba(8, 145, 178, 0.35)",
+        "--brand-card-selected-shadow": "rgba(8, 145, 178, 0.14)",
+        "--brand-card-selected-pill": "#0891b2",
+        "--brand-recorder-bg": "rgba(8, 145, 178, 0.08)",
+        "--brand-recorder-bg-hover": "rgba(8, 145, 178, 0.14)",
+        "--brand-recorder-text": "#0891b2",
+        "--brand-recorder-border": "rgba(8, 145, 178, 0.32)",
+        "--brand-highlight-bg": "rgba(236, 254, 255, 0.75)",
+        "--brand-highlight-bg-soft": "rgba(236, 254, 255, 0.5)",
+        "--brand-highlight-border": "#22d3ee",
+        "--brand-highlight-text": "#0e7490",
+        "--brand-highlight-dot": "#0891b2",
+        "--brand-danger": "#e11d48",
+        "--brand-danger-hover": "#be123c",
+      },
+      cyberpunkSelector
+    );
   });
 
   test("globals.css enforces :not(.dark) on every [data-brand-theme] selector and keeps .dark intact", () => {
     const lines = strippedCss.split(/\r?\n/);
     const brandThemeLines = lines.filter((line) => line.includes("[data-brand-theme"));
-    assert(brandThemeLines.length >= 2, "Expected at least 2 [data-brand-theme] selectors in globals.css");
+    assert(brandThemeLines.length >= 6, `Expected at least 6 [data-brand-theme] selectors in globals.css, got ${brandThemeLines.length}`);
     for (const line of brandThemeLines) {
       assert(
         line.includes(":not(.dark)"),
@@ -468,8 +680,9 @@ async function runTests() {
     assert(scriptCode.includes("relix_brand_theme"), "anti-FOUC script must read relix_brand_theme");
     assert(scriptCode.includes("try") && scriptCode.includes("catch"), "anti-FOUC script must use try/catch");
     assert(
-      scriptCode.includes('["relix"]') || scriptCode.includes("['relix']"),
-      'anti-FOUC script must validate against ["relix"] whitelist'
+      scriptCode.includes('["relix", "relix-cobalt", "relix-emerald", "relix-amber", "relix-cyberpunk"]') ||
+        scriptCode.includes("['relix', 'relix-cobalt', 'relix-emerald', 'relix-amber', 'relix-cyberpunk']"),
+      'anti-FOUC script must validate against ["relix", "relix-cobalt", "relix-emerald", "relix-amber", "relix-cyberpunk"] whitelist'
     );
 
     const runAntiFouc = (opts: {
@@ -510,6 +723,30 @@ async function runTests() {
     });
     assert.strictEqual(relixDarkRoot.classList.contains("dark"), true);
     assert.strictEqual(relixDarkRoot.dataset.brandTheme, "relix");
+
+    const cobaltRoot = runAntiFouc({
+      storageMap: { hubsupport_theme: "light", relix_brand_theme: "relix-cobalt" },
+    });
+    assert.strictEqual(cobaltRoot.classList.contains("dark"), false);
+    assert.strictEqual(cobaltRoot.dataset.brandTheme, "relix-cobalt");
+
+    const emeraldDarkRoot = runAntiFouc({
+      storageMap: { hubsupport_theme: "dark", relix_brand_theme: "relix-emerald" },
+    });
+    assert.strictEqual(emeraldDarkRoot.classList.contains("dark"), true);
+    assert.strictEqual(emeraldDarkRoot.dataset.brandTheme, "relix-emerald");
+
+    const amberRoot = runAntiFouc({
+      storageMap: { hubsupport_theme: "light", relix_brand_theme: "relix-amber" },
+    });
+    assert.strictEqual(amberRoot.classList.contains("dark"), false);
+    assert.strictEqual(amberRoot.dataset.brandTheme, "relix-amber");
+
+    const cyberpunkDarkRoot = runAntiFouc({
+      storageMap: { hubsupport_theme: "dark", relix_brand_theme: "relix-cyberpunk" },
+    });
+    assert.strictEqual(cyberpunkDarkRoot.classList.contains("dark"), true);
+    assert.strictEqual(cyberpunkDarkRoot.dataset.brandTheme, "relix-cyberpunk");
 
     const defaultLightRoot = runAntiFouc({
       storageMap: { hubsupport_theme: "light", relix_brand_theme: "default" },

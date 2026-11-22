@@ -33,6 +33,20 @@ const BrandLogoByThemeId: React.FC<BrandLogoByThemeIdProps> = ({
           {...restProps}
         />
       );
+    // TODO(task-2): delegar temporariamente até Task 2 implementar variantes vetoriais completas
+    case "relix-cobalt":
+    case "relix-emerald":
+    case "relix-amber":
+    case "relix-cyberpunk":
+      return (
+        <RelixLogo
+          variant={variant}
+          mode={mode}
+          height={height}
+          className={className}
+          {...restProps}
+        />
+      );
     default: {
       const _exhaustive: never = themeDef.logoId;
       throw new Error(`Unsupported brand logo id: ${String(_exhaustive)}`);
