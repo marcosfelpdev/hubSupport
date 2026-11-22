@@ -115,6 +115,122 @@ async function runTests() {
       appIconHtml.includes('aria-label="Relix Icon"'),
       'app-icon BrandLogo must have aria-label="Relix Icon"'
     );
+    assert(
+      appIconHtml.includes("#DE1D4B"),
+      "relix app-icon must use crimson background #DE1D4B"
+    );
+  });
+
+  test("BrandLogo renders all 5 logo variants (crimson, cobalt, emerald, amber, cyberpunk) across full, symbol, and app-icon in light and dark modes", () => {
+    // 1. Relix Carmim / Crimson (relix)
+    const crimsonLightFull = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix", variant: "full", mode: "light" })
+    );
+    assert(crimsonLightFull.includes("#121A2D"), "Crimson light full must use #121A2D for neutral bracket and wordmark");
+    assert(crimsonLightFull.includes("#DE1D4B"), "Crimson light full must include crimson x-stroke #DE1D4B");
+    assert(crimsonLightFull.includes("#E62050"), "Crimson light full must include main gradient start #E62050");
+    assert(crimsonLightFull.includes("#AA1238"), "Crimson light full must include fold gradient start #AA1238");
+
+    const crimsonDarkFull = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix", variant: "full", mode: "dark" })
+    );
+    assert(crimsonDarkFull.includes("#FFFFFF"), "Crimson dark full must use #FFFFFF for bracket and wordmark");
+    assert(crimsonDarkFull.includes("#DE1D4B"), "Crimson dark full must use #DE1D4B for x-stroke");
+
+    // 2. Relix Cobalto (relix-cobalt)
+    const cobaltLightFull = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-cobalt", variant: "full", mode: "light" })
+    );
+    assert(cobaltLightFull.includes("#121A2D"), "Cobalt light full must use #121A2D bracket/wordmark");
+    assert(cobaltLightFull.includes("#2563EB"), "Cobalt light full must use #2563EB x-stroke");
+    assert(cobaltLightFull.includes("#387EEE") && cobaltLightFull.includes("#276AEF"), "Cobalt light full must include main gradient #387EEE -> #276AEF");
+    assert(cobaltLightFull.includes("#1D4ED8"), "Cobalt light full must include fold gradient start #1D4ED8");
+
+    const cobaltDarkSymbol = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-cobalt", variant: "symbol", mode: "dark" })
+    );
+    assert(cobaltDarkSymbol.includes("#FFFFFF"), "Cobalt dark symbol must use #FFFFFF bracket");
+    assert(cobaltDarkSymbol.includes("#387EEE"), "Cobalt dark symbol must retain blue ribbon gradient");
+
+    const cobaltAppIcon = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-cobalt", variant: "app-icon" })
+    );
+    assert(cobaltAppIcon.includes("#2563EB"), "Cobalt app-icon must use #2563EB background");
+
+    // 3. Relix Esmeralda (relix-emerald)
+    const emeraldLightFull = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-emerald", variant: "full", mode: "light" })
+    );
+    assert(emeraldLightFull.includes("#121A2D"), "Emerald light full must use #121A2D bracket/wordmark");
+    assert(emeraldLightFull.includes("#059669"), "Emerald light full must use #059669 x-stroke");
+    assert(emeraldLightFull.includes("#10B281") && emeraldLightFull.includes("#0A8E69"), "Emerald light full must include main gradient #10B281 -> #0A8E69");
+    assert(emeraldLightFull.includes("#047857"), "Emerald light full must include fold gradient start #047857");
+
+    const emeraldDarkSymbol = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-emerald", variant: "symbol", mode: "dark" })
+    );
+    assert(emeraldDarkSymbol.includes("#FFFFFF"), "Emerald dark symbol must use #FFFFFF bracket");
+
+    const emeraldAppIcon = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-emerald", variant: "app-icon" })
+    );
+    assert(emeraldAppIcon.includes("#059669"), "Emerald app-icon must use #059669 background");
+
+    // 4. Relix Âmbar (relix-amber)
+    const amberLightFull = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-amber", variant: "full", mode: "light" })
+    );
+    assert(amberLightFull.includes("#121A2D"), "Amber light full must use #121A2D bracket/wordmark");
+    assert(amberLightFull.includes("#D97706"), "Amber light full must use #D97706 x-stroke");
+    assert(amberLightFull.includes("#F29B18") && amberLightFull.includes("#F49C14"), "Amber light full must include main gradient #F29B18 -> #F49C14");
+    assert(amberLightFull.includes("#B45309"), "Amber light full must include fold gradient start #B45309");
+
+    const amberDarkSymbol = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-amber", variant: "symbol", mode: "dark" })
+    );
+    assert(amberDarkSymbol.includes("#FFFFFF"), "Amber dark symbol must use #FFFFFF bracket");
+
+    const amberAppIcon = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-amber", variant: "app-icon" })
+    );
+    assert(amberAppIcon.includes("#D97706"), "Amber app-icon must use #D97706 background");
+
+    // 5. Relix Cyberpunk (relix-cyberpunk)
+    const cyberpunkLightFull = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-cyberpunk", variant: "full", mode: "light" })
+    );
+    // Bracket violeta light: #684ECB
+    assert(cyberpunkLightFull.includes("#684ECB"), "Cyberpunk light full must use violet #684ECB for bracket");
+    // Wordmark "reli": neutro #121A2D
+    assert(cyberpunkLightFull.includes("#121A2D"), "Cyberpunk light full must use #121A2D for neutral wordmark");
+    // Ribbon ciano gradients: #22D3EE -> #0891B2, fold: #0891B2 -> #06B6D4
+    assert(cyberpunkLightFull.includes("#22D3EE") && cyberpunkLightFull.includes("#0891B2"), "Cyberpunk light full must include cyan main gradient #22D3EE -> #0891B2");
+    assert(cyberpunkLightFull.includes("#06B6D4"), "Cyberpunk light full must include cyan fold gradient #06B6D4");
+
+    const cyberpunkDarkFull = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-cyberpunk", variant: "full", mode: "dark" })
+    );
+    // Bracket violeta dark: #6B42FF
+    assert(cyberpunkDarkFull.includes("#6B42FF"), "Cyberpunk dark full must use violet #6B42FF for bracket");
+    // Wordmark "reli": neutro #FFFFFF
+    assert(cyberpunkDarkFull.includes("#FFFFFF"), "Cyberpunk dark full must use #FFFFFF for wordmark");
+    // X stroke dark: ciano #22D3EE
+    assert(cyberpunkDarkFull.includes("#22D3EE"), "Cyberpunk dark full must use cyan #22D3EE for x-stroke");
+
+    const cyberpunkLightSymbol = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-cyberpunk", variant: "symbol", mode: "light" })
+    );
+    assert(cyberpunkLightSymbol.includes("#684ECB"), "Cyberpunk light symbol must use #684ECB bracket");
+
+    const cyberpunkDarkSymbol = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-cyberpunk", variant: "symbol", mode: "dark" })
+    );
+    assert(cyberpunkDarkSymbol.includes("#6B42FF"), "Cyberpunk dark symbol must use #6B42FF bracket");
+
+    const cyberpunkAppIcon = renderToString(
+      React.createElement(BrandLogo, { themeId: "relix-cyberpunk", variant: "app-icon" })
+    );
+    assert(cyberpunkAppIcon.includes("#6B42FF"), "Cyberpunk app-icon must use violet #6B42FF background");
   });
 
   test("BrandLogo reads active brandTheme from ThemeProvider when themeId is omitted", () => {
@@ -132,7 +248,7 @@ async function runTests() {
   });
 
   // 2. ThemeSettingsSection SSR
-  test("ThemeSettingsSection renders both themes, hex codes, and active aria-pressed in light mode", () => {
+  test("ThemeSettingsSection renders all 6 themes, hex codes, and active aria-pressed in light mode", () => {
     const html = renderToString(
       React.createElement(ThemeProvider, null, React.createElement(ThemeSettingsSection))
     );
@@ -140,16 +256,36 @@ async function runTests() {
     assert(html.includes("Personalização de Tema e Identidade Visual"), "Missing banner title");
     assert(html.includes("Padrão do Sistema"), "Missing default theme name");
     assert(html.includes("Relix Carmim"), "Missing relix theme name");
+    assert(html.includes("Relix Cobalto"), "Missing relix-cobalt theme name");
+    assert(html.includes("Relix Esmeralda"), "Missing relix-emerald theme name");
+    assert(html.includes("Relix Âmbar"), "Missing relix-amber theme name");
+    assert(html.includes("Relix Cyberpunk"), "Missing relix-cyberpunk theme name");
+
     assert(html.includes("#0F172A"), "Missing default theme accent hex #0F172A");
     assert(html.includes("#E11D48"), "Missing relix theme accent hex #E11D48");
+    assert(html.includes("#2563EB"), "Missing relix-cobalt theme accent hex #2563EB");
+    assert(html.includes("#059669"), "Missing relix-emerald theme accent hex #059669");
+    assert(html.includes("#D97706"), "Missing relix-amber theme accent hex #D97706");
+    assert(html.includes("#0891B2"), "Missing relix-cyberpunk theme accent hex #0891B2");
+
     assert(html.includes('aria-pressed="true"'), "Default theme must have aria-pressed='true'");
     assert(html.includes('aria-pressed="false"'), "Inactive theme must have aria-pressed='false'");
 
     const buttonBlocks = html.match(/<button\b[\s\S]*?<\/button>/g) ?? [];
     const defaultBtn = buttonBlocks.find((b) => b.includes("Padrão do Sistema"));
     const relixBtn = buttonBlocks.find((b) => b.includes("Relix Carmim"));
+    const cobaltBtn = buttonBlocks.find((b) => b.includes("Relix Cobalto"));
+    const emeraldBtn = buttonBlocks.find((b) => b.includes("Relix Esmeralda"));
+    const amberBtn = buttonBlocks.find((b) => b.includes("Relix Âmbar"));
+    const cyberpunkBtn = buttonBlocks.find((b) => b.includes("Relix Cyberpunk"));
+
     assert(defaultBtn, "Default theme button must exist");
     assert(relixBtn, "Relix theme button must exist");
+    assert(cobaltBtn, "Cobalt theme button must exist");
+    assert(emeraldBtn, "Emerald theme button must exist");
+    assert(amberBtn, "Amber theme button must exist");
+    assert(cyberpunkBtn, "Cyberpunk theme button must exist");
+
     assert(
       defaultBtn.includes('aria-pressed="true"'),
       "Default theme button must be pressed initially"
@@ -157,6 +293,22 @@ async function runTests() {
     assert(
       relixBtn.includes('aria-pressed="false"'),
       "Relix theme button must not be pressed initially"
+    );
+    assert(
+      cobaltBtn.includes('aria-pressed="false"'),
+      "Cobalt theme button must not be pressed initially"
+    );
+    assert(
+      emeraldBtn.includes('aria-pressed="false"'),
+      "Emerald theme button must not be pressed initially"
+    );
+    assert(
+      amberBtn.includes('aria-pressed="false"'),
+      "Amber theme button must not be pressed initially"
+    );
+    assert(
+      cyberpunkBtn.includes('aria-pressed="false"'),
+      "Cyberpunk theme button must not be pressed initially"
     );
 
     assert(

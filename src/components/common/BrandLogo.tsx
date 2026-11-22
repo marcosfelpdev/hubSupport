@@ -26,6 +26,7 @@ const BrandLogoByThemeId: React.FC<BrandLogoByThemeIdProps> = ({
     case "relix-crimson":
       return (
         <RelixLogo
+          logoId={themeDef.logoId}
           variant={variant}
           mode={mode}
           height={height}
@@ -33,13 +34,43 @@ const BrandLogoByThemeId: React.FC<BrandLogoByThemeIdProps> = ({
           {...restProps}
         />
       );
-    // TODO(task-2): delegar temporariamente até Task 2 implementar variantes vetoriais completas
     case "relix-cobalt":
+      return (
+        <RelixLogo
+          logoId={themeDef.logoId}
+          variant={variant}
+          mode={mode}
+          height={height}
+          className={className}
+          {...restProps}
+        />
+      );
     case "relix-emerald":
+      return (
+        <RelixLogo
+          logoId={themeDef.logoId}
+          variant={variant}
+          mode={mode}
+          height={height}
+          className={className}
+          {...restProps}
+        />
+      );
     case "relix-amber":
+      return (
+        <RelixLogo
+          logoId={themeDef.logoId}
+          variant={variant}
+          mode={mode}
+          height={height}
+          className={className}
+          {...restProps}
+        />
+      );
     case "relix-cyberpunk":
       return (
         <RelixLogo
+          logoId={themeDef.logoId}
           variant={variant}
           mode={mode}
           height={height}
