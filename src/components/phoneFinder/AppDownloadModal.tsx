@@ -75,7 +75,7 @@ export default function AppDownloadModal({
         {/* Cabeçalho */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900">
+            <span className="p-2 rounded-xl bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900">
               <QrCode className="w-4 h-4" />
             </span>
             <div>
@@ -155,7 +155,7 @@ export default function AppDownloadModal({
             <a
               href={downloadUrl}
               download="relix-mobile.apk"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-xs transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 shadow-xs transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Baixar APK</span>

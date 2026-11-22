@@ -82,7 +82,7 @@ export default function PhoneCardFormModal({
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
@@ -140,7 +140,7 @@ export default function PhoneCardFormModal({
               maxLength={120}
               disabled={saving}
               placeholder="Ex: Celular Bancada 01"
-              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:opacity-60"
+              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:opacity-60"
             />
           </div>
 
@@ -162,7 +162,7 @@ export default function PhoneCardFormModal({
               maxLength={300}
               disabled={saving}
               placeholder="Ex: Samsung Galaxy A54 — uso do suporte técnico"
-              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none disabled:opacity-60"
+              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none disabled:opacity-60"
             />
           </div>
 
@@ -179,7 +179,7 @@ export default function PhoneCardFormModal({
             <button
               type="submit"
               disabled={saving || !name.trim()}
-              className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 rounded-xl bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <>

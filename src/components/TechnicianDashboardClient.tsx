@@ -274,26 +274,26 @@ export default function TechnicianDashboardClient({
       <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 mb-6 flex flex-wrap gap-3 items-center shadow-xs">
         <input
           type="text"
-          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1"
           placeholder="Pesquisar por solicitante"
           value={filters.requester}
           onChange={(e) => setFilters({ ...filters, requester: e.target.value })}
         />
         <input
           type="text"
-          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[220px] flex-1"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[220px] flex-1"
           placeholder="Pesquisar por escritório/cliente"
           value={filters.clientOrOffice}
           onChange={(e) => setFilters({ ...filters, clientOrOffice: e.target.value })}
         />
         <input
           type="date"
-          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[180px] flex-1 [color-scheme:light] dark:[color-scheme:dark]"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[180px] flex-1 [color-scheme:light] dark:[color-scheme:dark]"
           value={filters.date}
           onChange={(e) => setFilters({ ...filters, date: e.target.value })}
         />
         <select
-          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.status}
           onChange={(e) => setFilters({ ...filters, status: e.target.value })}
         >
@@ -305,7 +305,7 @@ export default function TechnicianDashboardClient({
           ))}
         </select>
         <select
-          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.tag}
           onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
         >
@@ -317,7 +317,7 @@ export default function TechnicianDashboardClient({
           ))}
         </select>
         <select
-          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.type}
           onChange={(e) => setFilters({ ...filters, type: e.target.value })}
         >
@@ -326,7 +326,7 @@ export default function TechnicianDashboardClient({
           <option value="implementation">Implementação</option>
         </select>
         <select
-          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
+          className="bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 transition-colors shadow-2xs max-w-[200px] flex-1 cursor-pointer"
           value={filters.employee}
           onChange={(e) => setFilters({ ...filters, employee: e.target.value })}
         >

@@ -223,7 +223,7 @@ export default function ClientsManager({
       <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs">
+            <span className="p-2 rounded-xl bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 shadow-xs">
               <Building2 className="w-5 h-5" />
             </span>
             <span>Clientes</span>
@@ -243,7 +243,7 @@ export default function ClientsManager({
             setClientManagerId("");
             setIsCreateOpen(true);
           }}
-          className="bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
+          className="bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Novo Cliente</span>
@@ -264,7 +264,7 @@ export default function ClientsManager({
         <div className="relative w-full sm:w-80">
           <input
             type="text"
-            className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+            className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
             placeholder="Buscar clientes por nome..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -317,7 +317,7 @@ export default function ClientsManager({
                   setClientManagerId("");
                   setIsCreateOpen(true);
                 }}
-                className="inline-flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-xs hover:bg-slate-800 dark:hover:bg-slate-100 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Cadastrar Primeiro Cliente</span>
@@ -355,7 +355,7 @@ export default function ClientsManager({
                             {getInitials(client.name)}
                           </div>
                           <div className="min-w-0">
-                            <span className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors block truncate">
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-highlight-dot dark:group-hover:text-indigo-400 transition-colors block truncate">
                               {client.name}
                             </span>
                             <span className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
@@ -423,7 +423,7 @@ export default function ClientsManager({
                               e.stopPropagation();
                               openEditModal(client);
                             }}
-                            className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 p-2 rounded-xl transition-all cursor-pointer"
+                            className="text-slate-400 dark:text-slate-500 hover:text-brand-highlight-dot dark:hover:text-indigo-400 hover:bg-brand-highlight-bg dark:hover:bg-indigo-950/40 p-2 rounded-xl transition-all cursor-pointer"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
@@ -474,7 +474,7 @@ export default function ClientsManager({
             {/* Modal Header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
@@ -518,7 +518,7 @@ export default function ClientsManager({
                   autoFocus
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="Ex: Cartório de Notas ou Empresa Alpha"
                   required
                   disabled={isPending}
@@ -537,7 +537,7 @@ export default function ClientsManager({
                   value={clientManagerId}
                   onChange={(e) => setClientManagerId(e.target.value)}
                   disabled={isPending}
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
                 >
                   <option value="">Nenhum gestor atribuído</option>
                   {employees.map((emp) => (
@@ -561,7 +561,7 @@ export default function ClientsManager({
                 <button
                   type="submit"
                   disabled={isPending || !clientName.trim()}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 rounded-xl bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? (
                     <>
@@ -592,7 +592,7 @@ export default function ClientsManager({
             {/* Modal Header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
@@ -636,7 +636,7 @@ export default function ClientsManager({
                   autoFocus
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="Nome do cliente"
                   required
                   disabled={isPending}
@@ -655,7 +655,7 @@ export default function ClientsManager({
                   value={editManagerId}
                   onChange={(e) => setEditManagerId(e.target.value)}
                   disabled={isPending}
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
                 >
                   <option value="">Nenhum gestor atribuído</option>
                   {employees.map((emp) => (
@@ -679,7 +679,7 @@ export default function ClientsManager({
                 <button
                   type="submit"
                   disabled={isPending || !editName.trim()}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 rounded-xl bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? (
                     <>
@@ -745,7 +745,7 @@ export default function ClientsManager({
                 type="button"
                 disabled={isPending}
                 onClick={handleDeleteConfirm}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-brand-danger hover:bg-brand-danger-hover dark:bg-rose-600 dark:hover:bg-rose-700 text-white font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
               >
                 {isPending ? (
                   <>

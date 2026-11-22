@@ -604,7 +604,7 @@ export default function PhoneFinderPage() {
         <div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
-              <span className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs">
+              <span className="p-2 rounded-xl bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 shadow-xs">
                 <Smartphone className="w-5 h-5" />
               </span>
               <span>Localizador</span>
@@ -669,7 +669,7 @@ export default function PhoneFinderPage() {
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
+            className="bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Novo Card</span>
@@ -704,7 +704,7 @@ export default function PhoneFinderPage() {
                 onClick={() => setStatusFilter(chip.key)}
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                   isActive
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-xs"
+                    ? "bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 border-brand-accent dark:border-white shadow-xs"
                     : "bg-slate-50/80 dark:bg-[#0b0f19] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80"
                 }`}
               >
@@ -737,7 +737,7 @@ export default function PhoneFinderPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por nome ou descrição..."
-            className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+            className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
           />
           <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           {searchTerm && (
@@ -756,7 +756,7 @@ export default function PhoneFinderPage() {
       {/* Conteúdo Principal */}
       {loading ? (
         <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3 shadow-xs">
-          <Loader2 className="w-8 h-8 text-slate-700 dark:text-slate-300 animate-spin" />
+          <Loader2 className="w-8 h-8 text-brand-accent dark:text-slate-300 animate-spin" />
           <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
             Carregando dispositivos do Localizador...
           </span>
@@ -793,7 +793,7 @@ export default function PhoneFinderPage() {
               <button
                 type="button"
                 onClick={handleOpenCreate}
-                className="inline-flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-xs hover:bg-slate-800 dark:hover:bg-slate-100 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Criar Primeiro Card</span>
@@ -1017,7 +1017,7 @@ export default function PhoneFinderPage() {
                   type="button"
                   disabled={deleteLoading}
                   onClick={handleConfirmDelete}
-                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-brand-danger hover:bg-brand-danger-hover dark:bg-rose-600 dark:hover:bg-rose-700 text-white font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
                 >
                   {deleteLoading ? (
                     <>

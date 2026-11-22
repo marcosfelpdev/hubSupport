@@ -386,13 +386,13 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
     : "";
 
   const surfaceClasses = isSelected
-    ? "bg-sky-50/30 dark:bg-sky-950/20 hover:bg-sky-50/40 dark:hover:bg-sky-950/30"
+    ? ""
     : "bg-white dark:bg-[#111726] hover:bg-white dark:hover:bg-[#161f33]";
 
   const stateClasses = isDragging
-    ? "opacity-50 scale-[0.98] border-dashed border-sky-400 dark:border-sky-500 shadow-md"
+    ? "opacity-50 scale-[0.98] border-dashed border-brand-card-selected-border dark:border-sky-500 shadow-md"
     : isSelected
-    ? "border-sky-500 dark:border-sky-400 ring-[1.5px] ring-inset ring-sky-400/40 dark:ring-sky-500/40 shadow-md shadow-sky-500/10 dark:shadow-sky-950/40"
+    ? "brand-card-selected dark:bg-sky-950/20 dark:hover:bg-sky-950/30 dark:border-sky-400 dark:ring-[1.5px] dark:ring-inset dark:ring-sky-500/40 dark:shadow-md dark:shadow-sky-950/40"
     : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs hover:shadow-md";
 
   return (
@@ -418,7 +418,7 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
             {/* Indicador visual de Card Aberto / Maximizado */}
             {isSelected && (
               <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500 dark:bg-sky-600 text-white shadow-2xs animate-fade-in"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-card-selected-pill dark:bg-sky-600 text-white shadow-2xs animate-fade-in"
                 title="Chamado aberto"
               >
                 <Maximize2 size={10} className="text-white shrink-0" />

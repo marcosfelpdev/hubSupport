@@ -34,7 +34,7 @@ export default function ClientsPage() {
     return (
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full animate-fade-in">
         <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3 shadow-xs">
-          <Loader2 className="w-8 h-8 text-slate-700 dark:text-slate-300 animate-spin" />
+          <Loader2 className="w-8 h-8 text-brand-accent dark:text-slate-300 animate-spin" />
           <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
             Carregando lista de clientes...
           </span>

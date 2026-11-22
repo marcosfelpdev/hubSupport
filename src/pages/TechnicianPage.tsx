@@ -99,7 +99,7 @@ export default function TechnicianPage() {
               onClick={() => setViewMode("kanban")}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs transition-all duration-200 cursor-pointer ${
                 viewMode === "kanban"
-                  ? "bg-slate-900 dark:bg-slate-800 text-white shadow-xs font-semibold"
+                  ? "bg-brand-accent dark:bg-slate-800 text-brand-accent-foreground dark:text-white shadow-xs font-semibold"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg font-medium hover:bg-slate-200/60 dark:hover:bg-slate-800/60"
               }`}
             >
@@ -111,7 +111,7 @@ export default function TechnicianPage() {
               onClick={() => setViewMode("classic")}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs transition-all duration-200 cursor-pointer ${
                 viewMode === "classic"
-                  ? "bg-slate-900 dark:bg-slate-800 text-white shadow-xs font-semibold"
+                  ? "bg-brand-accent dark:bg-slate-800 text-brand-accent-foreground dark:text-white shadow-xs font-semibold"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg font-medium hover:bg-slate-200/60 dark:hover:bg-slate-800/60"
               }`}
             >
@@ -124,7 +124,7 @@ export default function TechnicianPage() {
 
       {loading ? (
         <div className="py-20 px-8 flex flex-col items-center justify-center gap-4 text-center bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl shadow-xs">
-          <div className="w-10 h-10 border-[3px] border-slate-200 dark:border-slate-700 border-t-slate-900 dark:border-t-white rounded-full animate-spin" />
+          <div className="w-10 h-10 border-[3px] border-slate-200 dark:border-slate-700 border-t-brand-accent dark:border-t-white rounded-full animate-spin" />
           <div className="flex flex-col items-center gap-1">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
               Carregando atendimentos técnicos...
