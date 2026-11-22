@@ -86,7 +86,7 @@ export const EditWorkLogModal: React.FC<EditWorkLogModalProps> = ({
         {/* Cabeçalho */}
         <div className="flex items-center justify-between p-5 pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/80 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-brand-filter-bg dark:bg-sky-950/50 text-brand-action-sky dark:text-sky-400 border border-brand-filter-border dark:border-sky-800/80 flex items-center justify-center shrink-0 shadow-2xs">
               <Edit3 size={18} />
             </div>
             <div>
@@ -125,7 +125,7 @@ export const EditWorkLogModal: React.FC<EditWorkLogModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all shadow-xs"
+              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-brand-focus-sky dark:focus:border-sky-500 focus:ring-1 focus:ring-brand-focus-sky dark:focus:ring-sky-500 transition-all shadow-xs"
               placeholder="Ex: Ajuste de prompt do assistente"
               required
             />
@@ -140,7 +140,7 @@ export const EditWorkLogModal: React.FC<EditWorkLogModalProps> = ({
                 type="text"
                 value={requester}
                 onChange={(e) => setRequester(e.target.value)}
-                className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all shadow-xs"
+                className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-brand-focus-sky dark:focus:border-sky-500 focus:ring-1 focus:ring-brand-focus-sky dark:focus:ring-sky-500 transition-all shadow-xs"
                 placeholder="Nome da pessoa"
                 required
               />
@@ -154,7 +154,7 @@ export const EditWorkLogModal: React.FC<EditWorkLogModalProps> = ({
                 type="text"
                 value={clientOrOffice}
                 onChange={(e) => setClientOrOffice(e.target.value)}
-                className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all shadow-xs"
+                className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-brand-focus-sky dark:focus:border-sky-500 focus:ring-1 focus:ring-brand-focus-sky dark:focus:ring-sky-500 transition-all shadow-xs"
                 placeholder="Empresa ou departamento"
                 required
               />
@@ -169,7 +169,7 @@ export const EditWorkLogModal: React.FC<EditWorkLogModalProps> = ({
               rows={4}
               value={reportedProblem}
               onChange={(e) => setReportedProblem(e.target.value)}
-              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all shadow-xs resize-none"
+              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-brand-focus-sky dark:focus:border-sky-500 focus:ring-1 focus:ring-brand-focus-sky dark:focus:ring-sky-500 transition-all shadow-xs resize-none"
               placeholder="Detalhes do problema ou demanda..."
               required
             />
@@ -183,7 +183,7 @@ export const EditWorkLogModal: React.FC<EditWorkLogModalProps> = ({
               rows={3}
               value={actionTaken}
               onChange={(e) => setActionTaken(e.target.value)}
-              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all shadow-xs resize-none"
+              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-brand-focus-sky dark:focus:border-sky-500 focus:ring-1 focus:ring-brand-focus-sky dark:focus:ring-sky-500 transition-all shadow-xs resize-none"
               placeholder="Descreva a solução aplicada ou desenvolvida..."
             />
           </div>
@@ -201,7 +201,7 @@ export const EditWorkLogModal: React.FC<EditWorkLogModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 dark:bg-sky-600 dark:hover:bg-sky-500 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-brand-action-sky hover:bg-brand-action-sky-hover dark:bg-sky-600 dark:hover:bg-sky-500 shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

@@ -291,7 +291,7 @@ export function ClientCombobox({
           className={`w-full bg-white dark:bg-[#0b0f19] border ${
             error
               ? "border-rose-500 dark:border-rose-500 focus:border-rose-500 dark:focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:focus:ring-rose-500"
-              : "border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400"
+              : "border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400"
           } text-slate-900 dark:text-white rounded-xl pl-10 pr-16 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:cursor-not-allowed`}
         />
 

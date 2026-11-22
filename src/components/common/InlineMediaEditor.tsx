@@ -503,7 +503,7 @@ export const InlineMediaEditor = forwardRef<InlineMediaEditorRef, InlineMediaEdi
         className={`relative w-full rounded-xl border transition-all text-sm leading-relaxed ${
           disabled
             ? "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 opacity-60 cursor-not-allowed"
-            : "bg-white dark:bg-[#0b0f19] border-slate-200 dark:border-slate-800 focus-within:border-slate-900 dark:focus-within:border-slate-400 focus-within:ring-1 focus-within:ring-slate-900 dark:focus-within:ring-slate-400 shadow-xs"
+            : "bg-white dark:bg-[#0b0f19] border-slate-200 dark:border-slate-800 focus-within:border-brand-focus-border dark:focus-within:border-slate-400 focus-within:ring-1 focus-within:ring-brand-focus-ring dark:focus-within:ring-slate-400 shadow-xs"
         } ${className}`}
       >
         {/* Placeholder visual */}
@@ -526,8 +526,8 @@ export const InlineMediaEditor = forwardRef<InlineMediaEditorRef, InlineMediaEdi
               height: `${dropCursor.height}px`,
             }}
           >
-            <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 -mt-1 shadow-xs" />
-            <div className="w-[2px] flex-1 bg-indigo-600 dark:bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+            <div className="w-2 h-2 rounded-full bg-brand-action-indigo dark:bg-indigo-400 -mt-1 shadow-xs" />
+            <div className="w-[2px] flex-1 bg-brand-action-indigo dark:bg-indigo-400 shadow-[0_0_8px_var(--brand-action-indigo)] dark:shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
           </div>
         )}
 

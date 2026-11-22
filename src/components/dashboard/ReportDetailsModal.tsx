@@ -211,7 +211,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   download
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs active:scale-95 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-xs active:scale-95 transition-all"
                   title="Baixar arquivo PDF original"
                 >
                   <Download size={13} />
@@ -245,7 +245,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
             <div className="flex-1 w-full h-full relative bg-slate-100 dark:bg-[#0b0f19] p-3 sm:p-5 overflow-hidden flex items-center justify-center">
               {pdfLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-100/90 dark:bg-[#0b0f19]/90 z-10 backdrop-blur-xs text-slate-600 dark:text-slate-400">
-                  <Loader2 size={32} className="text-slate-900 dark:text-white animate-spin" />
+                  <Loader2 size={32} className="text-brand-accent dark:text-white animate-spin" />
                   <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
                     Carregando relatório PDF oficial...
                   </span>
@@ -289,7 +289,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   download
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs active:scale-95 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-xs active:scale-95 transition-all"
                   title="Baixar arquivo original"
                 >
                   <Download size={13} />
@@ -362,7 +362,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
                         target="_blank"
                         rel="noopener noreferrer"
                         download
-                        className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-semibold shadow-xs transition-all"
+                        className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white text-xs font-semibold shadow-xs transition-all"
                       >
                         <Download size={14} />
                         <span>Baixar Arquivo</span>
@@ -398,7 +398,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
                         onClick={() => setMediaCurrentIndex(idx)}
                         className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border transition-all duration-200 shrink-0 cursor-pointer relative group bg-white dark:bg-[#161f33] ${
                           isSelectedMedia
-                            ? "ring-2 ring-slate-900 dark:ring-white border-slate-900 dark:border-white shadow-md scale-105 opacity-100"
+                            ? "ring-2 ring-brand-accent dark:ring-white border-brand-accent dark:border-white shadow-md scale-105 opacity-100"
                             : "border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100 hover:border-slate-400 dark:hover:border-slate-600 hover:scale-100"
                         }`}
                         title={`Ir para mídia ${idx + 1}`}
@@ -417,7 +417,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
                         <span
                           className={`absolute bottom-0.5 right-1 text-[9px] font-bold px-1 rounded shadow-xs ${
                             isSelectedMedia
-                              ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                              ? "bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900"
                               : "bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
                           }`}
                         >

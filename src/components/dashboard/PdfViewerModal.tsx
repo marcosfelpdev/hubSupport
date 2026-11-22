@@ -112,7 +112,7 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               download
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-xs active:scale-95 transition-all cursor-pointer"
               title="Baixar arquivo PDF original"
             >
               <Download size={13} />
@@ -137,7 +137,7 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-100/90 dark:bg-[#0b0f19]/90 z-10 backdrop-blur-xs text-slate-600 dark:text-slate-400">
               <Loader2
                 size={32}
-                className="text-slate-900 dark:text-white animate-spin"
+                className="text-brand-accent dark:text-white animate-spin"
               />
               <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
                 Carregando relatório PDF oficial...

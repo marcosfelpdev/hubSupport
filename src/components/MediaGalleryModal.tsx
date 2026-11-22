@@ -148,7 +148,7 @@ export default function MediaGalleryModal({
                   target="_blank"
                   rel="noopener noreferrer"
                   download
-                  className="mt-2 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold text-xs shadow-xs transition-colors"
+                  className="mt-2 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-brand-accent hover:bg-brand-accent-hover dark:bg-slate-800 dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white font-semibold text-xs shadow-xs transition-colors"
                 >
                   <Download size={14} />
                   <span>Baixar Arquivo</span>
@@ -183,7 +183,7 @@ export default function MediaGalleryModal({
                   onClick={() => setCurrentIndex(idx)}
                   className={`w-14 h-14 rounded-xl overflow-hidden border transition-all shrink-0 cursor-pointer relative bg-white dark:bg-[#0b0f19] ${
                     isSelected
-                      ? "ring-2 ring-slate-900 dark:ring-white border-slate-900 dark:border-white shadow-md scale-105 opacity-100"
+                      ? "ring-2 ring-brand-accent dark:ring-white border-brand-accent dark:border-white shadow-md scale-105 opacity-100"
                       : "border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100 hover:border-slate-400 dark:hover:border-slate-600"
                   }`}
                   title={`Ir para mídia ${idx + 1}`}
@@ -202,7 +202,7 @@ export default function MediaGalleryModal({
                   <span
                     className={`absolute bottom-0.5 right-1 text-[9px] font-bold px-1 rounded ${
                       isSelected
-                        ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                        ? "bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900"
                         : "bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                     }`}
                   >
