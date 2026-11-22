@@ -154,7 +154,7 @@ export default function DashboardClient({
             setRecordedVideo(null);
             setIsModalOpen(true);
           }}
-          className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-xs transition-colors cursor-pointer ${
             isRecording ? "opacity-50 cursor-not-allowed" : ""
           }`}
           title={isRecording ? "Finalize a gravação de tela para abrir o formulário manualmente" : undefined}
@@ -175,7 +175,7 @@ export default function DashboardClient({
             placeholder="Pesquisar por solicitante..."
             value={filters.requester}
             onChange={(e) => setFilters({ ...filters, requester: e.target.value })}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors"
           />
         </div>
 
@@ -186,7 +186,7 @@ export default function DashboardClient({
             placeholder="Pesquisar por escritório/cliente..."
             value={filters.clientOrOffice}
             onChange={(e) => setFilters({ ...filters, clientOrOffice: e.target.value })}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors"
           />
         </div>
 
@@ -220,7 +220,7 @@ export default function DashboardClient({
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer"
+            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer"
           >
             <option value="">Todos os status</option>
             {statusOptions.map((status) => (
@@ -235,7 +235,7 @@ export default function DashboardClient({
           <select
             value={filters.tag}
             onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
-            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer"
+            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer"
           >
             <option value="">Todas as plataformas / tags</option>
             {tagOptions.map((name) => (
@@ -250,7 +250,7 @@ export default function DashboardClient({
           <select
             value={filters.employee}
             onChange={(e) => setFilters({ ...filters, employee: e.target.value })}
-            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer"
+            className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer"
           >
             <option value="">Todos os funcionários</option>
             {employeeOptions.map((name) => (

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LogIn, AlertCircle } from "lucide-react";
-import RelixLogo from "@/components/common/RelixLogo";
+import BrandLogo from "@/components/common/BrandLogo";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative z-10 animate-fade-in">
         {/* Brand Header */}
         <div className="text-center mb-6 flex flex-col items-center">
-          <RelixLogo variant="full" height={48} className="mb-2" />
+          <BrandLogo variant="full" height={48} className="mb-2" />
           <h1 className="sr-only">Relix</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Acesse sua conta no Relix
@@ -80,7 +80,7 @@ export default function LoginPage() {
               <input
                 id="email"
                 type="email"
-                className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-800"
+                className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-800"
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -100,7 +100,7 @@ export default function LoginPage() {
               <input
                 id="password"
                 type="password"
-                className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-800"
+                className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-800"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -114,7 +114,7 @@ export default function LoginPage() {
               id="btn-login"
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-xl py-3 px-6 text-sm shadow-xs transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer mt-2"
+              className="w-full bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white font-semibold rounded-xl py-3 px-6 text-sm shadow-xs transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer mt-2"
             >
               {loading ? (
                 <>

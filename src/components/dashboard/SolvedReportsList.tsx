@@ -65,7 +65,7 @@ export const SolvedReportsList: React.FC<SolvedReportsListProps> = ({ logs, onSe
             placeholder="Buscar por cliente, solicitante, plataforma..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors"
           />
         </div>
       </div>

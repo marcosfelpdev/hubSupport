@@ -382,9 +382,9 @@ export const BasicAgenda: React.FC = () => {
                 onClick={() => setSelectedDate(day.dateStr)}
                 className={`h-7 flex flex-col items-center justify-center rounded-lg text-xs font-semibold relative transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xs font-bold"
+                    ? "bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 shadow-2xs font-bold"
                     : isToday
-                    ? "border border-indigo-400 dark:border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-bold"
+                    ? "border border-brand-highlight-border dark:border-indigo-500 bg-brand-highlight-bg dark:bg-indigo-950/40 text-brand-highlight-text dark:text-indigo-400 font-bold"
                     : day.isCurrentMonth
                     ? "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                     : "text-slate-300 dark:text-slate-600"
@@ -394,7 +394,7 @@ export const BasicAgenda: React.FC = () => {
                 {hasEvent && (
                   <span
                     className={`w-1 h-1 rounded-full absolute bottom-0.5 ${
-                      isSelected ? "bg-white dark:bg-slate-900" : "bg-indigo-600 dark:bg-indigo-400"
+                      isSelected ? "bg-brand-accent-foreground dark:bg-slate-900" : "bg-brand-highlight-dot dark:bg-indigo-400"
                     }`}
                   />
                 )}
@@ -421,7 +421,7 @@ export const BasicAgenda: React.FC = () => {
             className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
               showAddForm
                 ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900 hover:bg-rose-100 dark:hover:bg-rose-900/60"
-                : "bg-slate-900 dark:bg-slate-800 text-white border-slate-900 dark:border-slate-700 hover:bg-slate-800 dark:hover:bg-slate-700 shadow-2xs"
+                : "bg-brand-accent dark:bg-slate-800 text-brand-accent-foreground dark:text-white border-brand-accent dark:border-slate-700 hover:bg-brand-accent-hover dark:hover:bg-slate-700 shadow-2xs"
             }`}
           >
             <Plus
@@ -445,7 +445,7 @@ export const BasicAgenda: React.FC = () => {
               onChange={(e) => setNewTitle(e.target.value)}
               autoFocus
               required
-              className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors"
+              className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors"
             />
 
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -454,14 +454,14 @@ export const BasicAgenda: React.FC = () => {
                 value={newTime}
                 onChange={(e) => setNewTime(e.target.value)}
                 required
-                className="w-20 px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none shrink-0"
+                className="w-20 px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none shrink-0"
               />
 
               <select
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
                 required
-                className="flex-1 min-w-[90px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
+                className="flex-1 min-w-[90px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none cursor-pointer"
               >
                 <option value="Reunião">Reunião</option>
                 <option value="Atendimento">Atendimento</option>
@@ -474,7 +474,7 @@ export const BasicAgenda: React.FC = () => {
                 value={newEmployeeId}
                 onChange={(e) => setNewEmployeeId(e.target.value)}
                 required
-                className="flex-1 min-w-[125px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
+                className="flex-1 min-w-[125px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none cursor-pointer"
               >
                 <option value="">Selecionar Funcionário *</option>
                 {employees.map((emp) => (
@@ -489,7 +489,7 @@ export const BasicAgenda: React.FC = () => {
                 value={newClientId}
                 onChange={(e) => setNewClientId(e.target.value)}
                 required
-                className="flex-1 min-w-[125px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none cursor-pointer"
+                className="flex-1 min-w-[125px] px-2 py-1.5 text-xs bg-white dark:bg-[#161f33] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none cursor-pointer"
               >
                 <option value="">Selecionar Cliente *</option>
                 {clients.map((c) => (
@@ -502,7 +502,7 @@ export const BasicAgenda: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-2xs transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center justify-center gap-1"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-2xs transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center justify-center gap-1"
               >
                 {isSaving && <RotateCw size={11} className="animate-spin" />}
                 {isSaving ? "Salvar..." : "Salvar"}
@@ -524,7 +524,7 @@ export const BasicAgenda: React.FC = () => {
               <span>Nenhum compromisso agendado para este dia.</span>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="mt-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 underline cursor-pointer"
+                className="mt-1 text-xs font-medium text-brand-highlight-dot dark:text-indigo-400 hover:text-brand-highlight-text dark:hover:text-indigo-300 underline cursor-pointer"
               >
                 + Adicionar para {selectedDateFormatted}
               </button>

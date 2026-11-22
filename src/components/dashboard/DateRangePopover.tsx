@@ -240,7 +240,7 @@ export default function DateRangePopover({
   const presetButtonClass = (active: boolean) =>
     `px-2.5 py-1.5 text-xs rounded-lg font-medium transition-colors text-left cursor-pointer border ${
       active
-        ? "bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-200 border-sky-300 dark:border-sky-700 font-semibold"
+        ? "bg-brand-filter-bg-hover dark:bg-sky-950/60 text-brand-filter-text dark:text-sky-200 border-brand-filter-border dark:border-sky-700 font-semibold"
         : "bg-slate-50 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white"
     }`;
 
@@ -252,7 +252,7 @@ export default function DateRangePopover({
         onClick={() => setIsOpen((prev) => !prev)}
         className={`flex items-center justify-between gap-2 px-3 py-1.5 text-xs rounded-xl cursor-pointer shadow-xs transition-colors w-full ${
           isActive
-            ? "bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-700 text-sky-800 dark:text-sky-200 font-medium hover:border-sky-400 dark:hover:border-sky-600"
+            ? "bg-brand-filter-bg dark:bg-sky-950/40 border border-brand-filter-border dark:border-sky-700 text-brand-filter-text dark:text-sky-200 font-medium hover:border-brand-accent-border dark:hover:border-sky-600"
             : "bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
         }`}
         title={isActive ? `Período ativo: ${displayLabel}` : "Filtrar por período de datas"}
@@ -264,7 +264,7 @@ export default function DateRangePopover({
             size={14}
             className={
               isActive
-                ? "text-sky-600 dark:text-sky-400 shrink-0"
+                ? "text-brand-action-sky dark:text-sky-400 shrink-0"
                 : "text-slate-400 dark:text-slate-500 shrink-0"
             }
           />
@@ -292,7 +292,7 @@ export default function DateRangePopover({
                   setTempEnd("");
                 }
               }}
-              className="p-0.5 rounded-md hover:bg-sky-200/60 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 hover:text-sky-900 dark:hover:text-white transition-colors cursor-pointer"
+              className="p-0.5 rounded-md hover:bg-brand-filter-bg-hover dark:hover:bg-sky-900/60 text-brand-filter-text dark:text-sky-300 hover:text-brand-accent dark:hover:text-white transition-colors cursor-pointer"
               title="Limpar período"
               aria-label="Limpar período"
             >
@@ -322,7 +322,7 @@ export default function DateRangePopover({
               Período de Atendimento
             </span>
             {isActive && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-filter-bg-hover text-brand-filter-text dark:bg-sky-950/60 dark:text-sky-300 border border-brand-filter-border dark:border-sky-800">
                 Ativo
               </span>
             )}
@@ -393,7 +393,7 @@ export default function DateRangePopover({
                   type="date"
                   value={tempStart}
                   onChange={(e) => setTempStart(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
               <div>
@@ -404,7 +404,7 @@ export default function DateRangePopover({
                   type="date"
                   value={tempEnd}
                   onChange={(e) => setTempEnd(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>
@@ -422,7 +422,7 @@ export default function DateRangePopover({
             <button
               type="button"
               onClick={handleApplyCustom}
-              className="px-3.5 py-1.5 text-xs font-semibold bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white rounded-lg transition-colors cursor-pointer shadow-xs"
+              className="px-3.5 py-1.5 text-xs font-semibold bg-brand-accent dark:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 hover:bg-brand-accent-hover dark:hover:bg-white rounded-lg transition-colors cursor-pointer shadow-xs"
             >
               Aplicar
             </button>
