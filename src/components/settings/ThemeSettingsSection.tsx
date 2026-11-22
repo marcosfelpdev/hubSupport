@@ -156,12 +156,6 @@ export default function ThemeSettingsSection(): React.JSX.Element {
                           <span className="h-1.5 w-14 rounded-full bg-slate-800/80" />
                           <span className="h-1 w-10 rounded-full bg-slate-300" />
                         </div>
-                        <span
-                          className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold text-white shrink-0 leading-none"
-                          style={{ backgroundColor: item.preview.cardPill }}
-                        >
-                          Aberto
-                        </span>
                       </div>
                     </div>
                   </div>

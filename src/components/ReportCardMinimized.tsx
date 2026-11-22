@@ -1,7 +1,5 @@
 import React from "react";
 import {
-  Sparkles,
-  Maximize2,
   Paperclip,
   Inbox,
   Clock,
@@ -349,18 +347,6 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
   const assignedInitials = React.useMemo(() => getInitials(assignedName), [assignedName]);
   const assignedColorClass = React.useMemo(() => getAvatarColorClass(assignedName), [assignedName]);
 
-  const isAiGenerating = Boolean(
-    log.aiReport &&
-      (log.aiReport.status === "pending" ||
-        log.aiReport.status === "processing" ||
-        (!log.aiReport.pdfPath && log.aiReport.status !== "failed"))
-  );
-
-  const isAiCompleted = Boolean(
-    log.aiReport &&
-      (log.aiReport.status === "completed" || Boolean(log.aiReport.pdfPath))
-  );
-
   const mediaCount = React.useMemo(() => {
     if (!log.media) return 0;
     try {
@@ -418,34 +404,6 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
           <TagBadge name={tagName} color={tagColor} size="sm" />
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Indicador visual de Card Aberto / Maximizado */}
-            {isSelected && (
-              <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-card-selected-pill dark:bg-sky-600 text-white shadow-2xs animate-fade-in"
-                title="Chamado aberto"
-              >
-                <Maximize2 size={10} className="text-white shrink-0" />
-                <span>Aberto</span>
-              </span>
-            )}
-
-            {/* Símbolo de IA */}
-            {isAiGenerating ? (
-              <span
-                title="IA gerando relatório PDF em segundo plano..."
-                className="inline-flex items-center text-indigo-600 dark:text-indigo-400 animate-sparkle cursor-help"
-              >
-                <Sparkles size={13} />
-              </span>
-            ) : isAiCompleted ? (
-              <span
-                title="Relatório de IA e PDF disponíveis"
-                className="inline-flex items-center text-indigo-600 dark:text-indigo-400"
-              >
-                <Sparkles size={13} />
-              </span>
-            ) : null}
-
             {/* Indicador sutil de Validação Reprovada */}
             {hasRejection && (
               <span
