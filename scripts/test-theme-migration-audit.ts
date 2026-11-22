@@ -10,14 +10,13 @@ interface ComputedStyleSnapshot {
   backgroundColor: string;
   color: string;
   borderTopColor: string;
+  boxShadow: string;
 }
 
 interface ClassNameBlock {
   content: string;
   startLine: number;
   endLine: number;
-  startOffset: number;
-  endOffset: number;
 }
 
 function test(name: string, fn: () => void) {
@@ -307,9 +306,7 @@ function extractClassNameBlocks(strippedSource: string): ClassNameBlock[] {
     blocks.push({
       content: strippedSource.slice(attrStart, endOffset),
       startLine: lineNumberAt(strippedSource, attrStart),
-      endLine: lineNumberAt(strippedSource, endOffset),
-      startOffset: attrStart,
-      endOffset,
+      endLine: lineNumberAt(strippedSource, Math.max(attrStart, endOffset - 1)),
     });
 
     attrRegex.lastIndex = endOffset;
@@ -393,10 +390,7 @@ function runStaticAudit() {
       );
     }
 
-    const allowedDirectRelixFiles = new Set([
-      "src/components/common/BrandLogo.tsx",
-      "src/components/common/RelixLogo.tsx",
-    ]);
+    const allowedDirectRelixFiles = new Set(["src/components/common/BrandLogo.tsx"]);
     const directRelixViolations = parsedFiles
       .filter((f) => !allowedDirectRelixFiles.has(f.relative) && relixTagRegex.test(f.stripped))
       .map((f) => f.relative);
@@ -439,8 +433,10 @@ function runStaticAudit() {
       settingsPage.stripped.includes("PRESET_COLORS"),
       "SettingsPage.tsx must preserve PRESET_COLORS"
     );
+    const categoryIconPickers =
+      settingsPage.stripped.match(/<CategoryIconPicker\b[\s\S]*?\/>/g) ?? [];
     assert(
-      /<CategoryIconPicker[\s\S]*?accentColor=\{catColor\}/.test(settingsPage.stripped),
+      categoryIconPickers.some((tag) => tag.includes("accentColor={catColor}")),
       "SettingsPage.tsx must preserve <CategoryIconPicker with accentColor={catColor}"
     );
 
@@ -490,22 +486,18 @@ function runStaticAudit() {
 
       // Verifica linhas com ocorrências fora de blocos className=...
       const lines = file.stripped.split(/\r?\n/);
-      let offset = 0;
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx];
-        const lineStart = offset;
-        const lineEnd = offset + line.length;
-        offset = lineEnd + 1;
-
         if (!tokenRegex.test(line)) continue;
 
+        const lineNumber = idx + 1;
         const insideClassBlock = file.classBlocks.some(
-          (b) => lineStart >= b.startOffset && lineStart <= b.endOffset
+          (b) => lineNumber >= b.startLine && lineNumber <= b.endLine
         );
         if (!insideClassBlock) {
           checkedOccurrences++;
           if (!darkBgRegex.test(line)) {
-            violations.push(`${file.relative}:${idx + 1}`);
+            violations.push(`${file.relative}:${lineNumber}`);
           }
         }
       }
@@ -631,6 +623,7 @@ async function getComputedSnapshot(locator: Locator): Promise<ComputedStyleSnaps
       backgroundColor: cs.backgroundColor,
       color: cs.color,
       borderTopColor: cs.borderTopColor,
+      boxShadow: cs.boxShadow,
     };
   });
 }
@@ -772,7 +765,7 @@ async function runLivePlaywrightAudit() {
           .locator("..")
           .locator(".bg-rose-50, .text-rose-800")
           .first()
-          .textContent()
+          .textContent({ timeout: 1000 })
           .catch(() => null);
         throw new Error(
           `Falha de autenticação/seed no login (${email}): ${
@@ -802,6 +795,13 @@ async function runLivePlaywrightAudit() {
       );
 
       await relixCard.click();
+      await page.waitForFunction(
+        () =>
+          document.documentElement.dataset.brandTheme === "relix" &&
+          localStorage.getItem("relix_brand_theme") === "relix",
+        undefined,
+        { timeout: 2500 }
+      );
       await waitForSettledPaint(page);
 
       const postClick = await page.evaluate(() => ({
