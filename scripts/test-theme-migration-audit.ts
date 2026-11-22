@@ -6,6 +6,14 @@ import { chromium, type Locator, type Page } from "playwright";
 const projectRoot = process.cwd();
 const srcDir = path.join(projectRoot, "src");
 
+type BrandThemeAuditId =
+  | "default"
+  | "relix"
+  | "relix-cobalt"
+  | "relix-emerald"
+  | "relix-amber"
+  | "relix-cyberpunk";
+
 interface ComputedStyleSnapshot {
   backgroundColor: string;
   color: string;
@@ -512,17 +520,29 @@ function runStaticAudit() {
   });
 
   // 5. Escopo de CSS no src/styles/globals.css
-  test("5. src/styles/globals.css define seletores :not(.dark) e .brand-card-selected em @layer components", () => {
+  test("5. src/styles/globals.css define seletores :not(.dark) para os 5 temas Relix e .brand-card-selected em @layer components", () => {
     const globalsCssPath = path.join(srcDir, "styles", "globals.css");
     const globalsCss = fs.readFileSync(globalsCssPath, "utf8");
     const strippedCss = stripCssComments(globalsCss);
 
-    const relixSelector = ':root[data-brand-theme="relix"]:not(.dark)';
+    const relixThemes: BrandThemeAuditId[] = [
+      "relix",
+      "relix-cobalt",
+      "relix-emerald",
+      "relix-amber",
+      "relix-cyberpunk",
+    ];
+
+    for (const theme of relixThemes) {
+      const themeSelector = `:root[data-brand-theme="${theme}"]:not(.dark)`;
+      const themeBlock = extractCssBlock(strippedCss, themeSelector);
+      assert(
+        themeBlock.includes("--brand-accent"),
+        `${themeSelector} block must define --brand-accent`
+      );
+    }
+
     const collapseSelector = ':root:where([data-brand-theme]:not([data-brand-theme="default"])):not(.dark)';
-
-    const relixBlock = extractCssBlock(strippedCss, relixSelector);
-    assert(relixBlock.includes("--brand-accent"), "Relix block must define --brand-accent");
-
     const collapseBlock = extractCssBlock(strippedCss, collapseSelector);
     assert(
       collapseBlock.includes("--brand-action-blue"),
@@ -538,7 +558,7 @@ function runStaticAudit() {
     const brandThemeLines = strippedCss
       .split(/\r?\n/)
       .filter((line) => line.includes("[data-brand-theme"));
-    assert(brandThemeLines.length >= 2, "Expected at least 2 [data-brand-theme] rules in globals.css");
+    assert(brandThemeLines.length >= 6, "Expected at least 6 [data-brand-theme] rules in globals.css");
     for (const line of brandThemeLines) {
       assert(
         line.includes(":not(.dark)"),
@@ -631,7 +651,7 @@ async function getComputedSnapshot(locator: Locator): Promise<ComputedStyleSnaps
 async function setBrandStorageAndReload(
   page: Page,
   theme: "light" | "dark",
-  brandTheme: "default" | "relix",
+  brandTheme: BrandThemeAuditId,
   waitUntil: "domcontentloaded" | "networkidle" = "networkidle"
 ): Promise<void> {
   await page.evaluate(
@@ -776,17 +796,12 @@ async function runLivePlaywrightAudit() {
       await page.waitForLoadState("networkidle");
     });
 
-    await asyncTest("Bloco B.2 — /dashboard/configuracoes troca tema para 'relix', persiste após F5 e colore sidebar ativa", async () => {
+    await asyncTest("Bloco B.2 — /dashboard/configuracoes exibe os 6 temas, alterna para cada tema Relix, persiste após F5 e colore sidebar ativa", async () => {
       await page.goto(`${baseUrl}/dashboard/configuracoes`, { waitUntil: "networkidle" });
       await setBrandStorageAndReload(page, "light", "default", "networkidle");
 
       const appearanceTab = page.locator('button:has-text("Aparência")').first();
-      const defaultCard = page.locator('button:has-text("Padrão do Sistema")').first();
-      const relixCard = page.locator('button:has-text("Relix Carmim")').first();
-
       await appearanceTab.waitFor({ state: "visible", timeout: 15000 });
-      await defaultCard.waitFor({ state: "visible", timeout: 10000 });
-      await relixCard.waitFor({ state: "visible", timeout: 10000 });
 
       const tabClasses = (await appearanceTab.getAttribute("class")) || "";
       assert(
@@ -794,7 +809,97 @@ async function runLivePlaywrightAudit() {
         `Expected Aparência tab to be active with border-brand-accent, got "${tabClasses}"`
       );
 
-      await relixCard.click();
+      // Verifica visibilidade de todos os 6 cards de tema
+      const allThemeNames = [
+        "Padrão do Sistema",
+        "Relix Carmim",
+        "Relix Cobalto",
+        "Relix Esmeralda",
+        "Relix Âmbar",
+        "Relix Cyberpunk",
+      ];
+      for (const name of allThemeNames) {
+        const card = page.locator(`button:has-text("${name}")`).first();
+        await card.waitFor({ state: "visible", timeout: 10000 });
+      }
+
+      const relixThemeCases: Array<{
+        id: BrandThemeAuditId;
+        name: string;
+        expectedSidebarRgb: string;
+      }> = [
+        { id: "relix", name: "Relix Carmim", expectedSidebarRgb: "rgb(225, 29, 72)" },
+        { id: "relix-cobalt", name: "Relix Cobalto", expectedSidebarRgb: "rgb(37, 99, 235)" },
+        { id: "relix-emerald", name: "Relix Esmeralda", expectedSidebarRgb: "rgb(5, 150, 105)" },
+        { id: "relix-amber", name: "Relix Âmbar", expectedSidebarRgb: "rgb(217, 119, 6)" },
+        { id: "relix-cyberpunk", name: "Relix Cyberpunk", expectedSidebarRgb: "rgb(8, 145, 178)" },
+      ];
+
+      for (const themeCase of relixThemeCases) {
+        const themeCard = page.locator(`button:has-text("${themeCase.name}")`).first();
+        await themeCard.click();
+        await page.waitForFunction(
+          (expectedId) =>
+            document.documentElement.dataset.brandTheme === expectedId &&
+            localStorage.getItem("relix_brand_theme") === expectedId,
+          themeCase.id,
+          { timeout: 2500 }
+        );
+        await waitForSettledPaint(page);
+
+        const postClick = await page.evaluate(() => ({
+          datasetBrand: document.documentElement.dataset.brandTheme,
+          storedBrand: localStorage.getItem("relix_brand_theme"),
+        }));
+        assert.strictEqual(postClick.datasetBrand, themeCase.id);
+        assert.strictEqual(postClick.storedBrand, themeCase.id);
+
+        assert.strictEqual(
+          await themeCard.getAttribute("aria-pressed"),
+          "true",
+          `Clicked ${themeCase.name} card must have aria-pressed='true'`
+        );
+        const cardClasses = (await themeCard.getAttribute("class")) || "";
+        assert(
+          cardClasses.includes("brand-card-selected"),
+          `Clicked ${themeCase.name} card must include brand-card-selected, got "${cardClasses}"`
+        );
+
+        // Sidebar ativa adota a cor computada respectiva
+        const activeSidebarLink = page.locator('aside nav a[href="/dashboard/configuracoes"]').first();
+        await activeSidebarLink.waitFor({ state: "visible", timeout: 10000 });
+        await waitForComputedStyleProp(
+          activeSidebarLink,
+          "backgroundColor",
+          themeCase.expectedSidebarRgb,
+          `/dashboard/configuracoes active sidebar link (light ${themeCase.id})`
+        );
+
+        // F5 reload anti-FOUC síncrono e persistência
+        await page.reload({ waitUntil: "domcontentloaded" });
+        const immediateBrand = await page.evaluate(() => document.documentElement.dataset.brandTheme);
+        assert.strictEqual(
+          immediateBrand,
+          themeCase.id,
+          `Expected dataset.brandTheme === "${themeCase.id}" immediately on domcontentloaded after F5`
+        );
+
+        await page.waitForLoadState("networkidle");
+        const activeSidebarLinkAfterReload = page
+          .locator('aside nav a[href="/dashboard/configuracoes"]')
+          .first();
+        await activeSidebarLinkAfterReload.waitFor({ state: "visible", timeout: 10000 });
+        await waitForComputedStyleProp(
+          activeSidebarLinkAfterReload,
+          "backgroundColor",
+          themeCase.expectedSidebarRgb,
+          `/dashboard/configuracoes active sidebar link after F5 (light ${themeCase.id})`
+        );
+      }
+
+      // Restaura o tema relix (carmim) para manter compatibilidade com os blocos subsequentes (B.3)
+      const relixCardFinal = page.locator('button:has-text("Relix Carmim")').first();
+      await relixCardFinal.click();
       await page.waitForFunction(
         () =>
           document.documentElement.dataset.brandTheme === "relix" &&
@@ -803,43 +908,6 @@ async function runLivePlaywrightAudit() {
         { timeout: 2500 }
       );
       await waitForSettledPaint(page);
-
-      const postClick = await page.evaluate(() => ({
-        datasetBrand: document.documentElement.dataset.brandTheme,
-        storedBrand: localStorage.getItem("relix_brand_theme"),
-      }));
-      assert.strictEqual(postClick.datasetBrand, "relix");
-      assert.strictEqual(postClick.storedBrand, "relix");
-
-      assert.strictEqual(
-        await relixCard.getAttribute("aria-pressed"),
-        "true",
-        "Clicked Relix Carmim card must have aria-pressed='true'"
-      );
-      const relixCardClasses = (await relixCard.getAttribute("class")) || "";
-      assert(
-        relixCardClasses.includes("brand-card-selected"),
-        `Clicked Relix Carmim card must include brand-card-selected, got "${relixCardClasses}"`
-      );
-
-      // F5 anti-FOUC e persistência na sidebar
-      await page.reload({ waitUntil: "domcontentloaded" });
-      const immediateBrand = await page.evaluate(() => document.documentElement.dataset.brandTheme);
-      assert.strictEqual(
-        immediateBrand,
-        "relix",
-        `Expected dataset.brandTheme === "relix" immediately on domcontentloaded after F5`
-      );
-
-      await page.waitForLoadState("networkidle");
-      const activeSidebarLink = page.locator('aside nav a[href="/dashboard/configuracoes"]').first();
-      await activeSidebarLink.waitFor({ state: "visible", timeout: 10000 });
-      await waitForComputedStyleProp(
-        activeSidebarLink,
-        "backgroundColor",
-        "rgb(225, 29, 72)",
-        "/dashboard/configuracoes active sidebar link (light relix)"
-      );
     });
 
     await asyncTest("Bloco B.3 — /dashboard/atendimentos aplica brand-card-selected e preserva cores de TagBadge", async () => {
@@ -984,8 +1052,16 @@ async function runLivePlaywrightAudit() {
       );
     });
 
-    await asyncTest("Bloco B.6 — Paridade Dark Mode (default vs relix) em /dashboard/configuracoes e /dashboard/tecnico", async () => {
-      const captureConfigDark = async (brand: "default" | "relix") => {
+    await asyncTest("Bloco B.6 — Paridade Dark Mode (default vs todos os 5 temas Relix) em /dashboard/configuracoes e /dashboard/tecnico", async () => {
+      const relixThemes: BrandThemeAuditId[] = [
+        "relix",
+        "relix-cobalt",
+        "relix-emerald",
+        "relix-amber",
+        "relix-cyberpunk",
+      ];
+
+      const captureConfigDark = async (brand: BrandThemeAuditId) => {
         await page.evaluate(
           (b) => {
             localStorage.setItem("hubsupport_theme", "dark");
@@ -1012,7 +1088,7 @@ async function runLivePlaywrightAudit() {
           brandTheme: document.documentElement.dataset.brandTheme,
         }));
         assert.strictEqual(rootState.isDark, true);
-        assert.strictEqual(rootState.brandTheme, brand === "relix" ? "relix" : undefined);
+        assert.strictEqual(rootState.brandTheme, brand === "default" ? undefined : brand);
 
         const baseSnapshot = {
           body: await getComputedSnapshot(page.locator("body")),
@@ -1050,14 +1126,16 @@ async function runLivePlaywrightAudit() {
       };
 
       const configDarkDefault = await captureConfigDark("default");
-      const configDarkRelix = await captureConfigDark("relix");
-      assert.deepStrictEqual(
-        configDarkRelix,
-        configDarkDefault,
-        "/dashboard/configuracoes dark mode styles must be strictly identical between default and relix"
-      );
+      for (const theme of relixThemes) {
+        const configDarkTheme = await captureConfigDark(theme);
+        assert.deepStrictEqual(
+          configDarkTheme,
+          configDarkDefault,
+          `/dashboard/configuracoes dark mode styles must be strictly identical between default and ${theme}`
+        );
+      }
 
-      const captureTechDark = async (brand: "default" | "relix") => {
+      const captureTechDark = async (brand: BrandThemeAuditId) => {
         await page.evaluate(
           (b) => {
             localStorage.setItem("hubsupport_theme", "dark");
@@ -1082,7 +1160,7 @@ async function runLivePlaywrightAudit() {
           brandTheme: document.documentElement.dataset.brandTheme,
         }));
         assert.strictEqual(rootState.isDark, true);
-        assert.strictEqual(rootState.brandTheme, brand === "relix" ? "relix" : undefined);
+        assert.strictEqual(rootState.brandTheme, brand === "default" ? undefined : brand);
 
         const inputResting = await getComputedSnapshot(firstInput);
         await firstInput.focus();
@@ -1099,12 +1177,14 @@ async function runLivePlaywrightAudit() {
       };
 
       const techDarkDefault = await captureTechDark("default");
-      const techDarkRelix = await captureTechDark("relix");
-      assert.deepStrictEqual(
-        techDarkRelix,
-        techDarkDefault,
-        "/dashboard/tecnico dark mode styles must be strictly identical between default and relix"
-      );
+      for (const theme of relixThemes) {
+        const techDarkTheme = await captureTechDark(theme);
+        assert.deepStrictEqual(
+          techDarkTheme,
+          techDarkDefault,
+          `/dashboard/tecnico dark mode styles must be strictly identical between default and ${theme}`
+        );
+      }
     });
 
     console.log("\n✅ Mode 2 — Live Playwright Light/Dark Audit passed.");
