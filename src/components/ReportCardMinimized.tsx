@@ -1,7 +1,5 @@
 import React from "react";
 import {
-  Sparkles,
-  Maximize2,
   Paperclip,
   Inbox,
   Clock,
@@ -349,18 +347,6 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
   const assignedInitials = React.useMemo(() => getInitials(assignedName), [assignedName]);
   const assignedColorClass = React.useMemo(() => getAvatarColorClass(assignedName), [assignedName]);
 
-  const isAiGenerating = Boolean(
-    log.aiReport &&
-      (log.aiReport.status === "pending" ||
-        log.aiReport.status === "processing" ||
-        (!log.aiReport.pdfPath && log.aiReport.status !== "failed"))
-  );
-
-  const isAiCompleted = Boolean(
-    log.aiReport &&
-      (log.aiReport.status === "completed" || Boolean(log.aiReport.pdfPath))
-  );
-
   const mediaCount = React.useMemo(() => {
     if (!log.media) return 0;
     try {
@@ -385,14 +371,17 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
     ? "cursor-pointer"
     : "";
 
-  const surfaceClasses = isSelected
-    ? "bg-sky-50/30 dark:bg-sky-950/20 hover:bg-sky-50/40 dark:hover:bg-sky-950/30"
-    : "bg-white dark:bg-[#111726] hover:bg-white dark:hover:bg-[#161f33]";
+  const surfaceClasses =
+    isSelected && !isDragging
+      ? ""
+      : isSelected
+      ? "bg-brand-card-selected-bg dark:bg-sky-950/20"
+      : "bg-white dark:bg-[#111726] hover:bg-white dark:hover:bg-[#161f33]";
 
   const stateClasses = isDragging
-    ? "opacity-50 scale-[0.98] border-dashed border-sky-400 dark:border-sky-500 shadow-md"
+    ? "opacity-50 scale-[0.98] border-dashed border-brand-card-selected-border dark:border-sky-500 shadow-md"
     : isSelected
-    ? "border-sky-500 dark:border-sky-400 ring-[1.5px] ring-inset ring-sky-400/40 dark:ring-sky-500/40 shadow-md shadow-sky-500/10 dark:shadow-sky-950/40"
+    ? "brand-card-selected dark:bg-sky-950/20 dark:hover:bg-sky-950/30 dark:border-sky-400 dark:ring-[1.5px] dark:ring-inset dark:ring-sky-500/40 dark:shadow-md dark:shadow-sky-950/40"
     : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs hover:shadow-md";
 
   return (
@@ -415,34 +404,6 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
           <TagBadge name={tagName} color={tagColor} size="sm" />
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Indicador visual de Card Aberto / Maximizado */}
-            {isSelected && (
-              <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500 dark:bg-sky-600 text-white shadow-2xs animate-fade-in"
-                title="Chamado aberto"
-              >
-                <Maximize2 size={10} className="text-white shrink-0" />
-                <span>Aberto</span>
-              </span>
-            )}
-
-            {/* Símbolo de IA */}
-            {isAiGenerating ? (
-              <span
-                title="IA gerando relatório PDF em segundo plano..."
-                className="inline-flex items-center text-indigo-600 dark:text-indigo-400 animate-sparkle cursor-help"
-              >
-                <Sparkles size={13} />
-              </span>
-            ) : isAiCompleted ? (
-              <span
-                title="Relatório de IA e PDF disponíveis"
-                className="inline-flex items-center text-indigo-600 dark:text-indigo-400"
-              >
-                <Sparkles size={13} />
-              </span>
-            ) : null}
-
             {/* Indicador sutil de Validação Reprovada */}
             {hasRejection && (
               <span

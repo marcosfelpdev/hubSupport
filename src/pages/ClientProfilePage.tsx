@@ -252,7 +252,7 @@ export default function ClientProfilePage() {
     return (
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full animate-fade-in">
         <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3 shadow-xs">
-          <Loader2 className="w-8 h-8 text-slate-700 dark:text-slate-300 animate-spin" />
+          <Loader2 className="w-8 h-8 text-brand-accent dark:text-slate-300 animate-spin" />
           <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
             Carregando perfil e histórico do cliente...
           </span>
@@ -554,7 +554,7 @@ export default function ClientProfilePage() {
                               onClick={() => toggleMeetingExpanded(evt.id)}
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium text-xs transition-all cursor-pointer shadow-2xs ${
                                 isExpanded
-                                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                  ? "bg-brand-accent text-brand-accent-foreground dark:bg-white dark:text-slate-900"
                                   : hasAta
                                   ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
                                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
@@ -630,7 +630,7 @@ export default function ClientProfilePage() {
                                     onClick={() => openGalleryForMedia(mediaList, 0)}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs transition-colors cursor-pointer"
                                   >
-                                    <Eye className="w-3.5 h-3.5 text-indigo-500" />
+                                    <Eye className="w-3.5 h-3.5 text-brand-highlight-dot dark:text-indigo-500" />
                                     <span>Ver Galeria ({mediaList.length})</span>
                                   </button>
                                 )}
@@ -812,7 +812,7 @@ export default function ClientProfilePage() {
                             </span>
                           )}
                           <div className="min-w-0">
-                            <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+                            <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-highlight-dot dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
                               {title}
                             </span>
                             {log.reportedProblem && log.title && (
@@ -868,7 +868,7 @@ export default function ClientProfilePage() {
                             e.stopPropagation();
                             setSelectedLog(log);
                           }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 font-medium text-xs transition-colors cursor-pointer group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 font-medium text-xs transition-colors cursor-pointer group-hover:bg-brand-accent group-hover:text-brand-accent-foreground dark:group-hover:bg-white dark:group-hover:text-slate-900"
                         >
                           <FileText className="w-3.5 h-3.5" />
                           <span>Detalhes</span>
@@ -923,7 +923,7 @@ export default function ClientProfilePage() {
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-200/80 dark:border-indigo-800/60">
+                <div className="w-8 h-8 rounded-xl bg-brand-highlight-bg dark:bg-indigo-950/60 text-brand-highlight-dot dark:text-indigo-400 flex items-center justify-center shrink-0 border border-brand-highlight-border/80 dark:border-indigo-800/60">
                   <Pencil className="w-4 h-4" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -964,7 +964,7 @@ export default function ClientProfilePage() {
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder="Ex: ACME Corporation"
                   disabled={editPending}
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none"
                 />
               </div>
 
@@ -981,7 +981,7 @@ export default function ClientProfilePage() {
                   value={editManagerId}
                   onChange={(e) => setEditManagerId(e.target.value)}
                   disabled={editPending}
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
                 >
                   <option value="">Nenhum gestor atribuído</option>
                   {employees.map((emp) => (
@@ -1005,7 +1005,7 @@ export default function ClientProfilePage() {
                 <button
                   type="submit"
                   disabled={editPending || !editName.trim()}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 rounded-xl bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editPending ? (
                     <>

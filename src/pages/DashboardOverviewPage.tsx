@@ -112,7 +112,7 @@ export default function DashboardOverviewPage() {
 
           <Link
             to="/dashboard/atendimentos"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-xs transition-colors"
           >
             <Plus size={15} />
             <span>Novo Atendimento</span>
@@ -214,7 +214,7 @@ export default function DashboardOverviewPage() {
       {/* Grid Principal com os 3 Painéis */}
       {loading ? (
         <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-16 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center gap-3 shadow-xs">
-          <div className="w-8 h-8 border-2 border-slate-200 dark:border-slate-800 border-t-slate-800 dark:border-t-white rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 dark:border-slate-800 border-t-brand-accent dark:border-t-white rounded-full animate-spin" />
           <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Carregando dados do dashboard...</span>
         </div>
       ) : (

@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
       {loading ? (
         <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-16 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center gap-3 shadow-xs">
-          <div className="w-8 h-8 border-2 border-slate-200 dark:border-slate-800 border-t-slate-800 dark:border-t-white rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 dark:border-slate-800 border-t-brand-accent dark:border-t-white rounded-full animate-spin" />
           <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Carregando atendimentos do dia...</span>
         </div>
       ) : error ? (

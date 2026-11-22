@@ -13,8 +13,8 @@ async function runTests() {
   console.log('1. Checking Sidebar.tsx...');
   const sidebarPath = path.join(projectRoot, 'src', 'components', 'Sidebar.tsx');
   const sidebarContent = fs.readFileSync(sidebarPath, 'utf8');
-  assert(sidebarContent.includes('RelixLogo'), 'Sidebar.tsx must import RelixLogo');
-  assert(sidebarContent.includes('<RelixLogo'), 'Sidebar.tsx must render <RelixLogo');
+  assert(sidebarContent.includes('BrandLogo'), 'Sidebar.tsx must import BrandLogo');
+  assert(sidebarContent.includes('<BrandLogo'), 'Sidebar.tsx must render <BrandLogo');
   assert(sidebarContent.includes('Relix - Portal da Equipe'), 'Sidebar.tsx must have Relix tooltip');
   assert(!sidebarContent.includes('HubSupport'), 'Sidebar.tsx must not contain legacy HubSupport text');
 
@@ -22,7 +22,8 @@ async function runTests() {
   console.log('2. Checking DashboardHeader.tsx...');
   const headerPath = path.join(projectRoot, 'src', 'components', 'DashboardHeader.tsx');
   const headerContent = fs.readFileSync(headerPath, 'utf8');
-  assert(headerContent.includes('RelixLogo'), 'DashboardHeader.tsx must import RelixLogo');
+  assert(headerContent.includes('BrandLogo'), 'DashboardHeader.tsx must import BrandLogo');
+  assert(headerContent.includes('<BrandLogo'), 'DashboardHeader.tsx must render <BrandLogo');
   assert(headerContent.includes('Relix'), 'DashboardHeader.tsx must contain Relix');
   assert(!headerContent.includes('HubSupport'), 'DashboardHeader.tsx must not contain legacy HubSupport text');
 
@@ -30,10 +31,16 @@ async function runTests() {
   console.log('3. Checking LoginPage.tsx...');
   const loginPath = path.join(projectRoot, 'src', 'pages', 'LoginPage.tsx');
   const loginContent = fs.readFileSync(loginPath, 'utf8');
-  assert(loginContent.includes('RelixLogo'), 'LoginPage.tsx must import RelixLogo');
-  assert(loginContent.includes('<RelixLogo variant="full" height={48}'), 'LoginPage.tsx must render full RelixLogo');
+  assert(loginContent.includes('BrandLogo'), 'LoginPage.tsx must import BrandLogo');
+  assert(loginContent.includes('<BrandLogo variant="full" height={48}'), 'LoginPage.tsx must render full BrandLogo');
   assert(loginContent.includes('Acesse sua conta no Relix'), 'LoginPage.tsx must contain "Acesse sua conta no Relix"');
   assert(!loginContent.includes('HubSupport'), 'LoginPage.tsx must not contain legacy HubSupport text');
+
+  // Verify BrandLogo.tsx preserves RelixLogo delegation
+  const brandLogoPath = path.join(projectRoot, 'src', 'components', 'common', 'BrandLogo.tsx');
+  const brandLogoContent = fs.readFileSync(brandLogoPath, 'utf8');
+  assert(brandLogoContent.includes('RelixLogo'), 'BrandLogo.tsx must import and render RelixLogo');
+  assert(brandLogoContent.includes('<RelixLogo'), 'BrandLogo.tsx must render <RelixLogo');
 
   // Test 4: Verify AppDownloadModal.tsx
   console.log('4. Checking AppDownloadModal.tsx...');

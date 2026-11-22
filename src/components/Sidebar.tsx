@@ -4,7 +4,7 @@ import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Sun, Moon, Building2, Smartphone } from "lucide-react";
-import RelixLogo from "@/components/common/RelixLogo";
+import BrandLogo from "@/components/common/BrandLogo";
 
 interface User {
   id?: string | null;
@@ -209,7 +209,7 @@ export default function Sidebar({ user }: { user: User }) {
             className="flex items-center min-h-[40px] px-1"
             title={!isHovered ? "Relix - Portal da Equipe" : undefined}
           >
-            <RelixLogo
+            <BrandLogo
               variant={isHovered ? "full" : "symbol"}
               height={32}
               className="shrink-0 transition-all duration-200"
@@ -291,14 +291,14 @@ export default function Sidebar({ user }: { user: User }) {
                           isBlocked
                             ? "opacity-40 cursor-not-allowed pointer-events-none text-slate-400 dark:text-slate-500"
                             : isActive
-                            ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold shadow-xs"
+                            ? "bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 font-semibold shadow-xs"
                             : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 group"
                         }`}
                       >
                         <span
                           className={`w-10 h-10 shrink-0 flex items-center justify-center transition-colors ${
                             isActive
-                              ? "text-white dark:text-slate-900"
+                              ? "text-brand-accent-foreground dark:text-slate-900"
                               : isBlocked
                               ? "text-slate-300 dark:text-slate-600"
                               : "text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-200"
@@ -346,7 +346,7 @@ export default function Sidebar({ user }: { user: User }) {
               {theme === "dark" ? (
                 <Sun className="w-4 h-4 text-amber-400" />
               ) : (
-                <Moon className="w-4 h-4 text-indigo-600" />
+                <Moon className="w-4 h-4 text-brand-highlight-dot" />
               )}
             </button>
           ) : (

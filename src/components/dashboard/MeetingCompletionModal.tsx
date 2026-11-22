@@ -341,7 +341,7 @@ export const MeetingCompletionModal: React.FC<MeetingCompletionModalProps> = ({
               onChange={(e) => setNotes(e.target.value)}
               disabled={isSubmitting}
               placeholder="O que foi realizado durante a reunião? Descreva os tópicos abordados, decisões tomadas e alinhamentos..."
-              className="w-full px-3.5 py-3 text-xs sm:text-sm bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-slate-900 dark:focus:border-slate-300 focus:bg-white dark:focus:bg-[#111726] focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-300 transition-all resize-y min-h-[120px]"
+              className="w-full px-3.5 py-3 text-xs sm:text-sm bg-slate-50/70 dark:bg-[#0b0f19]/70 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-brand-focus-border dark:focus:border-slate-300 focus:bg-white dark:focus:bg-[#111726] focus:outline-none focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-300 transition-all resize-y min-h-[120px]"
             />
           </div>
 
@@ -355,7 +355,7 @@ export const MeetingCompletionModal: React.FC<MeetingCompletionModalProps> = ({
                 </span>
               </label>
               {mediaFiles.length > 0 && (
-                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                <span className="text-xs font-semibold text-brand-highlight-dot dark:text-indigo-400">
                   {mediaFiles.length}{" "}
                   {mediaFiles.length === 1 ? "arquivo selecionado" : "arquivos selecionados"}
                 </span>
@@ -381,14 +381,14 @@ export const MeetingCompletionModal: React.FC<MeetingCompletionModalProps> = ({
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer select-none flex flex-col items-center justify-center gap-2 ${
                 isDraggingOver
-                  ? "border-slate-900 dark:border-slate-400 bg-slate-100/80 dark:bg-slate-800/80 shadow-xs"
+                  ? "border-brand-accent dark:border-slate-400 bg-brand-accent-soft/80 dark:bg-slate-800/80 shadow-xs"
                   : "border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-[#0b0f19]/40 hover:bg-slate-50 dark:hover:bg-[#0b0f19]/70"
               } ${isSubmitting ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-2xs ${
                   isDraggingOver
-                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900"
+                    ? "bg-brand-accent dark:bg-slate-100 text-brand-accent-foreground dark:text-slate-900"
                     : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                 }`}
               >
@@ -398,13 +398,13 @@ export const MeetingCompletionModal: React.FC<MeetingCompletionModalProps> = ({
               <div>
                 <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   {isDraggingOver ? (
-                    <span className="text-slate-900 dark:text-white font-semibold">
+                    <span className="text-brand-accent dark:text-white font-semibold">
                       Solte os arquivos para anexar
                     </span>
                   ) : (
                     <>
                       Arraste e solte arquivos aqui ou{" "}
-                      <span className="text-slate-900 dark:text-white font-semibold underline underline-offset-2">
+                      <span className="text-brand-accent dark:text-white font-semibold underline underline-offset-2">
                         procure no dispositivo
                       </span>
                     </>

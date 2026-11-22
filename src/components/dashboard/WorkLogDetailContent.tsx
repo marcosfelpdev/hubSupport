@@ -1009,7 +1009,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                   aria-haspopup="listbox"
                   aria-expanded={statusMenuOpen}
                   title="Clique para alterar o status deste atendimento"
-                  className={`group inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer active:scale-95 disabled:opacity-75 disabled:cursor-wait select-none focus:outline-hidden focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500/60 ${statusPill.badgeClass}`}
+                  className={`group inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer active:scale-95 disabled:opacity-75 disabled:cursor-wait select-none focus:outline-hidden focus:ring-2 focus:ring-offset-1 focus:ring-brand-focus-indigo/60 dark:focus:ring-indigo-500/60 ${statusPill.badgeClass}`}
                 >
                   {isUpdatingStatus ? (
                     <Loader2 size={12} className="animate-spin text-current shrink-0" />
@@ -1274,12 +1274,12 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 onClick={() => handleAssign(currentUser.id)}
                 disabled={isAssigning}
                 title="Assumir este atendimento imediatamente com 1 clique"
-                className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-xs inline-flex items-center gap-2 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                className="bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-xs inline-flex items-center gap-2 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait"
               >
                 {isAssigning ? (
                   <Loader2 size={14} className="animate-spin text-white shrink-0" />
                 ) : (
-                  <UserCheck size={14} className="text-indigo-400 dark:text-cyan-400 shrink-0" />
+                  <UserCheck size={14} className="text-brand-accent-icon-tint dark:text-cyan-400 shrink-0" />
                 )}
                 <span>Assumir Tarefa</span>
               </button>
@@ -1333,7 +1333,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                         value={employeeSearch}
                         onChange={(e) => setEmployeeSearch(e.target.value)}
                         placeholder="Buscar membro da equipe..."
-                        className="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                        className="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-brand-focus-indigo dark:focus:ring-indigo-500"
                         autoFocus
                       />
                     </div>
@@ -1364,7 +1364,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                             onClick={() => handleAssign(emp.id)}
                             className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors text-left cursor-pointer ${
                               isAssigned
-                                ? "bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-semibold"
+                                ? "bg-brand-highlight-bg dark:bg-indigo-950/40 text-brand-highlight-text dark:text-indigo-200 font-semibold"
                                 : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
                             }`}
                           >
@@ -1380,7 +1380,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                                 <div className="flex items-center gap-1.5">
                                   <span className="truncate">{emp.name}</span>
                                   {isSelf && (
-                                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
+                                    <span className="text-[10px] text-brand-highlight-dot dark:text-indigo-400 font-semibold">
                                       (Você)
                                     </span>
                                   )}
@@ -1395,7 +1395,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                             {isAssigned && (
                               <Check
                                 size={14}
-                                className="text-indigo-600 dark:text-indigo-400 shrink-0"
+                                className="text-brand-highlight-dot dark:text-indigo-400 shrink-0"
                               />
                             )}
                           </button>
@@ -1673,7 +1673,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenPdfModal(log.id)}
-                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
+                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
                     title="Visualizar o PDF oficial"
                   >
                     <Eye size={14} />
@@ -1684,7 +1684,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                     href={api.worklogs.getViewReportUrl(log.id)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs active:scale-98 transition-all duration-150"
+                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-xs active:scale-98 transition-all duration-150"
                     title="Visualizar o PDF oficial em nova aba"
                   >
                     <Eye size={14} />
@@ -2027,7 +2027,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenPdfModal(log.id)}
-                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs active:scale-98 transition-all duration-150 shrink-0 cursor-pointer"
+                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-xs active:scale-98 transition-all duration-150 shrink-0 cursor-pointer"
                   >
                     <Eye size={14} />
                     <span>Visualizar PDF</span>
@@ -2037,7 +2037,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                     href={api.worklogs.getViewReportUrl(log.id)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-xs active:scale-98 transition-all duration-150 shrink-0"
+                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white shadow-xs active:scale-98 transition-all duration-150 shrink-0"
                   >
                     <Eye size={14} />
                     <span>Visualizar PDF</span>
@@ -2101,7 +2101,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
               onChange={(e) => setNewNoteContent(e.target.value)}
               placeholder="Adicionar nota ou observação sobre este atendimento..."
               rows={2}
-              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all resize-none"
+              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-brand-focus-indigo/30 focus:border-brand-focus-indigo dark:focus:ring-indigo-500/30 dark:focus:border-indigo-500 transition-all resize-none"
               disabled={isSubmittingNote}
             />
           </div>
@@ -2118,7 +2118,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
             <button
               type="submit"
               disabled={!newNoteContent.trim() || isSubmittingNote}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-brand-action-indigo hover:bg-brand-action-indigo-hover dark:bg-indigo-600 dark:hover:bg-indigo-500 shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
             >
               {isSubmittingNote ? (
                 <Loader2 size={13} className="animate-spin shrink-0" />
@@ -2349,7 +2349,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 id="btn-confirm-delete-worklog"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-500 rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-brand-danger hover:bg-brand-danger-hover dark:bg-rose-600 dark:hover:bg-rose-500 rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-60 disabled:cursor-wait"
               >
                 {isDeleting ? (
                   <>

@@ -177,7 +177,7 @@ export default function PairingCodeModal({
             {/* Header */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 flex items-center justify-center shrink-0 shadow-xs">
                   <QrCode className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
@@ -225,7 +225,7 @@ export default function PairingCodeModal({
             {/* Conteúdo do Código */}
             {loading && !pairingData ? (
               <div className="py-10 flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-slate-400">
-                <Loader2 className="w-7 h-7 animate-spin text-slate-700 dark:text-slate-300" />
+                <Loader2 className="w-7 h-7 animate-spin text-brand-accent dark:text-slate-300" />
                 <span className="text-xs font-medium">
                   Gerando código de 6 dígitos...
                 </span>
@@ -307,7 +307,7 @@ export default function PairingCodeModal({
                           ? "bg-rose-500"
                           : remainingMs < 60_000
                             ? "bg-amber-500"
-                            : "bg-slate-900 dark:bg-white"
+                            : "bg-brand-accent dark:bg-white"
                       }`}
                       style={{ width: `${progressPercent}%` }}
                     />
@@ -339,7 +339,7 @@ export default function PairingCodeModal({
                 onClick={onRegenerate}
                 className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-50 ${
                   isExpired || !pairingData
-                    ? "bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-xs"
+                    ? "bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 shadow-xs"
                     : "border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60"
                 }`}
               >

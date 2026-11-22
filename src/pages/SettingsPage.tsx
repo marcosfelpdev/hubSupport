@@ -4,6 +4,7 @@ import { TagItem, WorkLogCategoryItem, api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import TagBadge from "@/components/TagBadge";
 import CategoryIconPicker, { getCategoryIconComponent } from "@/components/CategoryIconPicker";
+import ThemeSettingsSection from "@/components/settings/ThemeSettingsSection";
 import {
   Tag as TagIcon,
   Plus,
@@ -21,6 +22,7 @@ import {
   Eye,
   EyeOff,
   Sliders,
+  Palette,
 } from "lucide-react";
 
 const PRESET_COLORS = [
@@ -39,7 +41,7 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
 
-  const [activeTab, setActiveTab] = useState<"tags" | "categories">("tags");
+  const [activeTab, setActiveTab] = useState<"appearance" | "tags" | "categories">("appearance");
   const [tags, setTags] = useState<TagItem[]>([]);
   const [categories, setCategories] = useState<WorkLogCategoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,7 +90,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!isAdmin && activeTab === "categories") {
-      setActiveTab("tags");
+      setActiveTab("appearance");
     }
   }, [isAdmin, activeTab]);
 
@@ -304,13 +306,29 @@ export default function SettingsPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 mt-6">
+        <div className="flex gap-2 overflow-x-auto border-b border-slate-200 dark:border-slate-800 mt-6">
+          <button
+            type="button"
+            onClick={() => setActiveTab("appearance")}
+            className={`shrink-0 whitespace-nowrap flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+              activeTab === "appearance"
+                ? "border-brand-accent text-brand-accent dark:border-white dark:text-white"
+                : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            }`}
+          >
+            <Palette className="w-4 h-4" />
+            <span>Aparência</span>
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 ml-1">
+              Temas
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={() => setActiveTab("tags")}
-            className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
               activeTab === "tags"
-                ? "border-slate-900 dark:border-white text-slate-900 dark:text-white"
+                ? "border-brand-accent text-brand-accent dark:border-white dark:text-white"
                 : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
@@ -325,9 +343,9 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setActiveTab("categories")}
-              className={`flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap flex items-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
                 activeTab === "categories"
-                  ? "border-slate-900 dark:border-white text-slate-900 dark:text-white"
+                  ? "border-brand-accent text-brand-accent dark:border-white dark:text-white"
                   : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
@@ -355,6 +373,9 @@ export default function SettingsPage() {
           <span>{error}</span>
         </div>
       )}
+
+      {/* Conteúdo da Aba: Aparência */}
+      {activeTab === "appearance" && <ThemeSettingsSection />}
 
       {/* Conteúdo da Aba: Formato de Formulário (Tags Mestre) */}
       {activeTab === "tags" && (
@@ -396,7 +417,7 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={handleOpenCreate}
-                className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
+                className="bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Nova Tag</span>
@@ -406,7 +427,7 @@ export default function SettingsPage() {
             {/* Estado de Carregamento */}
             {isLoading && (
               <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-500 dark:text-slate-400">
-                <div className="w-7 h-7 border-2 border-slate-200 dark:border-slate-700 border-t-slate-800 dark:border-t-slate-200 rounded-full animate-spin" />
+                <div className="w-7 h-7 border-2 border-slate-200 dark:border-slate-700 border-t-brand-accent dark:border-t-slate-200 rounded-full animate-spin" />
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Carregando tags...</span>
               </div>
             )}
@@ -426,7 +447,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={handleOpenCreate}
-                  className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
+                  className="bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Cadastrar Primeira Tag</span>
@@ -530,7 +551,7 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={handleOpenCreateCategory}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
+                className="bg-brand-action-blue hover:bg-brand-action-blue-hover dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Nova Categoria</span>
@@ -540,7 +561,7 @@ export default function SettingsPage() {
             {/* Estado de Carregamento */}
             {isCategoriesLoading && (
               <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-500 dark:text-slate-400">
-                <div className="w-7 h-7 border-2 border-slate-200 dark:border-slate-700 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin" />
+                <div className="w-7 h-7 border-2 border-slate-200 dark:border-slate-700 border-t-brand-action-blue dark:border-t-blue-400 rounded-full animate-spin" />
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Carregando categorias...</span>
               </div>
             )}
@@ -560,7 +581,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={handleOpenCreateCategory}
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
+                  className="bg-brand-action-blue hover:bg-brand-action-blue-hover dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg px-3.5 py-2 text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Cadastrar Primeira Categoria</span>
@@ -726,7 +747,7 @@ export default function SettingsPage() {
                 <input
                   id="tagName"
                   type="text"
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-800"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-800"
                   placeholder="Ex: Plataforma Web, Sistema ERP, App Mobile..."
                   value={tagName}
                   onChange={(e) => setTagName(e.target.value)}
@@ -778,7 +799,7 @@ export default function SettingsPage() {
                     value={tagColor}
                     onChange={(e) => setTagColor(e.target.value)}
                     placeholder="#3b82f6"
-                    className="w-28 bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs uppercase font-mono shadow-xs outline-none"
+                    className="w-28 bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs uppercase font-mono shadow-xs outline-none"
                   />
                   <span className="text-[11px] text-slate-400 dark:text-slate-500">
                     Hexadecimal personalizado
@@ -812,7 +833,7 @@ export default function SettingsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-xl px-5 py-2.5 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
+                  className="bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white font-semibold rounded-xl px-5 py-2.5 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>
@@ -880,7 +901,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
+                className="bg-brand-danger hover:bg-brand-danger-hover dark:bg-rose-600 dark:hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
               >
                 {isDeleting ? (
                   <>
@@ -989,7 +1010,7 @@ export default function SettingsPage() {
                     value={catName}
                     onChange={(e) => setCatName(e.target.value)}
                     placeholder="Ex: Ação Técnica, Prompt, Infra"
-                    className="w-full text-xs sm:text-sm bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-xs sm:text-sm bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-focus-blue dark:focus:ring-blue-500"
                     required
                   />
                 </div>
@@ -1003,7 +1024,7 @@ export default function SettingsPage() {
                     value={catSubtitle}
                     onChange={(e) => setCatSubtitle(e.target.value)}
                     placeholder="Ex: Demanda técnica / dev"
-                    className="w-full text-xs sm:text-sm bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-xs sm:text-sm bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-focus-blue dark:focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -1053,7 +1074,7 @@ export default function SettingsPage() {
                 <select
                   value={catNotifyRole}
                   onChange={(e) => setCatNotifyRole(e.target.value)}
-                  className="w-full text-xs sm:text-sm bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  className="w-full text-xs sm:text-sm bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-focus-blue dark:focus:ring-blue-500 cursor-pointer"
                 >
                   <option value="">Nenhuma notificação automática</option>
                   <option value="TECHNICIAN">Técnicos (TECHNICIAN)</option>
@@ -1070,7 +1091,7 @@ export default function SettingsPage() {
                     type="checkbox"
                     checked={catTargetKanban}
                     onChange={(e) => setCatTargetKanban(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 rounded text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 mt-0.5 rounded accent-brand-action-blue text-brand-action-blue focus:ring-brand-focus-blue dark:accent-blue-600 dark:text-blue-600 dark:focus:ring-blue-500"
                   />
                   <div>
                     <span className="block text-xs font-semibold text-slate-900 dark:text-white">
@@ -1087,7 +1108,7 @@ export default function SettingsPage() {
                     type="checkbox"
                     checked={catLockStatus}
                     onChange={(e) => setCatLockStatus(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 rounded text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 mt-0.5 rounded accent-brand-action-blue text-brand-action-blue focus:ring-brand-focus-blue dark:accent-blue-600 dark:text-blue-600 dark:focus:ring-blue-500"
                   />
                   <div>
                     <span className="block text-xs font-semibold text-slate-900 dark:text-white">
@@ -1111,7 +1132,7 @@ export default function SettingsPage() {
                     value={catTargetStatus}
                     onChange={(e) => setCatTargetStatus(e.target.value)}
                     placeholder="Backlog"
-                    className="w-full text-xs sm:text-sm bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-xs sm:text-sm bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-focus-blue dark:focus:ring-blue-500"
                   />
                 </div>
               )}
@@ -1122,7 +1143,7 @@ export default function SettingsPage() {
                   type="checkbox"
                   checked={catActive}
                   onChange={(e) => setCatActive(e.target.checked)}
-                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                  className="w-4 h-4 rounded accent-brand-action-blue text-brand-action-blue focus:ring-brand-focus-blue dark:accent-blue-600 dark:text-blue-600 dark:focus:ring-blue-500"
                 />
                 <span className="text-xs font-semibold text-slate-900 dark:text-white">
                   Categoria ativa e visível no formulário de atendimento
@@ -1142,7 +1163,7 @@ export default function SettingsPage() {
                 <button
                   type="submit"
                   disabled={isSubmittingCategory}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
+                  className="bg-brand-action-blue hover:bg-brand-action-blue-hover dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
                 >
                   {isSubmittingCategory ? (
                     <>
@@ -1210,7 +1231,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleConfirmDeleteCategory}
                 disabled={isDeletingCategory}
-                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
+                className="bg-brand-danger hover:bg-brand-danger-hover dark:bg-rose-600 dark:hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
               >
                 {isDeletingCategory ? (
                   <>

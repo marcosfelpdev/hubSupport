@@ -365,7 +365,7 @@ export default function ScreenRecorderButton({
         id="btn-screen-recording"
         onClick={startRecording}
         disabled={disabled}
-        className={isRecording ? "" : "btn-secondary"}
+        className={isRecording ? "" : "brand-recorder-btn"}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -376,16 +376,17 @@ export default function ScreenRecorderButton({
           fontSize: "0.875rem",
           cursor: "pointer",
           transition: "all 0.2s ease-in-out",
-          background: isRecording
-            ? "linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.3) 100%)"
-            : "rgba(99, 102, 241, 0.08)",
-          color: isRecording ? "#fca5a5" : "#a5b4fc",
-          border: isRecording
-            ? "1px solid rgba(239, 68, 68, 0.5)"
-            : "1px solid rgba(99, 102, 241, 0.3)",
-          boxShadow: isRecording
-            ? "0 0 15px rgba(239, 68, 68, 0.25)"
-            : "none",
+          ...(isRecording
+            ? {
+                background:
+                  "linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.3) 100%)",
+                color: "#fca5a5",
+                border: "1px solid rgba(239, 68, 68, 0.5)",
+                boxShadow: "0 0 15px rgba(239, 68, 68, 0.25)",
+              }
+            : {
+                boxShadow: "none",
+              }),
         }}
         title={isRecording ? "Clique para finalizar a gravação" : "Gravar tela com áudio obrigatório para gerar relatório automático com IA"}
       >

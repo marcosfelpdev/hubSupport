@@ -198,7 +198,7 @@ export default function NotificationBell() {
                 Notificações
               </span>
               {unreadCount > 0 && (
-                <span className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-indigo-200/60 dark:border-indigo-800/60">
+                <span className="bg-brand-highlight-bg dark:bg-indigo-950/60 text-brand-highlight-text dark:text-indigo-300 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-brand-highlight-border/60 dark:border-indigo-800/60">
                   {unreadCount} nova{unreadCount > 1 ? "s" : ""}
                 </span>
               )}
@@ -233,7 +233,7 @@ export default function NotificationBell() {
                 <button
                   onClick={handleMarkAllAsRead}
                   disabled={loading}
-                  className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 px-1.5 py-0.5 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors cursor-pointer disabled:opacity-50"
+                  className="text-xs font-medium text-brand-highlight-dot dark:text-indigo-400 hover:text-brand-highlight-text dark:hover:text-indigo-300 px-1.5 py-0.5 rounded-md hover:bg-brand-highlight-bg dark:hover:bg-indigo-950/50 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Marcar lidas
                 </button>
@@ -275,7 +275,7 @@ export default function NotificationBell() {
                     className={`p-3 rounded-xl cursor-pointer transition-all flex gap-3 items-start border ${
                       item.read
                         ? "bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 border-transparent text-slate-600 dark:text-slate-400"
-                        : "bg-indigo-50/40 dark:bg-indigo-950/30 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/50 border-indigo-100 dark:border-indigo-900/50 text-slate-900 dark:text-white"
+                        : "bg-brand-highlight-bg-soft dark:bg-indigo-950/30 hover:bg-brand-highlight-bg dark:hover:bg-indigo-950/50 border-brand-highlight-border/40 dark:border-indigo-900/50 text-slate-900 dark:text-white"
                     }`}
                   >
                     {/* Ícone de status */}
@@ -346,7 +346,7 @@ export default function NotificationBell() {
                     </div>
 
                     {!item.read && (
-                      <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0 mt-1" />
+                      <span className="w-2 h-2 rounded-full bg-brand-highlight-dot dark:bg-indigo-600 shrink-0 mt-1" />
                     )}
                   </div>
                 );

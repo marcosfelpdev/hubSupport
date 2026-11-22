@@ -516,7 +516,7 @@ export default function WorkLogForm({
               id="title"
               name="title"
               type="text"
-              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:cursor-not-allowed"
+              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:cursor-not-allowed"
               placeholder="Ex: Erro ao sincronizar API de faturamento"
               required
               disabled={isPending}
@@ -544,7 +544,7 @@ export default function WorkLogForm({
                 className={`w-full appearance-none rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs pr-10 outline-none ${
                   isStatusLocked
                     ? "bg-slate-100/80 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 font-medium cursor-not-allowed"
-                    : "bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white cursor-pointer"
+                    : "bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white cursor-pointer"
                 }`}
               >
                 {isStatusLocked ? (
@@ -578,7 +578,7 @@ export default function WorkLogForm({
               id="requester"
               name="requester"
               type="text"
-              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:cursor-not-allowed"
+              className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:cursor-not-allowed"
               placeholder="Nome de quem solicitou o suporte"
               required
               disabled={isPending}
@@ -660,7 +660,7 @@ export default function WorkLogForm({
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer select-none flex flex-col items-center justify-center gap-2 ${
               isDraggingOver
-                ? "border-slate-900 dark:border-slate-400 bg-slate-100/80 dark:bg-slate-800/80 shadow-xs"
+                ? "border-brand-accent dark:border-slate-400 bg-brand-accent-soft/80 dark:bg-slate-800/80 shadow-xs"
                 : !hasMedia
                 ? "border-amber-300 dark:border-amber-500/40 hover:border-amber-400 dark:hover:border-amber-500/60 bg-amber-50/20 dark:bg-amber-950/10 hover:bg-amber-50/40 dark:hover:bg-amber-950/20"
                 : "border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-[#0b0f19]/40 hover:bg-slate-50 dark:hover:bg-[#0b0f19]/70"
@@ -669,7 +669,7 @@ export default function WorkLogForm({
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-2xs ${
                 isDraggingOver
-                  ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900"
+                  ? "bg-brand-accent dark:bg-slate-100 text-brand-accent-foreground dark:text-slate-900"
                   : !hasMedia
                   ? "bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400"
                   : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
@@ -681,11 +681,11 @@ export default function WorkLogForm({
             <div>
               <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 {isDraggingOver ? (
-                  <span className="text-slate-900 dark:text-white font-semibold">Solte os arquivos para anexar</span>
+                  <span className="text-brand-accent dark:text-white font-semibold">Solte os arquivos para anexar</span>
                 ) : (
                   <>
                     Arraste e solte arquivos aqui ou{" "}
-                    <span className="text-slate-900 dark:text-white font-semibold underline underline-offset-2">
+                    <span className="text-brand-accent dark:text-white font-semibold underline underline-offset-2">
                       procure no dispositivo
                     </span>
                   </>
@@ -774,7 +774,7 @@ export default function WorkLogForm({
 
                       {/* Floating badge No texto */}
                       {insertedMediaIds.has(item.id) && (
-                        <div className="absolute top-1.5 left-1.5 z-10 bg-indigo-600/90 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-md shadow-xs flex items-center gap-1 backdrop-blur-xs select-none">
+                        <div className="absolute top-1.5 left-1.5 z-10 bg-brand-action-indigo/90 dark:bg-indigo-600/90 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-md shadow-xs flex items-center gap-1 backdrop-blur-xs select-none">
                           <span>✓</span>
                           <span>No texto</span>
                         </div>
@@ -985,7 +985,7 @@ export default function WorkLogForm({
             className={`w-full font-semibold rounded-xl py-3 px-6 text-sm shadow-xs transition-all flex items-center justify-center gap-2 ${
               !hasMedia
                 ? "bg-slate-300 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300/80 dark:border-slate-700/60"
-                : "bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white active:scale-[0.99] cursor-pointer"
+                : "bg-brand-accent hover:bg-brand-accent-hover dark:bg-slate-800 dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white active:scale-[0.99] cursor-pointer"
             }`}
             title={
               !hasMedia

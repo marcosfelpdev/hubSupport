@@ -232,7 +232,7 @@ export default function EmployeesManager({
               setCreateRole("SUPPORT");
               setIsCreateOpen(true);
             }}
-            className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
+            className="bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white font-semibold rounded-xl px-4 py-2.5 text-xs sm:text-sm shadow-xs flex items-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Cadastrar Funcionário</span>
@@ -254,7 +254,7 @@ export default function EmployeesManager({
         <div className="relative w-full sm:w-80">
           <input
             type="text"
-            className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+            className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
             placeholder="Buscar por nome, e-mail ou cargo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -470,7 +470,7 @@ export default function EmployeesManager({
                   id="create-name"
                   name="name"
                   type="text"
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="Ex: Amanda Silva"
                   required
                   disabled={isPending}
@@ -489,7 +489,7 @@ export default function EmployeesManager({
                   id="create-email"
                   name="email"
                   type="email"
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="exemplo@hubsupport.com"
                   required
                   disabled={isPending}
@@ -508,7 +508,7 @@ export default function EmployeesManager({
                   id="create-password"
                   name="password"
                   type="password"
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="Mínimo 6 caracteres"
                   required
                   disabled={isPending}
@@ -532,7 +532,7 @@ export default function EmployeesManager({
                         onClick={() => setCreateRole(opt.value)}
                         className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer flex items-center justify-between ${
                           isSelected
-                            ? "bg-slate-50 dark:bg-[#161f33] border-slate-900 dark:border-white ring-1 ring-slate-900 dark:ring-white shadow-xs"
+                            ? "bg-brand-accent-soft dark:bg-[#161f33] border-brand-accent dark:border-white ring-1 ring-brand-accent dark:ring-white shadow-xs"
                             : "bg-white dark:bg-[#0b0f19] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-[#161f33]/60"
                         }`}
                       >
@@ -553,7 +553,7 @@ export default function EmployeesManager({
                         <div
                           className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-2 ${
                             isSelected
-                              ? "bg-slate-900 dark:bg-white border-slate-900 dark:border-white text-white dark:text-slate-900"
+                              ? "bg-brand-accent dark:bg-white border-brand-accent dark:border-white text-brand-accent-foreground dark:text-slate-900"
                               : "border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0b0f19]"
                           }`}
                         >
@@ -578,7 +578,7 @@ export default function EmployeesManager({
                 <button
                   id="btn-confirm-create-employee"
                   type="submit"
-                  className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
+                  className="bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
                   disabled={isPending}
                 >
                   {isPending ? (
@@ -645,7 +645,7 @@ export default function EmployeesManager({
                   id="edit-name"
                   name="name"
                   type="text"
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   defaultValue={editingEmployee.name}
                   required
                   disabled={isPending}
@@ -681,7 +681,7 @@ export default function EmployeesManager({
                   id="edit-password"
                   name="password"
                   type="password"
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   placeholder="Deixe em branco para manter a atual"
                   disabled={isPending}
                 />
@@ -704,7 +704,7 @@ export default function EmployeesManager({
                         onClick={() => setEditRole(opt.value)}
                         className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer flex items-center justify-between ${
                           isSelected
-                            ? "bg-slate-50 dark:bg-[#161f33] border-slate-900 dark:border-white ring-1 ring-slate-900 dark:ring-white shadow-xs"
+                            ? "bg-brand-accent-soft dark:bg-[#161f33] border-brand-accent dark:border-white ring-1 ring-brand-accent dark:ring-white shadow-xs"
                             : "bg-white dark:bg-[#0b0f19] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-[#161f33]/60"
                         }`}
                       >
@@ -717,7 +717,7 @@ export default function EmployeesManager({
                         <div
                           className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                             isSelected
-                              ? "bg-slate-900 dark:bg-white border-slate-900 dark:border-white text-white dark:text-slate-900"
+                              ? "bg-brand-accent dark:bg-white border-brand-accent dark:border-white text-brand-accent-foreground dark:text-slate-900"
                               : "border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0b0f19]"
                           }`}
                         >
@@ -740,7 +740,7 @@ export default function EmployeesManager({
                 <select
                   id="edit-active"
                   name="active"
-                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-400 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 focus:border-brand-focus-border dark:focus:border-slate-400 focus:ring-1 focus:ring-brand-focus-ring dark:focus:ring-slate-400 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm transition-all shadow-xs outline-none cursor-pointer"
                   defaultValue={editingEmployee.active ? "true" : "false"}
                   disabled={isPending}
                 >
@@ -762,7 +762,7 @@ export default function EmployeesManager({
                 <button
                   id="btn-confirm-edit-employee"
                   type="submit"
-                  className="bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
+                  className="bg-brand-accent dark:bg-slate-800 hover:bg-brand-accent-hover dark:hover:bg-slate-700 text-brand-accent-foreground dark:text-white font-semibold rounded-xl px-5 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
                   disabled={isPending}
                 >
                   {isPending ? (
@@ -831,7 +831,7 @@ export default function EmployeesManager({
                 type="button"
                 onClick={handleDeleteConfirm}
                 disabled={isPending}
-                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
+                className="bg-brand-danger hover:bg-brand-danger-hover dark:bg-rose-600 dark:hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-xs sm:text-sm shadow-xs transition-all active:scale-[0.99] cursor-pointer inline-flex items-center gap-2 disabled:opacity-60"
               >
                 {isPending ? (
                   <>

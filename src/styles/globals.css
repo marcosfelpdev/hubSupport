@@ -1,6 +1,50 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme inline {
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-hover: var(--brand-accent-hover);
+  --color-brand-accent-foreground: var(--brand-accent-foreground);
+  --color-brand-accent-soft: var(--brand-accent-soft);
+  --color-brand-accent-soft-hover: var(--brand-accent-soft-hover);
+  --color-brand-accent-border: var(--brand-accent-border);
+  --color-brand-accent-text: var(--brand-accent-text);
+  --color-brand-accent-icon-tint: var(--brand-accent-icon-tint);
+  --color-brand-focus: var(--brand-focus-border);
+  --color-brand-focus-border: var(--brand-focus-border);
+  --color-brand-focus-ring: var(--brand-focus-ring);
+  --color-brand-card-selected-bg: var(--brand-card-selected-bg);
+  --color-brand-card-selected-bg-hover: var(--brand-card-selected-bg-hover);
+  --color-brand-card-selected-border: var(--brand-card-selected-border);
+  --color-brand-card-selected-ring: var(--brand-card-selected-ring);
+  --color-brand-card-selected-shadow: var(--brand-card-selected-shadow);
+  --color-brand-card-selected-pill: var(--brand-card-selected-pill);
+  --color-brand-recorder-bg: var(--brand-recorder-bg);
+  --color-brand-recorder-bg-hover: var(--brand-recorder-bg-hover);
+  --color-brand-recorder-text: var(--brand-recorder-text);
+  --color-brand-recorder-border: var(--brand-recorder-border);
+  --color-brand-highlight-bg: var(--brand-highlight-bg);
+  --color-brand-highlight-bg-soft: var(--brand-highlight-bg-soft);
+  --color-brand-highlight-border: var(--brand-highlight-border);
+  --color-brand-highlight-text: var(--brand-highlight-text);
+  --color-brand-highlight-dot: var(--brand-highlight-dot);
+  --color-brand-action-blue: var(--brand-action-blue);
+  --color-brand-action-blue-hover: var(--brand-action-blue-hover);
+  --color-brand-focus-blue: var(--brand-focus-blue);
+  --color-brand-action-sky: var(--brand-action-sky);
+  --color-brand-action-sky-hover: var(--brand-action-sky-hover);
+  --color-brand-focus-sky: var(--brand-focus-sky);
+  --color-brand-action-indigo: var(--brand-action-indigo);
+  --color-brand-action-indigo-hover: var(--brand-action-indigo-hover);
+  --color-brand-focus-indigo: var(--brand-focus-indigo);
+  --color-brand-filter-bg: var(--brand-filter-bg);
+  --color-brand-filter-bg-hover: var(--brand-filter-bg-hover);
+  --color-brand-filter-border: var(--brand-filter-border);
+  --color-brand-filter-text: var(--brand-filter-text);
+  --color-brand-danger: var(--brand-danger);
+  --color-brand-danger-hover: var(--brand-danger-hover);
+}
+
 :root {
   --bg-primary: #f8f9fa;
   --bg-secondary: #ffffff;
@@ -17,6 +61,48 @@
   --success: #10b981;
   --error: #ef4444;
   --warning: #f59e0b;
+
+  /* Tokens de tema de marca (padrão do sistema + fallback em dark mode) */
+  --brand-accent: #0f172a;
+  --brand-accent-hover: #1e293b;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #f1f5f9;
+  --brand-accent-soft-hover: #e2e8f0;
+  --brand-accent-border: #cbd5e1;
+  --brand-accent-text: #0f172a;
+  --brand-accent-icon-tint: #818cf8;
+  --brand-focus-border: #0f172a;
+  --brand-focus-ring: #0f172a;
+  --brand-card-selected-bg: rgba(240, 249, 255, 0.3);
+  --brand-card-selected-bg-hover: rgba(240, 249, 255, 0.4);
+  --brand-card-selected-border: #0ea5e9;
+  --brand-card-selected-ring: rgba(56, 189, 248, 0.4);
+  --brand-card-selected-shadow: rgba(14, 165, 233, 0.1);
+  --brand-card-selected-pill: #0ea5e9;
+  --brand-recorder-bg: rgba(99, 102, 241, 0.08);
+  --brand-recorder-bg-hover: rgba(99, 102, 241, 0.14);
+  --brand-recorder-text: #a5b4fc;
+  --brand-recorder-border: rgba(99, 102, 241, 0.3);
+  --brand-highlight-bg: rgba(238, 242, 255, 0.6);
+  --brand-highlight-bg-soft: rgba(238, 242, 255, 0.4);
+  --brand-highlight-border: #818cf8;
+  --brand-highlight-text: #4338ca;
+  --brand-highlight-dot: #4f46e5;
+  --brand-action-blue: #2563eb;
+  --brand-action-blue-hover: #1d4ed8;
+  --brand-focus-blue: #3b82f6;
+  --brand-action-sky: #0284c7;
+  --brand-action-sky-hover: #0369a1;
+  --brand-focus-sky: #0ea5e9;
+  --brand-action-indigo: #4f46e5;
+  --brand-action-indigo-hover: #4338ca;
+  --brand-focus-indigo: #6366f1;
+  --brand-filter-bg: #f0f9ff;
+  --brand-filter-bg-hover: #e0f2fe;
+  --brand-filter-border: #7dd3fc;
+  --brand-filter-text: #075985;
+  --brand-danger: #e11d48;
+  --brand-danger-hover: #be123c;
 }
 
 .dark {
@@ -34,9 +120,202 @@
   --accent-muted: #1e293b;
 }
 
+/* Colapso automático de tokens legados em temas customizados (apenas modo claro) */
+:root:where([data-brand-theme]:not([data-brand-theme="default"])):not(.dark) {
+  --brand-action-blue: var(--brand-accent);
+  --brand-action-blue-hover: var(--brand-accent-hover);
+  --brand-focus-blue: var(--brand-focus-border);
+  --brand-action-sky: var(--brand-accent);
+  --brand-action-sky-hover: var(--brand-accent-hover);
+  --brand-focus-sky: var(--brand-focus-border);
+  --brand-action-indigo: var(--brand-accent);
+  --brand-action-indigo-hover: var(--brand-accent-hover);
+  --brand-focus-indigo: var(--brand-focus-border);
+  --brand-filter-bg: var(--brand-accent-soft);
+  --brand-filter-bg-hover: var(--brand-accent-soft-hover);
+  --brand-filter-border: var(--brand-accent-border);
+  --brand-filter-text: var(--brand-accent-text);
+  --brand-accent-icon-tint: var(--brand-accent-foreground);
+}
+
+/* Tema Relix Carmim (estritamente modo claro) */
+:root[data-brand-theme="relix"]:not(.dark) {
+  --brand-accent: #e11d48;
+  --brand-accent-hover: #be123c;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #fff1f2;
+  --brand-accent-soft-hover: #ffe4e6;
+  --brand-accent-border: #fda4af;
+  --brand-accent-text: #be123c;
+  --brand-focus-border: #e11d48;
+  --brand-focus-ring: rgba(225, 29, 72, 0.35);
+  --brand-card-selected-bg: rgba(255, 241, 242, 0.45);
+  --brand-card-selected-bg-hover: rgba(255, 228, 230, 0.52);
+  --brand-card-selected-border: #e11d48;
+  --brand-card-selected-ring: rgba(225, 29, 72, 0.35);
+  --brand-card-selected-shadow: rgba(225, 29, 72, 0.14);
+  --brand-card-selected-pill: #e11d48;
+  --brand-recorder-bg: rgba(225, 29, 72, 0.08);
+  --brand-recorder-bg-hover: rgba(225, 29, 72, 0.14);
+  --brand-recorder-text: #e11d48;
+  --brand-recorder-border: rgba(225, 29, 72, 0.32);
+  --brand-highlight-bg: rgba(255, 241, 242, 0.75);
+  --brand-highlight-bg-soft: rgba(255, 241, 242, 0.5);
+  --brand-highlight-border: #fb7185;
+  --brand-highlight-text: #be123c;
+  --brand-highlight-dot: #e11d48;
+  --brand-danger: #991b1b;
+  --brand-danger-hover: #7f1d1d;
+}
+
+/* Tema Relix Cobalto (estritamente modo claro) */
+:root[data-brand-theme="relix-cobalt"]:not(.dark) {
+  --brand-accent: #2563eb;
+  --brand-accent-hover: #1d4ed8;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #eff6ff;
+  --brand-accent-soft-hover: #dbeafe;
+  --brand-accent-border: #93c5fd;
+  --brand-accent-text: #1e40af;
+  --brand-focus-border: #2563eb;
+  --brand-focus-ring: rgba(37, 99, 235, 0.35);
+  --brand-card-selected-bg: rgba(239, 246, 255, 0.45);
+  --brand-card-selected-bg-hover: rgba(219, 234, 254, 0.52);
+  --brand-card-selected-border: #2563eb;
+  --brand-card-selected-ring: rgba(37, 99, 235, 0.35);
+  --brand-card-selected-shadow: rgba(37, 99, 235, 0.14);
+  --brand-card-selected-pill: #2563eb;
+  --brand-recorder-bg: rgba(37, 99, 235, 0.08);
+  --brand-recorder-bg-hover: rgba(37, 99, 235, 0.14);
+  --brand-recorder-text: #2563eb;
+  --brand-recorder-border: rgba(37, 99, 235, 0.32);
+  --brand-highlight-bg: rgba(239, 246, 255, 0.75);
+  --brand-highlight-bg-soft: rgba(239, 246, 255, 0.5);
+  --brand-highlight-border: #60a5fa;
+  --brand-highlight-text: #1d4ed8;
+  --brand-highlight-dot: #2563eb;
+  --brand-danger: #e11d48;
+  --brand-danger-hover: #be123c;
+}
+
+/* Tema Relix Esmeralda (estritamente modo claro) */
+:root[data-brand-theme="relix-emerald"]:not(.dark) {
+  --brand-accent: #059669;
+  --brand-accent-hover: #047857;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #ecfdf5;
+  --brand-accent-soft-hover: #d1fae5;
+  --brand-accent-border: #6ee7b7;
+  --brand-accent-text: #065f46;
+  --brand-focus-border: #059669;
+  --brand-focus-ring: rgba(5, 150, 105, 0.35);
+  --brand-card-selected-bg: rgba(236, 253, 245, 0.45);
+  --brand-card-selected-bg-hover: rgba(209, 250, 229, 0.52);
+  --brand-card-selected-border: #059669;
+  --brand-card-selected-ring: rgba(5, 150, 105, 0.35);
+  --brand-card-selected-shadow: rgba(5, 150, 105, 0.14);
+  --brand-card-selected-pill: #059669;
+  --brand-recorder-bg: rgba(5, 150, 105, 0.08);
+  --brand-recorder-bg-hover: rgba(5, 150, 105, 0.14);
+  --brand-recorder-text: #059669;
+  --brand-recorder-border: rgba(5, 150, 105, 0.32);
+  --brand-highlight-bg: rgba(236, 253, 245, 0.75);
+  --brand-highlight-bg-soft: rgba(236, 253, 245, 0.5);
+  --brand-highlight-border: #34d399;
+  --brand-highlight-text: #047857;
+  --brand-highlight-dot: #059669;
+  --brand-danger: #e11d48;
+  --brand-danger-hover: #be123c;
+}
+
+/* Tema Relix Âmbar (estritamente modo claro) */
+:root[data-brand-theme="relix-amber"]:not(.dark) {
+  --brand-accent: #d97706;
+  --brand-accent-hover: #b45309;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #fffbeb;
+  --brand-accent-soft-hover: #fef3c7;
+  --brand-accent-border: #fcd34d;
+  --brand-accent-text: #92400e;
+  --brand-focus-border: #d97706;
+  --brand-focus-ring: rgba(217, 119, 6, 0.35);
+  --brand-card-selected-bg: rgba(255, 251, 235, 0.45);
+  --brand-card-selected-bg-hover: rgba(254, 243, 199, 0.52);
+  --brand-card-selected-border: #d97706;
+  --brand-card-selected-ring: rgba(217, 119, 6, 0.35);
+  --brand-card-selected-shadow: rgba(217, 119, 6, 0.14);
+  --brand-card-selected-pill: #d97706;
+  --brand-recorder-bg: rgba(217, 119, 6, 0.08);
+  --brand-recorder-bg-hover: rgba(217, 119, 6, 0.14);
+  --brand-recorder-text: #d97706;
+  --brand-recorder-border: rgba(217, 119, 6, 0.32);
+  --brand-highlight-bg: rgba(255, 251, 235, 0.75);
+  --brand-highlight-bg-soft: rgba(255, 251, 235, 0.5);
+  --brand-highlight-border: #fbbf24;
+  --brand-highlight-text: #b45309;
+  --brand-highlight-dot: #d97706;
+  --brand-danger: #e11d48;
+  --brand-danger-hover: #be123c;
+}
+
+/* Tema Relix Cyberpunk (estritamente modo claro) */
+:root[data-brand-theme="relix-cyberpunk"]:not(.dark) {
+  --brand-accent: #0891b2;
+  --brand-accent-hover: #0e7490;
+  --brand-accent-foreground: #ffffff;
+  --brand-accent-soft: #ecfeff;
+  --brand-accent-soft-hover: #cffafe;
+  --brand-accent-border: #67e8f9;
+  --brand-accent-text: #155e75;
+  --brand-focus-border: #0891b2;
+  --brand-focus-ring: rgba(8, 145, 178, 0.35);
+  --brand-card-selected-bg: rgba(236, 254, 255, 0.45);
+  --brand-card-selected-bg-hover: rgba(207, 250, 254, 0.52);
+  --brand-card-selected-border: #0891b2;
+  --brand-card-selected-ring: rgba(8, 145, 178, 0.35);
+  --brand-card-selected-shadow: rgba(8, 145, 178, 0.14);
+  --brand-card-selected-pill: #0891b2;
+  --brand-recorder-bg: rgba(8, 145, 178, 0.08);
+  --brand-recorder-bg-hover: rgba(8, 145, 178, 0.14);
+  --brand-recorder-text: #0891b2;
+  --brand-recorder-border: rgba(8, 145, 178, 0.32);
+  --brand-highlight-bg: rgba(236, 254, 255, 0.75);
+  --brand-highlight-bg-soft: rgba(236, 254, 255, 0.5);
+  --brand-highlight-border: #22d3ee;
+  --brand-highlight-text: #0e7490;
+  --brand-highlight-dot: #0891b2;
+  --brand-danger: #e11d48;
+  --brand-danger-hover: #be123c;
+}
+
 @layer base {
   *, ::before, ::after {
     box-sizing: border-box;
+  }
+}
+
+@layer components {
+  html:not(.dark) .brand-card-selected {
+    background-color: var(--brand-card-selected-bg);
+    border-color: var(--brand-card-selected-border);
+    box-shadow:
+      inset 0 0 0 1.5px var(--brand-card-selected-ring),
+      0 4px 6px -1px var(--brand-card-selected-shadow),
+      0 2px 4px -2px var(--brand-card-selected-shadow);
+  }
+
+  html:not(.dark) .brand-card-selected:hover {
+    background-color: var(--brand-card-selected-bg-hover);
+  }
+
+  .brand-recorder-btn {
+    background-color: var(--brand-recorder-bg);
+    color: var(--brand-recorder-text);
+    border: 1px solid var(--brand-recorder-border);
+  }
+
+  .brand-recorder-btn:hover:not(:disabled) {
+    background-color: var(--brand-recorder-bg-hover);
   }
 }
 
@@ -134,14 +413,14 @@ html, body {
 }
 
 .input-dark:focus {
-  border-color: #0f172a;
-  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+  border-color: var(--brand-focus-border);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-focus-border) 8%, transparent);
 }
 
 /* Button styles */
 .btn-primary {
-  background: #0f172a;
-  color: #ffffff;
+  background: var(--brand-accent);
+  color: var(--brand-accent-foreground);
   padding: 0.5rem 1rem;
   border-radius: 8px;
   border: none;
@@ -155,9 +434,9 @@ html, body {
 }
 
 .btn-primary:hover {
-  background: #1e293b;
+  background: var(--brand-accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand-accent) 15%, transparent);
 }
 
 .btn-primary:active {
@@ -369,8 +648,8 @@ label {
 .spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(15, 23, 42, 0.2);
-  border-top-color: #0f172a;
+  border: 2px solid color-mix(in srgb, var(--brand-accent) 20%, transparent);
+  border-top-color: var(--brand-accent);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }

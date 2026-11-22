@@ -15,6 +15,29 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <!-- Anti-FOUC: aplica dark mode e tema de marca antes do mount do React -->
+    <script>
+      (function () {
+        try {
+          var root = document.documentElement;
+          var savedTheme = localStorage.getItem("hubsupport_theme");
+          var isDark =
+            savedTheme === "dark" ||
+            (savedTheme !== "light" &&
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (isDark) {
+            root.classList.add("dark");
+          }
+
+          var savedBrandTheme = localStorage.getItem("relix_brand_theme");
+          var allowedBrandThemes = ["relix", "relix-cobalt", "relix-emerald", "relix-amber", "relix-cyberpunk"];
+          if (savedBrandTheme && allowedBrandThemes.indexOf(savedBrandTheme) !== -1) {
+            root.dataset.brandTheme = savedBrandTheme;
+          }
+        } catch (_err) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

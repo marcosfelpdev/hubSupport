@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import RelixLogo from "@/components/common/RelixLogo";
+import BrandLogo from "@/components/common/BrandLogo";
 
 interface User {
   name?: string | null;
@@ -56,7 +56,7 @@ export default function DashboardHeader({ user }: { user: User }) {
       >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <RelixLogo variant="symbol" height={32} />
+          <BrandLogo variant="symbol" height={32} />
           <div>
             <span
               style={{

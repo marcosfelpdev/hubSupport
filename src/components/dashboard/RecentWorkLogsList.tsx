@@ -65,7 +65,7 @@ export const RecentWorkLogsList: React.FC<RecentWorkLogsListProps> = ({ logs, on
             placeholder="Buscar por cliente, solicitante, plataforma..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-slate-900 dark:focus:border-slate-400 focus:outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0b0f19] focus:border-brand-focus-border dark:focus:border-slate-400 focus:outline-none transition-colors"
           />
         </div>
 
@@ -79,7 +79,7 @@ export const RecentWorkLogsList: React.FC<RecentWorkLogsListProps> = ({ logs, on
                 onClick={() => setStatusFilter(st)}
                 className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? "bg-slate-900 dark:bg-slate-800 text-white border-slate-900 dark:border-slate-700 shadow-2xs"
+                    ? "bg-brand-accent dark:bg-slate-800 text-brand-accent-foreground dark:text-white border-brand-accent dark:border-slate-700 shadow-2xs"
                     : "bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 text-slate-600 dark:text-slate-400 border-transparent"
                 }`}
               >

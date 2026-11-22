@@ -325,7 +325,7 @@ export default function PhoneCardTile({
           <button
             type="button"
             onClick={() => onPair(card)}
-            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl bg-brand-accent dark:bg-white hover:bg-brand-accent-hover dark:hover:bg-slate-100 text-brand-accent-foreground dark:text-slate-900 font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
           >
             <QrCode className="w-4 h-4" />
             <span>Parear Dispositivo</span>
