@@ -135,8 +135,8 @@ export default function MediaGalleryModal({
               <video
                 src={activeUrl}
                 controls
-                autoPlay
-                className="max-h-full max-w-full rounded-xl bg-black"
+                playsInline
+                className="max-h-full max-w-full rounded-xl bg-black shadow-lg"
               />
             ) : (
               <div className="p-6 text-center flex flex-col items-center gap-2">

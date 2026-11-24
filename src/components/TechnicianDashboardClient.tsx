@@ -8,6 +8,7 @@ import ReportCardMinimized from "@/components/ReportCardMinimized";
 import MediaGalleryModal from "@/components/MediaGalleryModal";
 import WorkLogDetailContent from "@/components/dashboard/WorkLogDetailContent";
 import PdfViewerModal from "@/components/dashboard/PdfViewerModal";
+import VideoPlayerModal from "@/components/dashboard/VideoPlayerModal";
 
 export interface TechnicalWorkLog {
   id: string;
@@ -146,6 +147,7 @@ export default function TechnicianDashboardClient({
   const [isPending, startTransition] = useTransition();
   const [actionFeedback, setActionFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [pdfViewerLog, setPdfViewerLog] = useState<TechnicalWorkLog | null>(null);
+  const [videoPlayerLog, setVideoPlayerLog] = useState<TechnicalWorkLog | null>(null);
 
   const fetchLogs = onRefresh || onLogResolved;
 
@@ -399,6 +401,7 @@ export default function TechnicianDashboardClient({
                 }}
                 onOpenPdfModal={(_id) => setPdfViewerLog(selectedLog)}
                 onOpenMediaModal={(_log) => openMediaModal(selectedLog)}
+                onOpenVideoModal={(_log) => setVideoPlayerLog(selectedLog)}
                 footerActions={
                   <div className="border-t border-slate-200 dark:border-slate-800 pt-5 mt-2 flex items-center justify-between flex-wrap gap-4">
                     <div>
@@ -475,6 +478,13 @@ export default function TechnicianDashboardClient({
         log={pdfViewerLog}
         isOpen={!!pdfViewerLog}
         onClose={() => setPdfViewerLog(null)}
+      />
+
+      {/* Modal Visualizador de Vídeo Personalizado */}
+      <VideoPlayerModal
+        log={videoPlayerLog}
+        isOpen={!!videoPlayerLog}
+        onClose={() => setVideoPlayerLog(null)}
       />
     </div>
   );

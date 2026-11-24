@@ -621,6 +621,10 @@ export const api = {
       const token = getToken();
       return resolveApiUrl(`/api/reports/${id}/recording${token ? `?token=${encodeURIComponent(token)}` : ""}`);
     },
+    getViewRecordingUrl(id: string): string {
+      const token = getToken();
+      return resolveApiUrl(`/api/reports/${id}/recording?view=inline${token ? `&token=${encodeURIComponent(token)}` : ""}`);
+    },
     async downloadFile(url: string, defaultFilename: string): Promise<void> {
       const token = getToken();
       const headers: Record<string, string> = {};

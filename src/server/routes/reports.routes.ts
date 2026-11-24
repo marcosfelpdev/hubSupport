@@ -82,9 +82,11 @@ router.get("/:id/recording", authenticateToken, async (req: Request, res: Respon
     const clientSafeName = workLog.clientOrOffice.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 30);
     const downloadFileName = `gravacao-${clientSafeName}-${workLog.id.slice(0, 8)}${ext}`;
 
+    const isInline = req.query.view === "inline";
+
     res.setHeader("Content-Type", mimeType);
-    res.setHeader("Content-Disposition", `attachment; filename="${downloadFileName}"`);
-    res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
+    res.setHeader("Content-Disposition", `${isInline ? "inline" : "attachment"}; filename="${downloadFileName}"`);
+    res.setHeader("Cache-Control", isInline ? "private, max-age=3600" : "private, no-cache, no-store, must-revalidate");
 
     try {
       const range = req.headers.range;

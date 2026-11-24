@@ -16,6 +16,7 @@ import DateRangePopover, { DateRange } from "./dashboard/DateRangePopover";
 import { WorkLogItem } from "@/services/api";
 import WorkLogDetailContent from "@/components/dashboard/WorkLogDetailContent";
 import PdfViewerModal from "@/components/dashboard/PdfViewerModal";
+import VideoPlayerModal from "@/components/dashboard/VideoPlayerModal";
 
 interface DashboardProps {
   logs: WorkLogItem[];
@@ -53,6 +54,7 @@ export default function DashboardClient({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState<File | null>(null);
   const [pdfViewerLog, setPdfViewerLog] = useState<WorkLogItem | null>(null);
+  const [videoPlayerLog, setVideoPlayerLog] = useState<WorkLogItem | null>(null);
 
   const fetchLogs = onRefresh || onLogCreated;
 
@@ -326,6 +328,7 @@ export default function DashboardClient({
                 }}
                 onOpenPdfModal={(_id) => setPdfViewerLog(selectedLog)}
                 onOpenMediaModal={(_log) => openMediaModal(selectedLog)}
+                onOpenVideoModal={(_log) => setVideoPlayerLog(selectedLog)}
               />
             </div>
           ) : (
@@ -381,6 +384,13 @@ export default function DashboardClient({
         log={pdfViewerLog}
         isOpen={!!pdfViewerLog}
         onClose={() => setPdfViewerLog(null)}
+      />
+
+      {/* Modal Visualizador de Vídeo Personalizado */}
+      <VideoPlayerModal
+        log={videoPlayerLog}
+        isOpen={!!videoPlayerLog}
+        onClose={() => setVideoPlayerLog(null)}
       />
     </div>
   );
