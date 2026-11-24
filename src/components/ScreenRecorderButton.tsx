@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useScreenRecording } from "@/contexts/ScreenRecordingContext";
+import fixWebmDuration from "fix-webm-duration";
 
 interface ScreenRecorderButtonProps {
   onRecordingComplete: (file: File) => void;
@@ -41,6 +42,7 @@ export default function ScreenRecorderButton({
   const audioContextRef = useRef<AudioContext | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingStartTimeRef = useRef<number>(0);
 
   // Determina o formato de gravação suportado pelo navegador
   const getSupportedMimeType = useCallback(() => {
@@ -284,7 +286,7 @@ export default function ScreenRecorderButton({
         }
       };
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         setIsRecording(false);
         setGlobalIsRecording(false);
         cleanupStream();
@@ -302,8 +304,19 @@ export default function ScreenRecorderButton({
           return;
         }
 
+        const durationMs = Math.max(1000, Date.now() - (recordingStartTimeRef.current || Date.now()));
+        let finalBlob: Blob = videoBlob;
+
+        if (extension === "webm") {
+          try {
+            finalBlob = await fixWebmDuration(videoBlob, durationMs, { logger: false });
+          } catch (err) {
+            console.warn("[ScreenRecorder] Falha ao injetar duração no WebM, usando blob original:", err);
+          }
+        }
+
         const fileName = `gravacao-${new Date().toISOString().slice(0, 10)}-${Date.now()}.${extension}`;
-        const videoFile = new File([videoBlob], fileName, {
+        const videoFile = new File([finalBlob], fileName, {
           type: actualMime,
           lastModified: Date.now(),
         });
@@ -322,6 +335,7 @@ export default function ScreenRecorderButton({
 
       // Inicia a gravação capturando chunks a cada 1 segundo
       recorder.start(1000);
+      recordingStartTimeRef.current = Date.now();
       setIsRecording(true);
       setGlobalIsRecording(true);
       setElapsedSeconds(0);
