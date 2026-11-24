@@ -18,6 +18,7 @@ import { formatReportAsText, copyToClipboard } from "@/lib/report-formatter";
 import WorkLogDetailContent, {
   StructuredReportData,
 } from "@/components/dashboard/WorkLogDetailContent";
+import VideoPlayerModal from "@/components/dashboard/VideoPlayerModal";
 
 interface ReportDetailsModalProps {
   log: WorkLogItem | null;
@@ -42,6 +43,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
   const [pdfLoading, setPdfLoading] = useState<boolean>(true);
   const [viewingMedia, setViewingMedia] = useState<boolean>(false);
   const [mediaCurrentIndex, setMediaCurrentIndex] = useState<number>(0);
+  const [viewingVideo, setViewingVideo] = useState<boolean>(false);
 
   const [copiedPdfText, setCopiedPdfText] = useState(false);
 
@@ -86,6 +88,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
     setPdfLoading(true);
     setViewingMedia(false);
     setMediaCurrentIndex(0);
+    setViewingVideo(false);
   }, [log?.id]);
 
   const canGoPrev = mediaCurrentIndex > 0;
@@ -106,7 +109,9 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (viewingMedia) {
+        if (viewingVideo) {
+          setViewingVideo(false);
+        } else if (viewingMedia) {
           setViewingMedia(false);
         } else if (viewingPdf) {
           setViewingPdf(false);
@@ -461,6 +466,7 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
                 setMediaCurrentIndex(0);
                 setViewingMedia(true);
               }}
+              onOpenVideoModal={() => setViewingVideo(true)}
               footerActions={
                 <button
                   type="button"
@@ -477,5 +483,14 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
     </div>
   );
 
-  return typeof document !== "undefined" ? createPortal(modalContent, document.body) : null;
+  return typeof document !== "undefined" ? (
+    <>
+      {createPortal(modalContent, document.body)}
+      <VideoPlayerModal
+        isOpen={viewingVideo}
+        onClose={() => setViewingVideo(false)}
+        log={log}
+      />
+    </>
+  ) : null;
 };

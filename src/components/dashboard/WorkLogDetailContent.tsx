@@ -25,6 +25,7 @@ import {
   Search,
   UserCheck,
   Trash2,
+  Download,
   ShieldCheck,
   ShieldAlert,
   RotateCcw,
@@ -141,6 +142,7 @@ export interface WorkLogDetailContentProps {
   footerActions?: React.ReactNode;
   onOpenPdfModal?: (logId: string) => void;
   onOpenMediaModal?: (log: WorkLogItem | WorkLogDetailData) => void;
+  onOpenVideoModal?: (log: WorkLogItem | WorkLogDetailData) => void;
 }
 
 export const WORKLOG_STATUS_OPTIONS = [
@@ -424,6 +426,7 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
   footerActions,
   onOpenPdfModal,
   onOpenMediaModal,
+  onOpenVideoModal,
 }) => {
   const { user: currentUser } = useAuth();
 
@@ -1641,17 +1644,15 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
 
 {/* Botão Vídeo gravado */}
               {hasVideo && (
-                <a
-                  href={api.worklogs.getDownloadRecordingUrl(log.id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-white dark:bg-[#161f33] hover:bg-slate-50 dark:hover:bg-[#1c273e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs active:scale-98 transition-all duration-150"
-                  title="Baixar gravação em vídeo"
+                <button
+                  type="button"
+                  onClick={() => onOpenVideoModal?.(log)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-white dark:bg-[#161f33] hover:bg-slate-50 dark:hover:bg-[#1c273e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
+                  title="Assistir gravação de tela deste atendimento"
                 >
                   <Video size={13} />
                   <span>Vídeo</span>
-                </a>
+                </button>
               )}
 
               {/* Botão Visualizar Mídias Anexadas */}
@@ -1824,17 +1825,26 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
           </div>
 
           {hasVideo && (
-            <div className="flex justify-end pt-1">
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => onOpenVideoModal?.(log)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
+                title="Assistir gravação de vídeo"
+              >
+                <Video size={13} className="text-emerald-600 dark:text-emerald-400" />
+                <span>Assistir gravação</span>
+              </button>
               <a
                 href={api.worklogs.getDownloadRecordingUrl(log.id)}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
-                title="Baixar gravação de vídeo original"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs transition-all cursor-pointer"
+                title="Baixar gravação original"
               >
-                <Video size={13} className="text-indigo-600 dark:text-indigo-400" />
-                <span>Baixar gravação de vídeo</span>
+                <Download size={13} />
+                <span>Baixar</span>
               </a>
             </div>
           )}
@@ -1857,17 +1867,26 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
           </div>
 
           {hasVideo && (
-            <div className="flex justify-end pt-1">
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => onOpenVideoModal?.(log)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
+                title="Assistir gravação de vídeo"
+              >
+                <Video size={13} className="text-emerald-600 dark:text-emerald-400" />
+                <span>Assistir gravação</span>
+              </button>
               <a
                 href={api.worklogs.getDownloadRecordingUrl(log.id)}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
-                title="Baixar gravação de vídeo original"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs transition-all cursor-pointer"
+                title="Baixar gravação original"
               >
-                <Video size={13} className="text-indigo-600 dark:text-indigo-400" />
-                <span>Baixar gravação</span>
+                <Download size={13} />
+                <span>Baixar</span>
               </a>
             </div>
           )}
@@ -1895,17 +1914,28 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
 
           <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
             {hasVideo && (
-              <a
-                href={api.worklogs.getDownloadRecordingUrl(log.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
-                title="Baixar gravação de vídeo original"
-              >
-                <Video size={13} className="text-slate-600 dark:text-slate-400" />
-                <span>Baixar gravação</span>
-              </a>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onOpenVideoModal?.(log)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
+                  title="Assistir gravação de vídeo"
+                >
+                  <Video size={13} className="text-emerald-600 dark:text-emerald-400" />
+                  <span>Assistir gravação</span>
+                </button>
+                <a
+                  href={api.worklogs.getDownloadRecordingUrl(log.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs transition-all cursor-pointer"
+                  title="Baixar gravação original"
+                >
+                  <Download size={13} />
+                  <span>Baixar</span>
+                </a>
+              </div>
             )}
 
             <button
@@ -2011,16 +2041,15 @@ export const WorkLogDetailContent: React.FC<WorkLogDetailContentProps> = ({
                 </button>
 
                 {hasVideo && (
-                  <a
-                    href={api.worklogs.getDownloadRecordingUrl(log.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-white dark:bg-[#161f33] hover:bg-slate-50 dark:hover:bg-[#1c273e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-150"
+                  <button
+                    type="button"
+                    onClick={() => onOpenVideoModal?.(log)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-white dark:bg-[#161f33] hover:bg-slate-50 dark:hover:bg-[#1c273e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs active:scale-98 transition-all duration-150 cursor-pointer"
+                    title="Assistir gravação de tela deste atendimento"
                   >
                     <Video size={13} />
                     <span>Vídeo</span>
-                  </a>
+                  </button>
                 )}
 
                 {onOpenPdfModal ? (
