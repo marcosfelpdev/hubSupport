@@ -61,6 +61,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
+  const [maxObservedTime, setMaxObservedTime] = useState<number>(0);
   const [bufferedTime, setBufferedTime] = useState<number>(0);
   const [isBuffering, setIsBuffering] = useState<boolean>(true);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
@@ -119,6 +120,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       setIsPlaying(false);
       setCurrentTime(0);
       setDuration(0);
+      setMaxObservedTime(0);
       setBufferedTime(0);
       setIsBuffering(true);
       setHasError(false);
@@ -175,11 +177,13 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   // Pular 5 segundos para trás ou frente
   const seekRelative = useCallback((delta: number) => {
     if (!videoRef.current) return;
-    const target = Math.max(0, Math.min(videoRef.current.currentTime + delta, videoRef.current.duration || Infinity));
+    const cur = videoRef.current.currentTime;
+    const effectiveMax = duration > 0 ? duration : Infinity;
+    const target = Math.max(0, Math.min(cur + delta, effectiveMax));
     videoRef.current.currentTime = target;
     setCurrentTime(target);
     resetControlsTimeout();
-  }, [resetControlsTimeout]);
+  }, [duration, resetControlsTimeout]);
 
   // Toggle Mute
   const toggleMute = useCallback(() => {
@@ -230,7 +234,21 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     if (!progressBarRef.current || !videoRef.current) return;
     const rect = progressBarRef.current.getBoundingClientRect();
     const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const targetTime = pos * (duration || 0);
+
+    const effectiveDuration =
+      duration > 0
+        ? duration
+        : isFinite(videoRef.current.duration) && !isNaN(videoRef.current.duration) && videoRef.current.duration > 0 && videoRef.current.duration !== Infinity
+        ? videoRef.current.duration
+        : maxObservedTime > 0
+        ? maxObservedTime
+        : bufferedTime;
+
+    if (effectiveDuration <= 0) {
+      return;
+    }
+
+    const targetTime = Math.max(0, Math.min(pos * effectiveDuration, effectiveDuration));
     videoRef.current.currentTime = targetTime;
     setCurrentTime(targetTime);
   };
@@ -278,10 +296,89 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose, togglePlay, seekRelative, toggleMute, volume]);
 
+  // Workaround para WebM gerado por MediaRecorder no Chromium (onde duration vem como Infinity)
+  const resolveWebmDuration = useCallback((video: HTMLVideoElement) => {
+    if (isFinite(video.duration) && !isNaN(video.duration) && video.duration > 0 && video.duration !== Infinity) {
+      setDuration(video.duration);
+      setIsBuffering(false);
+      return;
+    }
+
+    let resolved = false;
+    const initialTime = video.currentTime;
+
+    const cleanup = () => {
+      video.removeEventListener("durationchange", onDurationChange);
+      video.removeEventListener("seeked", onSeeked);
+      video.removeEventListener("timeupdate", onTimeUpdate);
+    };
+
+    const finish = (finalDur: number) => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      if (isFinite(finalDur) && !isNaN(finalDur) && finalDur > 0 && finalDur !== Infinity) {
+        setDuration(finalDur);
+      }
+      try {
+        video.currentTime = initialTime;
+      } catch {}
+      setIsBuffering(false);
+    };
+
+    const onDurationChange = () => {
+      if (isFinite(video.duration) && !isNaN(video.duration) && video.duration > 0 && video.duration !== Infinity) {
+        finish(video.duration);
+      }
+    };
+
+    const onSeeked = () => {
+      if (isFinite(video.duration) && !isNaN(video.duration) && video.duration > 0 && video.duration !== Infinity) {
+        finish(video.duration);
+      } else if (video.currentTime > 0) {
+        finish(video.currentTime);
+      }
+    };
+
+    const onTimeUpdate = () => {
+      if (isFinite(video.duration) && !isNaN(video.duration) && video.duration > 0 && video.duration !== Infinity) {
+        finish(video.duration);
+      }
+    };
+
+    video.addEventListener("durationchange", onDurationChange);
+    video.addEventListener("seeked", onSeeked);
+    video.addEventListener("timeupdate", onTimeUpdate);
+
+    // No Chromium, saltar para o final do WebM faz o demuxer ler o último cluster e calcular a duração
+    try {
+      video.currentTime = 1e101;
+    } catch {
+      cleanup();
+      setIsBuffering(false);
+    }
+  }, []);
+
   // Atualização de buffer e tempo do vídeo
   const handleTimeUpdate = () => {
     if (!videoRef.current || isDraggingSeek) return;
-    setCurrentTime(videoRef.current.currentTime);
+    const cur = videoRef.current.currentTime;
+    setCurrentTime(cur);
+
+    if (cur > maxObservedTime) {
+      setMaxObservedTime(cur);
+    }
+
+    // Se duration ainda for <= 0 mas o elemento reportar valor finito válido
+    if (
+      duration <= 0 &&
+      isFinite(videoRef.current.duration) &&
+      !isNaN(videoRef.current.duration) &&
+      videoRef.current.duration > 0 &&
+      videoRef.current.duration !== Infinity
+    ) {
+      setDuration(videoRef.current.duration);
+    }
 
     // Atualiza buffer
     if (videoRef.current.buffered.length > 0) {
@@ -297,14 +394,17 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const handleLoadedMetadata = () => {
     if (!videoRef.current) return;
     const dur = videoRef.current.duration;
-    if (isFinite(dur) && !isNaN(dur)) {
+    if (isFinite(dur) && !isNaN(dur) && dur > 0 && dur !== Infinity) {
       setDuration(dur);
+      setIsBuffering(false);
+    } else {
+      resolveWebmDuration(videoRef.current);
     }
-    setIsBuffering(false);
   };
 
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const bufferPercent = duration > 0 ? (bufferedTime / duration) * 100 : 0;
+  const effectiveTotal = duration > 0 ? duration : maxObservedTime;
+  const progressPercent = effectiveTotal > 0 ? (currentTime / effectiveTotal) * 100 : 0;
+  const bufferPercent = effectiveTotal > 0 ? (bufferedTime / effectiveTotal) * 100 : 0;
 
   if (!isOpen || typeof document === "undefined") {
     return null;
@@ -394,6 +494,12 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               onClick={togglePlay}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
+              onDurationChange={(e) => {
+                const dur = (e.target as HTMLVideoElement).duration;
+                if (isFinite(dur) && !isNaN(dur) && dur > 0 && dur !== Infinity) {
+                  setDuration(dur);
+                }
+              }}
               onWaiting={() => setIsBuffering(true)}
               onPlaying={() => {
                 setIsBuffering(false);
@@ -557,7 +663,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
                 {/* Tempo: Atual / Duração */}
                 <span className="text-[11px] font-mono text-slate-300 ml-1">
-                  {formatTime(currentTime)} / {formatTime(duration)}
+                  {formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : maxObservedTime > 0 ? formatTime(maxObservedTime) : "--:--"}
                 </span>
               </div>
 
