@@ -354,8 +354,8 @@ export const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
                     <video
                       src={mediaPaths[mediaCurrentIndex]}
                       controls
-                      autoPlay
-                      className="max-h-full max-w-full rounded-xl"
+                      playsInline
+                      className="max-h-full max-w-full rounded-xl bg-black shadow-lg"
                     />
                   ) : (
                     <div className="p-8 bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-2xl text-center max-w-md shadow-xs flex flex-col items-center gap-3">
