@@ -682,7 +682,8 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
       onLogResolved?.();
     } catch (err) {
       console.error("[Kanban] Erro ao excluir chamado:", err);
-      alert("Não foi possível excluir o chamado.");
+      setArchiveToast({ message: "Não foi possível excluir o chamado.", type: "error" });
+      setTimeout(() => setArchiveToast(null), 4000);
     } finally {
       setIsDeleting(false);
     }

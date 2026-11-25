@@ -151,7 +151,7 @@ export const KanbanCardContextMenu: React.FC<KanbanCardContextMenuProps> = ({
         {/* Submenu de Colunas */}
         {isSubmenuOpen && (
           <div
-            className={`absolute top-0 w-48 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111726]/95 backdrop-blur-md shadow-2xl py-1.5 z-60 animate-in fade-in zoom-in-95 duration-75 ${
+            className={`absolute top-0 w-48 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#111726]/95 backdrop-blur-md shadow-2xl py-1.5 z-[60] animate-in fade-in zoom-in-95 duration-75 ${
               adjustedPos.x + 230 + 192 > window.innerWidth - 12
                 ? "right-full -mr-1"
                 : "left-full -ml-1"

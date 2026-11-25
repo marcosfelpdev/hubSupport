@@ -102,7 +102,8 @@ export const TechnicianArchivedView: React.FC<TechnicianArchivedViewProps> = ({
       onRefreshKanban();
     } catch (err) {
       console.error("[ArchivedView] Erro ao excluir chamado:", err);
-      alert("Não foi possível excluir o chamado definitivamente.");
+      setToast({ message: "Não foi possível excluir o chamado definitivamente.", type: "error" });
+      setTimeout(() => setToast(null), 4000);
     } finally {
       setIsDeleting(false);
     }
