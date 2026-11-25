@@ -102,6 +102,8 @@ export interface WorkLogItem {
   isIdea?: boolean;
   hasValidationRejection?: boolean;
   validationStartedAt?: string | null;
+  isArchived?: boolean;
+  archivedAt?: string | null;
   notes?: WorkLogNoteItem[];
   media: string;
   userId: string;
@@ -518,6 +520,19 @@ export const api = {
     },
     async getKanban(): Promise<WorkLogItem[]> {
       return request<WorkLogItem[]>("/api/worklogs/kanban");
+    },
+    async getArchived(): Promise<WorkLogItem[]> {
+      return request<WorkLogItem[]>("/api/worklogs/archived");
+    },
+    async archive(id: string): Promise<{ success: boolean; workLog: WorkLogItem }> {
+      return request<{ success: boolean; workLog: WorkLogItem }>(`/api/worklogs/${id}/archive`, {
+        method: "PATCH",
+      });
+    },
+    async unarchive(id: string): Promise<{ success: boolean; workLog: WorkLogItem }> {
+      return request<{ success: boolean; workLog: WorkLogItem }>(`/api/worklogs/${id}/unarchive`, {
+        method: "PATCH",
+      });
     },
     async create(formData: FormData): Promise<{ success: boolean; logId: string }> {
       return request<{ success: boolean; logId: string }>("/api/worklogs", {
