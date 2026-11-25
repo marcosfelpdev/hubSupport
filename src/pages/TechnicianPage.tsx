@@ -3,16 +3,18 @@ import { useAuth } from "../contexts/AuthContext";
 import { api, WorkLogItem } from "../services/api";
 import TechnicianDashboardClient from "../components/TechnicianDashboardClient";
 import { TechnicianKanbanBoard } from "../components/dashboard/TechnicianKanbanBoard";
-import { Columns3, LayoutList, RefreshCw, AlertTriangle } from "lucide-react";
+import { TechnicianArchivedView } from "../components/dashboard/TechnicianArchivedView";
+import { Columns3, LayoutList, RefreshCw, AlertTriangle, Archive } from "lucide-react";
 
 export default function TechnicianPage() {
   const { user } = useAuth();
   const [logs, setLogs] = useState<WorkLogItem[]>([]);
   const [employees, setEmployees] = useState<{ name: string }[]>([]);
+  const [archivedCount, setArchivedCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"kanban" | "classic">("kanban");
+  const [viewMode, setViewMode] = useState<"kanban" | "classic" | "archived">("kanban");
 
   const fetchTechnicalData = async (silent = false) => {
     try {
@@ -24,12 +26,14 @@ export default function TechnicianPage() {
         }
       }
       setError(null);
-      const [logsData, employeesData] = await Promise.all([
+      const [logsData, employeesData, archivedData] = await Promise.all([
         api.worklogs.getTechnical(),
         api.employees.getAll(),
+        api.worklogs.getArchived().catch(() => []),
       ]);
       setLogs(logsData);
       setEmployees(employeesData.map((e) => ({ name: e.name })));
+      setArchivedCount(archivedData.length);
     } catch (err) {
       console.error("[TechnicianPage] Erro ao carregar dados técnicos:", err);
       if (logs.length === 0) {
@@ -92,6 +96,30 @@ export default function TechnicianPage() {
             <span>{isRefreshing ? "Sincronizando..." : "Atualizar"}</span>
           </button>
 
+          {/* Botão para acessar a área de Arquivados */}
+          <button
+            type="button"
+            onClick={() => setViewMode(viewMode === "archived" ? "kanban" : "archived")}
+            title="Acessar chamados arquivados"
+            className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer border ${
+              viewMode === "archived"
+                ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-sm"
+                : "bg-white dark:bg-[#111726] hover:bg-slate-50 dark:hover:bg-[#161f33] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800"
+            }`}
+          >
+            <Archive size={14} className={viewMode === "archived" ? "text-white" : "text-amber-500"} />
+            <span>Arquivados</span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                viewMode === "archived"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+              }`}
+            >
+              {archivedCount}
+            </span>
+          </button>
+
           {/* Switcher de visualização: Kanban vs Lista */}
           <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl gap-1">
             <button
@@ -148,6 +176,11 @@ export default function TechnicianPage() {
             Tentar novamente
           </button>
         </div>
+      ) : viewMode === "archived" ? (
+        <TechnicianArchivedView
+          onBack={() => setViewMode("kanban")}
+          onRefreshKanban={() => fetchTechnicalData(true)}
+        />
       ) : viewMode === "kanban" ? (
         <TechnicianKanbanBoard
           logs={logs}
