@@ -8,12 +8,17 @@ import {
   X,
   ShieldCheck,
   ShieldAlert,
+  Trash2,
+  Archive,
+  Loader2,
 } from "lucide-react";
 import { WorkLogItem, WorkLogCategoryItem, api } from "@/services/api";
 import { getCategoryIconComponent } from "@/components/CategoryIconPicker";
 import { ReportDetailsModal } from "@/components/dashboard/ReportDetailsModal";
 import ReportCardMinimized from "@/components/ReportCardMinimized";
 import ValidationRejectionModal from "@/components/dashboard/ValidationRejectionModal";
+import KanbanCardContextMenu from "./KanbanCardContextMenu";
+import EditWorkLogModal from "./EditWorkLogModal";
 
 export type ColumnId = "backlog" | "pendencias" | "em_progresso" | "validacao" | "finalizadas";
 
@@ -202,6 +207,13 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
   } | null>(null);
 
   const [validationWarning, setValidationWarning] = useState<string | null>(null);
+
+  // Menu de Contexto (botão direito)
+  const [contextMenu, setContextMenu] = useState<{ log: WorkLogItem; x: number; y: number } | null>(null);
+  const [editingLogFromMenu, setEditingLogFromMenu] = useState<WorkLogItem | null>(null);
+  const [deletingLog, setDeletingLog] = useState<WorkLogItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [archiveToast, setArchiveToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -563,6 +575,120 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
     }
   };
 
+  const handleContextMenu = (log: WorkLogItem, e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ log, x: e.clientX, y: e.clientY });
+  };
+
+  const handleMenuEdit = (log: WorkLogItem) => {
+    setEditingLogFromMenu(log);
+  };
+
+  const handleMenuMoveColumn = async (targetColId: ColumnId) => {
+    if (!contextMenu) return;
+    const { log } = contextMenu;
+    const currentColumn = getColumnForStatus(log.status);
+    if (currentColumn === targetColId) return;
+
+    // 1. REGRA DE VALIDAÇÃO OBRIGATÓRIA: Tentativa de transferência para "Finalizadas"
+    if (targetColId === "finalizadas") {
+      setValidationWarning(
+        "Todo atendimento precisa obrigatoriamente passar pela coluna de Validação e ser aprovado pelo botão 'Aprovar Solução'. O chamado foi direcionado para a Validação."
+      );
+      setTimeout(() => setValidationWarning(null), 7000);
+
+      if (currentColumn === "validacao") {
+        return;
+      }
+
+      const validationStatus = "Validação";
+      setLogs((prev) =>
+        prev.map((l) => (l.id === log.id ? { ...l, status: validationStatus } : l))
+      );
+
+      try {
+        await api.worklogs.updateStatus(log.id, validationStatus);
+        onLogResolved?.();
+      } catch (err) {
+        console.error("[Kanban] Erro ao mover para validação:", err);
+        setLogs((prev) =>
+          prev.map((l) => (l.id === log.id ? { ...l, status: log.status } : l))
+        );
+      }
+      return;
+    }
+
+    const newStatus = getStatusForColumn(targetColId);
+
+    // 2. REGRA DE REPROVAÇÃO: Card saindo da coluna de Validação para etapas anteriores
+    if (currentColumn === "validacao" && targetColId !== "validacao") {
+      const targetColumnDef = COLUMNS.find((c) => c.id === targetColId);
+      setRejectionModalData({
+        isOpen: true,
+        logId: log.id,
+        targetColId,
+        newStatus,
+        targetColumnTitle: targetColumnDef?.title || targetColId,
+        cardTitle: log.title || log.reportedProblem,
+      });
+      return;
+    }
+
+    // 3. Movimentação padrão
+    setLogs((prev) =>
+      prev.map((l) => (l.id === log.id ? { ...l, status: newStatus } : l))
+    );
+
+    try {
+      await api.worklogs.updateStatus(log.id, newStatus);
+      onLogResolved?.();
+    } catch (err) {
+      console.error("[Kanban] Erro ao mover card via menu:", err);
+      setLogs((prev) =>
+        prev.map((l) => (l.id === log.id ? { ...l, status: log.status } : l))
+      );
+    }
+  };
+
+  const handleMenuArchive = async (log: WorkLogItem) => {
+    // Remoção otimista do quadro ativo
+    setLogs((prev) => prev.filter((l) => l.id !== log.id));
+    setArchiveToast({ message: "Chamado arquivado com sucesso!", type: "success" });
+    setTimeout(() => setArchiveToast(null), 4000);
+
+    try {
+      await api.worklogs.archive(log.id);
+      onLogResolved?.();
+    } catch (err) {
+      console.error("[Kanban] Erro ao arquivar card:", err);
+      setLogs((prev) => [...prev, log]);
+      setArchiveToast({ message: "Erro ao arquivar chamado.", type: "error" });
+      setTimeout(() => setArchiveToast(null), 4000);
+    }
+  };
+
+  const handleMenuDelete = (log: WorkLogItem) => {
+    setDeletingLog(log);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingLog) return;
+    setIsDeleting(true);
+    try {
+      await api.worklogs.delete(deletingLog.id);
+      setLogs((prev) => prev.filter((l) => l.id !== deletingLog.id));
+      setDeletingLog(null);
+      onLogResolved?.();
+    } catch (err) {
+      console.error("[Kanban] Erro ao excluir chamado:", err);
+      setArchiveToast({ message: "Não foi possível excluir o chamado.", type: "error" });
+      setTimeout(() => setArchiveToast(null), 4000);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="w-full">
       {/* Barra de Filtros Moderna */}
@@ -827,6 +953,7 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
                           handleDrop(col.id, e);
                         }}
                         onClick={() => setSelectedLogForModal(log)}
+                        onContextMenu={(e) => handleContextMenu(log, e)}
                         isDragging={isDragging}
                         isSelected={selectedLogForModal?.id === log.id}
                         log={log}
@@ -893,6 +1020,88 @@ export const TechnicianKanbanBoard: React.FC<TechnicianKanbanBoardProps> = ({
             }
           }}
         />
+      )}
+
+      {/* Menu de Contexto (Botão Direito) */}
+      {contextMenu && (
+        <KanbanCardContextMenu
+          log={contextMenu.log}
+          position={{ x: contextMenu.x, y: contextMenu.y }}
+          onClose={() => setContextMenu(null)}
+          onEdit={handleMenuEdit}
+          onMoveColumn={handleMenuMoveColumn}
+          onArchive={handleMenuArchive}
+          onDelete={handleMenuDelete}
+        />
+      )}
+
+      {/* Modal de Edição disparado pelo Menu de Contexto */}
+      {editingLogFromMenu && (
+        <EditWorkLogModal
+          isOpen={!!editingLogFromMenu}
+          workLog={editingLogFromMenu}
+          onClose={() => setEditingLogFromMenu(null)}
+          onSaveSuccess={(updated) => {
+            setLogs((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+            setEditingLogFromMenu(null);
+            onLogResolved?.();
+          }}
+        />
+      )}
+
+      {/* Modal de Confirmação de Exclusão do Card */}
+      {deletingLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-md bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900 flex items-center justify-center mb-4">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+              Excluir chamado definitivamente?
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+              Tem certeza que deseja excluir o chamado{" "}
+              <strong className="text-slate-900 dark:text-white font-semibold">
+                "{deletingLog.title || deletingLog.reportedProblem}"
+              </strong>
+              ? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeletingLog(null)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                {isDeleting && <Loader2 size={14} className="animate-spin" />}
+                <span>{isDeleting ? "Excluindo..." : "Sim, excluir"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Flutuante de Feedback de Arquivamento */}
+      {archiveToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900/95 dark:bg-[#111726]/95 text-white border border-slate-700 dark:border-slate-700 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-3 duration-200">
+          <Archive size={16} className="text-amber-400 shrink-0" />
+          <span className="text-xs font-medium">{archiveToast.message}</span>
+          <button
+            type="button"
+            onClick={() => setArchiveToast(null)}
+            className="text-slate-400 hover:text-white p-0.5 rounded cursor-pointer ml-1"
+          >
+            <X size={14} />
+          </button>
+        </div>
       )}
     </div>
   );

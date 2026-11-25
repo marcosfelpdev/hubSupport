@@ -90,6 +90,7 @@ router.get("/kanban", authenticateToken, async (req: Request, res: Response): Pr
   try {
     const logs = await prisma.workLog.findMany({
       where: {
+        isArchived: false,
         OR: [
           { category: { targetKanban: true } },
           { technicalAction: true },
@@ -110,6 +111,32 @@ router.get("/kanban", authenticateToken, async (req: Request, res: Response): Pr
   }
 });
 
+// GET /api/worklogs/archived
+router.get("/archived", authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const logs = await prisma.workLog.findMany({
+      where: {
+        isArchived: true,
+        OR: [
+          { category: { targetKanban: true } },
+          { technicalAction: true },
+          { implementation: true },
+          { isPrompt: true },
+          { isIdea: true },
+        ],
+      },
+      include: defaultWorkLogInclude,
+      orderBy: {
+        archivedAt: "desc",
+      },
+    });
+    res.json(logs);
+  } catch (error) {
+    console.error("[WorkLogs] Erro ao buscar atendimentos arquivados:", error);
+    res.status(500).json({ error: "Erro ao buscar atendimentos arquivados." });
+  }
+});
+
 // GET /api/worklogs
 router.get("/", authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -118,6 +145,7 @@ router.get("/", authenticateToken, async (req: Request, res: Response): Promise<
     if (type === "technical" || type === "kanban") {
       const logs = await prisma.workLog.findMany({
         where: {
+          isArchived: false,
           OR: [
             { category: { targetKanban: true } },
             { technicalAction: true },
@@ -963,6 +991,80 @@ router.patch(
     } catch (error) {
       console.error("[WorkLogs] Erro ao atribuir responsável:", error);
       res.status(500).json({ error: "Erro ao atribuir responsável ao atendimento." });
+    }
+  }
+);
+
+// PATCH /api/worklogs/:id/archive
+router.patch(
+  "/:id/archive",
+  authenticateToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+
+      const existing = await prisma.workLog.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      const updated = await prisma.workLog.update({
+        where: { id },
+        data: {
+          isArchived: true,
+          archivedAt: new Date(),
+        },
+        include: defaultWorkLogInclude,
+      });
+
+      res.json({
+        success: true,
+        workLog: updated,
+      });
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao arquivar atendimento:", error);
+      res.status(500).json({ error: "Erro ao arquivar atendimento." });
+    }
+  }
+);
+
+// PATCH /api/worklogs/:id/unarchive
+router.patch(
+  "/:id/unarchive",
+  authenticateToken,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+
+      const existing = await prisma.workLog.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        res.status(404).json({ error: "Atendimento não encontrado." });
+        return;
+      }
+
+      const updated = await prisma.workLog.update({
+        where: { id },
+        data: {
+          isArchived: false,
+          archivedAt: null,
+        },
+        include: defaultWorkLogInclude,
+      });
+
+      res.json({
+        success: true,
+        workLog: updated,
+      });
+    } catch (error) {
+      console.error("[WorkLogs] Erro ao desarquivar atendimento:", error);
+      res.status(500).json({ error: "Erro ao desarquivar atendimento." });
     }
   }
 );

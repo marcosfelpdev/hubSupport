@@ -76,6 +76,7 @@ export interface ReportCardMinimizedProps {
   style?: React.CSSProperties;
   id?: string;
   dataCardId?: string;
+  onContextMenu?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 export interface StatusPillConfig {
@@ -298,6 +299,7 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
   style = {},
   id,
   dataCardId,
+  onContextMenu,
 }) => {
   const statusIconDef = getStatusIconDef(log.status);
   const StatusIcon = statusIconDef.icon;
@@ -394,6 +396,7 @@ export const ReportCardMinimized: React.FC<ReportCardMinimizedProps> = ({
       onDragOver={onDragOver}
       onDrop={onDrop}
       onClick={onClick}
+      onContextMenu={onContextMenu}
       style={style}
       className={`group w-full shrink-0 min-h-[160px] h-[160px] ${surfaceClasses} border rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-200 select-none ${cursorClasses} ${stateClasses} ${className}`.trim()}
     >
