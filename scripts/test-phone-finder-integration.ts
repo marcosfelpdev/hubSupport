@@ -951,6 +951,82 @@ async function runIntegrationTests() {
     );
     console.log("✔ Cenário 9: Regressão ack não-função + disconnect durante await OK");
 
+    // Cenário 10: Prevenção de race condition entre device:identify e device:battery instantâneo
+    const card10 = await repo.create({ name: "Aparelho Telemetria Instantânea" });
+    const devId10 = "device-instant-telemetry-10";
+    await repo.pairDevice(card10.id, devId10);
+    runtime.presenceService.clearDevice(devId10);
+
+    const device10Socket = track(await connectSocket(`${baseUrl}/device`));
+
+    const bat10Promise = waitForEvent<CardBatteryPayload>(
+      panelSocket,
+      "card:battery",
+      3000,
+      (ev) => ev.cardId === card10.id && ev.deviceId === devId10 && ev.level === 82
+    );
+    const online10Promise = waitForEvent<DeviceStatusPayload>(
+      panelSocket,
+      "device:status",
+      3000,
+      (ev) => ev.cardId === card10.id && ev.deviceId === devId10 && ev.status === "online"
+    );
+
+    // Emite consecutivamente sem delay (exatamente como o Android faz no EVENT_CONNECT)
+    device10Socket.emit("device:identify", {
+      deviceId: devId10,
+      appVersionCode: 120,
+      appVersionName: "1.2.0",
+    });
+    device10Socket.emit("device:battery", {
+      deviceId: devId10,
+      level: 82,
+      isCharging: false,
+    });
+
+    const [online10Ev, bat10Ev] = await Promise.all([online10Promise, bat10Promise]);
+    assert.equal(online10Ev.status, "online");
+    assert.equal(bat10Ev.level, 82);
+    assert.equal(bat10Ev.isCharging, false);
+
+    const storedBattery = runtime.presenceService.getBattery(devId10);
+    assert.notEqual(storedBattery, null, "presenceService deve reter a telemetria inicial da bateria");
+    assert.equal(storedBattery?.level, 82);
+
+    // Próximas emissões de bateria não devem fazer consultas repetidas ao banco
+    let dbCalls10 = 0;
+    const origFind10 = repo.findByDeviceId.bind(repo);
+    repo.findByDeviceId = async (devId) => {
+      dbCalls10 += 1;
+      return origFind10(devId);
+    };
+
+    try {
+      const bat10UpdatePromise = waitForEvent<CardBatteryPayload>(
+        panelSocket,
+        "card:battery",
+        3000,
+        (ev) => ev.cardId === card10.id && ev.level === 83
+      );
+      device10Socket.emit("device:battery", {
+        deviceId: devId10,
+        level: 83,
+        isCharging: true,
+      });
+      const updatedBat10 = await bat10UpdatePromise;
+      assert.equal(updatedBat10.level, 83);
+      assert.equal(updatedBat10.isCharging, true);
+      assert.equal(
+        dbCalls10,
+        0,
+        `device:battery subsequente deve fazer 0 chamadas a findByDeviceId (fez ${dbCalls10})`
+      );
+    } finally {
+      repo.findByDeviceId = origFind10;
+    }
+
+    console.log("✔ Cenário 10: Resolução de race condition device:identify / device:battery instantâneo OK");
+
     console.log("\n✅ Todos os cenários de integração do Phone Finder passaram!");
   } finally {
     for (const socket of activeSockets) {
