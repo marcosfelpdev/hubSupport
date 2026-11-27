@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   AlertCircle,
+  BatteryLow,
   Check,
   Loader2,
   Plus,
@@ -30,6 +31,7 @@ import AppDownloadModal from "../components/phoneFinder/AppDownloadModal";
 import PhoneCardTile, {
   type PhoneDispatchAction,
 } from "../components/phoneFinder/PhoneCardTile";
+import { sortPhoneCardsByBattery } from "../utils/phoneCardSorting";
 
 type StatusFilter = "all" | PhonePresenceStatus;
 
@@ -365,12 +367,12 @@ export default function PhoneFinderPage() {
     };
   }, [cards]);
 
-  // Cards filtrados por status + busca
+  // Cards filtrados por status + busca e ordenados dinamicamente por menor carga
   const filteredCards = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     const queryDigits = query.replace(/\D/g, "");
 
-    return cards.filter((card) => {
+    const filtered = cards.filter((card) => {
       if (statusFilter !== "all" && card.status !== statusFilter) {
         return false;
       }
@@ -384,6 +386,8 @@ export default function PhoneFinderPage() {
 
       return inName || inDesc || inDigits;
     });
+
+    return sortPhoneCardsByBattery(filtered);
   }, [cards, statusFilter, searchTerm]);
 
   const activePairingCard = useMemo(() => {
@@ -728,6 +732,18 @@ export default function PhoneFinderPage() {
               </button>
             );
           })}
+        </div>
+
+        {/* Indicador de ordenação prioritária por bateria */}
+        <div
+          className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 shadow-2xs"
+          title="A lista prioriza automaticamente celulares descarregando com menor nível de bateria na frente"
+        >
+          <BatteryLow className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <span className="hidden md:inline">Prioridade:</span>
+          <span className="font-semibold text-slate-700 dark:text-slate-200">
+            Menor carga primeiro
+          </span>
         </div>
 
         {/* Busca por nome ou descrição */}
