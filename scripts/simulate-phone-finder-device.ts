@@ -380,8 +380,8 @@ function main(): void {
       };
       logInfo(`Enviando device:identify para deviceId=${ANSI.bold}${activeDeviceId}${ANSI.reset}...`);
       socket.emit("device:identify", identifyPayload);
-      // Breve atraso para garantir que device:identify finalize o registro do socket antes do device:battery inicial
-      startBatteryTelemetry(activeDeviceId, 400);
+      // Telemetria imediata idêntica ao app Android (sem delay)
+      startBatteryTelemetry(activeDeviceId, 0);
       return;
     }
 

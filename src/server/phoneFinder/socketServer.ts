@@ -401,103 +401,158 @@ export function attachPhoneFinderSocketServer(
 
     socket.on(
       "device:self-register",
-      async (payload: DeviceSelfRegisterPayload) => {
-        try {
-          const deviceId =
-            typeof payload?.deviceId === "string" ? payload.deviceId.trim() : "";
+      (payload: DeviceSelfRegisterPayload) => {
+        const deviceId =
+          typeof payload?.deviceId === "string" ? payload.deviceId.trim() : "";
 
-          if (!deviceId) {
-            if (socket.connected) {
-              socket.emit("pairing:result", {
-                success: false,
-                error: "deviceId é obrigatório.",
-              });
-            }
-            return;
+        if (!deviceId) {
+          if (socket.connected) {
+            socket.emit("pairing:result", {
+              success: false,
+              error: "deviceId é obrigatório.",
+            });
           }
+          return;
+        }
 
-          const formatResult = formatCardTitleFromNumbers(payload?.numbers);
-          if (!formatResult.success) {
-            if (socket.connected) {
-              socket.emit("pairing:result", {
-                success: false,
-                error: formatResult.error,
-              });
-            }
-            return;
-          }
+        socket.data.identifyingDeviceId = deviceId;
 
-          const formattedTitle = formatResult.title;
-          const normalizedPushToken =
-            typeof payload?.pushToken === "string" &&
-            payload.pushToken.trim().length > 0
-              ? payload.pushToken.trim()
-              : null;
-
-          let isNewCard = false;
-          let card = await runtime.cardRepository.findByDeviceId(deviceId);
-
-          if (card) {
-            // 1. Já existe card com este deviceId: atualiza título se alterado e pushToken se informado
-            if (card.name !== formattedTitle) {
-              const updated = await runtime.cardRepository.update(card.id, {
-                name: formattedTitle,
-              });
-              if (updated) {
-                card = updated;
+        const task = (async () => {
+          try {
+            const formatResult = formatCardTitleFromNumbers(payload?.numbers);
+            if (!formatResult.success) {
+              if (socket.connected) {
+                socket.emit("pairing:result", {
+                  success: false,
+                  error: formatResult.error,
+                });
               }
+              return;
             }
 
-            if (payload?.pushToken !== undefined) {
-              const updated = await runtime.cardRepository.updatePushToken(
-                card.id,
-                normalizedPushToken
-              );
-              if (updated) {
-                card = updated;
-              }
-            }
-          } else {
-            // 2. Não encontrado por deviceId: busca por nome formatado
-            card = await runtime.cardRepository.findByName(formattedTitle);
+            const formattedTitle = formatResult.title;
+            const normalizedPushToken =
+              typeof payload?.pushToken === "string" &&
+              payload.pushToken.trim().length > 0
+                ? payload.pushToken.trim()
+                : null;
+
+            let isNewCard = false;
+            let card = await runtime.cardRepository.findByDeviceId(deviceId);
 
             if (card) {
-              // Encontrou card com o mesmo nome: transfere a titularidade para este deviceId
-              if (card.pairedDeviceId && card.pairedDeviceId !== deviceId) {
-                notifyDeviceUnpaired(
-                  card.pairedDeviceId,
-                  "Este dispositivo foi substituído por outro aparelho no painel."
-                );
-                runtime.presenceService.clearDevice(card.pairedDeviceId);
+              // 1. Já existe card com este deviceId: atualiza título se alterado e pushToken se informado
+              if (card.name !== formattedTitle) {
+                const updated = await runtime.cardRepository.update(card.id, {
+                  name: formattedTitle,
+                });
+                if (updated) {
+                  card = updated;
+                }
               }
 
-              // Durante takeover por novo aparelho físico, o pushToken do aparelho antigo
-              // não pode ser herdado para evitar envio indevido de FCM para hardware substituído.
-              const updated = await runtime.cardRepository.pairDevice(
-                card.id,
-                deviceId,
-                normalizedPushToken
-              );
-              if (updated) {
-                card = updated;
+              if (payload?.pushToken !== undefined) {
+                const updated = await runtime.cardRepository.updatePushToken(
+                  card.id,
+                  normalizedPushToken
+                );
+                if (updated) {
+                  card = updated;
+                }
               }
             } else {
-              // 3. Não existe: cria novo card e associa deviceId + pushToken
-              isNewCard = true;
-              const created = await runtime.cardRepository.create({
-                name: formattedTitle,
-              });
-              const paired = await runtime.cardRepository.pairDevice(
-                created.id,
-                deviceId,
-                normalizedPushToken
-              );
-              card = paired ?? created;
-            }
-          }
+              // 2. Não encontrado por deviceId: busca por nome formatado
+              card = await runtime.cardRepository.findByName(formattedTitle);
 
-          // Previne vazamento de presença caso o socket tenha desconectado durante os awaits
-          if (!socket.connected) {
+              if (card) {
+                // Encontrou card com o mesmo nome: transfere a titularidade para este deviceId
+                if (card.pairedDeviceId && card.pairedDeviceId !== deviceId) {
+                  notifyDeviceUnpaired(
+                    card.pairedDeviceId,
+                    "Este dispositivo foi substituído por outro aparelho no painel."
+                  );
+                  runtime.presenceService.clearDevice(card.pairedDeviceId);
+                }
+
+                // Durante takeover por novo aparelho físico, o pushToken do aparelho antigo
+                // não pode ser herdado para evitar envio indevido de FCM para hardware substituído.
+                const updated = await runtime.cardRepository.pairDevice(
+                  card.id,
+                  deviceId,
+                  normalizedPushToken
+                );
+                if (updated) {
+                  card = updated;
+                }
+              } else {
+                // 3. Não existe: cria novo card e associa deviceId + pushToken
+                isNewCard = true;
+                const created = await runtime.cardRepository.create({
+                  name: formattedTitle,
+                });
+                const paired = await runtime.cardRepository.pairDevice(
+                  created.id,
+                  deviceId,
+                  normalizedPushToken
+                );
+                card = paired ?? created;
+              }
+            }
+
+            // Previne vazamento de presença caso o socket tenha desconectado durante os awaits
+            if (!socket.connected) {
+              const cardWithStatus = enrichCardWithStatus(
+                card,
+                runtime.presenceService
+              );
+              if (isNewCard) {
+                broadcastCardCreated(cardWithStatus);
+              } else {
+                broadcastCardUpdated(cardWithStatus);
+              }
+              broadcastDeviceStatus({
+                cardId: card.id,
+                status: "offline",
+                deviceId,
+                hasPushToken: Boolean(card.pushToken),
+                appVersionCode: null,
+                appVersionName: null,
+              });
+              return;
+            }
+
+            const hasVersionInfo =
+              payload?.appVersionCode !== undefined ||
+              payload?.appVersionName !== undefined;
+
+            runtime.presenceService.setCardId(deviceId, card.id);
+            runtime.presenceService.registerSocket(
+              deviceId,
+              socket.id,
+              hasVersionInfo
+                ? {
+                    appVersionCode:
+                      typeof payload.appVersionCode === "number" &&
+                      Number.isFinite(payload.appVersionCode)
+                        ? payload.appVersionCode
+                        : null,
+                    appVersionName:
+                      typeof payload.appVersionName === "string" &&
+                      payload.appVersionName.trim().length > 0
+                        ? payload.appVersionName.trim()
+                        : null,
+                  }
+                : undefined,
+              card.id
+            );
+
+            socket.emit("pairing:result", {
+              success: true,
+              deviceId,
+              cardId: card.id,
+              cardName: card.name,
+            });
+
             const cardWithStatus = enrichCardWithStatus(
               card,
               runtime.presenceService
@@ -507,22 +562,104 @@ export function attachPhoneFinderSocketServer(
             } else {
               broadcastCardUpdated(cardWithStatus);
             }
+
+            const appVersion = runtime.presenceService.getAppVersion(deviceId);
             broadcastDeviceStatus({
               cardId: card.id,
-              status: "offline",
+              status: "online",
               deviceId,
               hasPushToken: Boolean(card.pushToken),
-              appVersionCode: null,
-              appVersionName: null,
+              appVersionCode: appVersion?.appVersionCode ?? null,
+              appVersionName: appVersion?.appVersionName ?? null,
             });
+
+            if (socket.data?.pendingBattery) {
+              runtime.presenceService.setBattery(
+                deviceId,
+                socket.data.pendingBattery.level,
+                socket.data.pendingBattery.isCharging
+              );
+              socket.data.pendingBattery = null;
+            }
+
+            const battery = runtime.presenceService.getBattery(deviceId);
+            if (battery) {
+              broadcastBattery({
+                cardId: card.id,
+                deviceId,
+                level: battery.level,
+                isCharging: battery.isCharging,
+                updatedAt: battery.updatedAt,
+              });
+            }
+          } catch (err) {
+            console.error(
+              "[PhoneFinder][Socket][/device] Erro em device:self-register:",
+              err
+            );
+            if (socket.connected) {
+              socket.emit("pairing:result", {
+                success: false,
+                error: "Erro interno ao processar cadastro do aparelho.",
+              });
+            }
+          } finally {
+            socket.data.identifyingPromise = null;
+            socket.data.identifyingDeviceId = null;
+          }
+        })();
+
+        socket.data.identifyingPromise = task;
+      }
+    );
+
+    socket.on("device:identify", (payload: DeviceIdentifyPayload) => {
+      const deviceId =
+        typeof payload?.deviceId === "string" ? payload.deviceId.trim() : "";
+
+      if (!deviceId) {
+        socket.emit("device:unpaired", {
+          message: "Este dispositivo foi desvinculado do painel.",
+        });
+        return;
+      }
+
+      socket.data.identifyingDeviceId = deviceId;
+
+      const task = (async () => {
+        try {
+          let card = await runtime.cardRepository.findByDeviceId(deviceId);
+          if (!card) {
+            if (socket.connected) {
+              socket.emit("device:unpaired", {
+                message: "Este dispositivo foi desvinculado do painel.",
+              });
+            }
+            return;
+          }
+
+          if (
+            typeof payload.pushToken === "string" &&
+            payload.pushToken.trim().length > 0
+          ) {
+            const updated = await runtime.cardRepository.updatePushToken(
+              card.id,
+              payload.pushToken.trim()
+            );
+            if (updated) {
+              card = updated;
+            }
+          }
+
+          // Previne leak permanente de presença caso o socket tenha desconectado durante os awaits no banco
+          if (!socket.connected) {
             return;
           }
 
           const hasVersionInfo =
-            payload?.appVersionCode !== undefined ||
-            payload?.appVersionName !== undefined;
+            payload.appVersionCode !== undefined ||
+            payload.appVersionName !== undefined;
 
-          runtime.presenceService.setCardId(deviceId, card.id);
           runtime.presenceService.registerSocket(
             deviceId,
             socket.id,
@@ -543,24 +680,8 @@ export function attachPhoneFinderSocketServer(
             card.id
           );
 
-          socket.emit("pairing:result", {
-            success: true,
-            deviceId,
-            cardId: card.id,
-            cardName: card.name,
-          });
-
-          const cardWithStatus = enrichCardWithStatus(
-            card,
-            runtime.presenceService
-          );
-          if (isNewCard) {
-            broadcastCardCreated(cardWithStatus);
-          } else {
-            broadcastCardUpdated(cardWithStatus);
-          }
-
           const appVersion = runtime.presenceService.getAppVersion(deviceId);
+
           broadcastDeviceStatus({
             cardId: card.id,
             status: "online",
@@ -569,6 +690,26 @@ export function attachPhoneFinderSocketServer(
             appVersionCode: appVersion?.appVersionCode ?? null,
             appVersionName: appVersion?.appVersionName ?? null,
           });
+
+          if (
+            typeof payload.batteryLevel === "number" &&
+            Number.isFinite(payload.batteryLevel) &&
+            payload.batteryLevel >= 0 &&
+            payload.batteryLevel <= 100
+          ) {
+            runtime.presenceService.setBattery(
+              deviceId,
+              payload.batteryLevel,
+              Boolean(payload.isCharging)
+            );
+          } else if (socket.data?.pendingBattery) {
+            runtime.presenceService.setBattery(
+              deviceId,
+              socket.data.pendingBattery.level,
+              socket.data.pendingBattery.isCharging
+            );
+            socket.data.pendingBattery = null;
+          }
 
           const battery = runtime.presenceService.getBattery(deviceId);
           if (battery) {
@@ -582,121 +723,23 @@ export function attachPhoneFinderSocketServer(
           }
         } catch (err) {
           console.error(
-            "[PhoneFinder][Socket][/device] Erro em device:self-register:",
+            "[PhoneFinder][Socket][/device] Erro em device:identify:",
             err
           );
-          if (socket.connected) {
-            socket.emit("pairing:result", {
-              success: false,
-              error: "Erro interno ao processar cadastro do aparelho.",
-            });
-          }
+        } finally {
+          socket.data.identifyingPromise = null;
+          socket.data.identifyingDeviceId = null;
         }
-      }
-    );
+      })();
 
-    socket.on("device:identify", async (payload: DeviceIdentifyPayload) => {
-      try {
-        const deviceId =
-          typeof payload?.deviceId === "string" ? payload.deviceId.trim() : "";
-
-        if (!deviceId) {
-          socket.emit("device:unpaired", {
-            message: "Este dispositivo foi desvinculado do painel.",
-          });
-          return;
-        }
-
-        let card = await runtime.cardRepository.findByDeviceId(deviceId);
-        if (!card) {
-          if (socket.connected) {
-            socket.emit("device:unpaired", {
-              message: "Este dispositivo foi desvinculado do painel.",
-            });
-          }
-          return;
-        }
-
-        if (
-          typeof payload.pushToken === "string" &&
-          payload.pushToken.trim().length > 0
-        ) {
-          const updated = await runtime.cardRepository.updatePushToken(
-            card.id,
-            payload.pushToken.trim()
-          );
-          if (updated) {
-            card = updated;
-          }
-        }
-
-        // Previne leak permanente de presença caso o socket tenha desconectado durante os awaits no banco
-        if (!socket.connected) {
-          return;
-        }
-
-        const hasVersionInfo =
-          payload.appVersionCode !== undefined ||
-          payload.appVersionName !== undefined;
-
-        runtime.presenceService.registerSocket(
-          deviceId,
-          socket.id,
-          hasVersionInfo
-            ? {
-                appVersionCode:
-                  typeof payload.appVersionCode === "number" &&
-                  Number.isFinite(payload.appVersionCode)
-                    ? payload.appVersionCode
-                    : null,
-                appVersionName:
-                  typeof payload.appVersionName === "string" &&
-                  payload.appVersionName.trim().length > 0
-                    ? payload.appVersionName.trim()
-                    : null,
-              }
-            : undefined,
-          card.id
-        );
-
-        const appVersion = runtime.presenceService.getAppVersion(deviceId);
-
-        broadcastDeviceStatus({
-          cardId: card.id,
-          status: "online",
-          deviceId,
-          hasPushToken: Boolean(card.pushToken),
-          appVersionCode: appVersion?.appVersionCode ?? null,
-          appVersionName: appVersion?.appVersionName ?? null,
-        });
-
-        const battery = runtime.presenceService.getBattery(deviceId);
-        if (battery) {
-          broadcastBattery({
-            cardId: card.id,
-            deviceId,
-            level: battery.level,
-            isCharging: battery.isCharging,
-            updatedAt: battery.updatedAt,
-          });
-        }
-      } catch (err) {
-        console.error(
-          "[PhoneFinder][Socket][/device] Erro em device:identify:",
-          err
-        );
-      }
+      socket.data.identifyingPromise = task;
     });
 
     socket.on("device:battery", async (payload: DeviceBatteryPayload) => {
       try {
         const deviceId =
           typeof payload?.deviceId === "string" ? payload.deviceId.trim() : "";
-        const registeredDeviceId = runtime.presenceService.getDeviceBySocket(
-          socket.id
-        );
-
-        if (!registeredDeviceId || registeredDeviceId !== deviceId) {
+        if (!deviceId) {
           return;
         }
 
@@ -706,6 +749,26 @@ export function attachPhoneFinderSocketServer(
           payload.level < 0 ||
           payload.level > 100
         ) {
+          return;
+        }
+
+        // Se houver uma identificação ou auto-cadastro em andamento no mesmo socket para este deviceId, aguarda finalizar
+        if (
+          socket.data?.identifyingPromise &&
+          socket.data?.identifyingDeviceId === deviceId
+        ) {
+          socket.data.pendingBattery = {
+            level: payload.level,
+            isCharging: Boolean(payload.isCharging),
+          };
+          await socket.data.identifyingPromise;
+        }
+
+        const registeredDeviceId = runtime.presenceService.getDeviceBySocket(
+          socket.id
+        );
+
+        if (!registeredDeviceId || registeredDeviceId !== deviceId) {
           return;
         }
 

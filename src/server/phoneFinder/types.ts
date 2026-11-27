@@ -139,6 +139,8 @@ export interface DeviceIdentifyPayload {
   pushToken?: string;
   appVersionCode?: number;
   appVersionName?: string;
+  batteryLevel?: number;
+  isCharging?: boolean;
 }
 
 export interface DeviceSelfRegisterPayload {
