@@ -30,6 +30,7 @@
     "fix-webm-duration": "^1.0.6",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.58.0",
+    "motion": "^14.14.0",
     "multer": "^2.5.0",
     "pdfkit": "^0.20.2",
     "prisma": "^5.22.0",

@@ -32,6 +32,7 @@ import PhoneCardTile, {
   type PhoneDispatchAction,
 } from "../components/phoneFinder/PhoneCardTile";
 import { sortPhoneCardsByBattery } from "../utils/phoneCardSorting";
+import { motion, AnimatePresence } from "motion/react";
 
 type StatusFilter = "all" | PhonePresenceStatus;
 
@@ -221,8 +222,8 @@ export default function PhoneFinderPage() {
                 : card.appVersionName,
           battery:
             event.status === "unpaired" ||
-            (event.deviceId !== undefined &&
-              event.deviceId !== card.pairedDeviceId)
+              (event.deviceId !== undefined &&
+                event.deviceId !== card.pairedDeviceId)
               ? null
               : card.battery,
         };
@@ -248,13 +249,13 @@ export default function PhoneFinderPage() {
       prev.map((card) =>
         card.id === event.cardId
           ? {
-              ...card,
-              battery: {
-                level: event.level,
-                isCharging: event.isCharging,
-                updatedAt: event.updatedAt,
-              },
-            }
+            ...card,
+            battery: {
+              level: event.level,
+              isCharging: event.isCharging,
+              updatedAt: event.updatedAt,
+            },
+          }
           : card
       )
     );
@@ -491,14 +492,14 @@ export default function PhoneFinderPage() {
         prev.map((c) =>
           c.id === unpairTarget.id
             ? {
-                ...c,
-                status: "unpaired",
-                pairedDeviceId: null,
-                hasPushToken: false,
-                battery: null,
-                appVersionCode: null,
-                appVersionName: null,
-              }
+              ...c,
+              status: "unpaired",
+              pairedDeviceId: null,
+              hasPushToken: false,
+              battery: null,
+              appVersionCode: null,
+              appVersionName: null,
+            }
             : c
         )
       );
@@ -577,26 +578,26 @@ export default function PhoneFinderPage() {
     count: number;
     dotClass?: string;
   }> = [
-    { key: "all", label: "Todos", count: counts.all },
-    {
-      key: "online",
-      label: "Online",
-      count: counts.online,
-      dotClass: "bg-emerald-500",
-    },
-    {
-      key: "offline",
-      label: "Offline",
-      count: counts.offline,
-      dotClass: "bg-amber-500",
-    },
-    {
-      key: "unpaired",
-      label: "Não pareados",
-      count: counts.unpaired,
-      dotClass: "bg-slate-400 dark:bg-slate-500",
-    },
-  ];
+      { key: "all", label: "Todos", count: counts.all },
+      {
+        key: "online",
+        label: "Online",
+        count: counts.online,
+        dotClass: "bg-emerald-500",
+      },
+      {
+        key: "offline",
+        label: "Offline",
+        count: counts.offline,
+        dotClass: "bg-amber-500",
+      },
+      {
+        key: "unpaired",
+        label: "Não pareados",
+        count: counts.unpaired,
+        dotClass: "bg-slate-400 dark:bg-slate-500",
+      },
+    ];
 
   const hasActiveFilter =
     statusFilter !== "all" || searchTerm.trim().length > 0;
@@ -706,26 +707,23 @@ export default function PhoneFinderPage() {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setStatusFilter(chip.key)}
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                  isActive
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${isActive
                     ? "bg-brand-accent dark:bg-white text-brand-accent-foreground dark:text-slate-900 border-brand-accent dark:border-white shadow-xs"
                     : "bg-slate-50/80 dark:bg-[#0b0f19] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80"
-                }`}
+                  }`}
               >
                 {chip.dotClass && (
                   <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      isActive ? "bg-current opacity-80" : chip.dotClass
-                    }`}
+                    className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-current opacity-80" : chip.dotClass
+                      }`}
                   />
                 )}
                 <span>{chip.label}</span>
                 <span
-                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold tabular-nums ${
-                    isActive
+                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold tabular-nums ${isActive
                       ? "bg-white/20 dark:bg-slate-900/15"
                       : "bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                  }`}
+                    }`}
                 >
                   {chip.count}
                 </span>
@@ -840,28 +838,42 @@ export default function PhoneFinderPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredCards.map((card) => (
-            <PhoneCardTile
-              key={card.id}
-              card={card}
-              dispatchingAction={dispatchingByCard[card.id] ?? null}
-              feedback={feedbackByCard[card.id] ?? null}
-              onEdit={handleOpenEdit}
-              onPair={handleOpenPairing}
-              onUnpair={(target) => {
-                setUnpairError(null);
-                setUnpairTarget(target);
-              }}
-              onDelete={(target) => {
-                setDeleteError(null);
-                setDeleteTarget(target);
-              }}
-              onLocate={(target) => handleDispatchCommand(target, "locate")}
-              onVibrate={(target) => handleDispatchCommand(target, "vibrate")}
-            />
-          ))}
-        </div>
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <AnimatePresence mode="popLayout">
+            {filteredCards.map((card) => (
+              <motion.div
+                key={card.id}
+                layout
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{
+                  layout: { type: "spring", stiffness: 320, damping: 28 },
+                  opacity: { duration: 0.2 },
+                }}
+                className="w-full"
+              >
+                <PhoneCardTile
+                  card={card}
+                  dispatchingAction={dispatchingByCard[card.id] ?? null}
+                  feedback={feedbackByCard[card.id] ?? null}
+                  onEdit={handleOpenEdit}
+                  onPair={handleOpenPairing}
+                  onUnpair={(target) => {
+                    setUnpairError(null);
+                    setUnpairTarget(target);
+                  }}
+                  onDelete={(target) => {
+                    setDeleteError(null);
+                    setDeleteTarget(target);
+                  }}
+                  onLocate={(target) => handleDispatchCommand(target, "locate")}
+                  onVibrate={(target) => handleDispatchCommand(target, "vibrate")}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
 
       {/* Modal: Criar / Editar Card */}
