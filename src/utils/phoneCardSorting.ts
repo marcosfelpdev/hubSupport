@@ -13,7 +13,10 @@ export function getBatteryWeight(card: PhoneCardItem): number {
     return 2000;
   }
 
-  const level = Math.max(0, Math.min(100, Math.round(card.battery.level)));
+  const rawLevel = Number(card.battery.level);
+  const level = Number.isFinite(rawLevel)
+    ? Math.max(0, Math.min(100, Math.round(rawLevel)))
+    : 0;
   const isCharging = Boolean(card.battery.isCharging);
 
   return isCharging ? 1000 + level : level;

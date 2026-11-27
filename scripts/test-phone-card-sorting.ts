@@ -120,4 +120,14 @@ assert.deepStrictEqual(
 );
 console.log("✔ Passo 6 aprovado: preservação de última leitura em offline.");
 
+// 7. Cenário: Telemetria com nível inválido/NaN não quebra e assume valor seguro
+const cardInvalidLevel = createMockCard("12", "Card Nível Inválido", { level: NaN, isCharging: false });
+const sortedWithInvalid = sortPhoneCardsByBattery([card39Discharging, cardInvalidLevel]);
+assert.deepStrictEqual(
+  sortedWithInvalid.map((c) => c.id),
+  ["12", "2"],
+  "Aparelho com nível NaN deve ser tratado como 0% de forma segura"
+);
+console.log("✔ Passo 7 aprovado: blindagem contra NaN em telemetria.");
+
 console.log("[Test] TODOS OS TESTES PASSARAM COM SUCESSO! 🎯");
